@@ -1,0 +1,86 @@
+MASTER OF MAGIC v1.31 DECOMPILATION - CONVENTIONS (where things live, how to add them, how sure we are)
+Written 2026-10-16 (step 43). STATUS.txt = where we are / how to resume; this file = the rules of the house.
+
+NOTHING HERE CHANGES THE GAME. original/ and gog/official_131 are byte-identical untouched copies (WIZARDS.EXE
+sha256 83e27310...). tools/vroomm.py writes a rearranged ANALYSIS copy (work/flat/WIZARDS_FLAT.EXE, overlays laid out
+flat). Ghidra holds only analysis metadata (code/data boundaries, functions, references, names, types, comments); no
+script writes program bytes. Edited saves exist only in the DOSBox test copy work/run_131.
+
+1. SOURCES OF TRUTH (text, in git; the Ghidra project is rebuilt from them by the pipeline)
+   re/names.tsv          function names + one-line comment (becomes the function comment)       seg:off  Name  comment
+   re/param_names.tsv    GENERATED parameter names (tools/param_names.py from the "(a, b, c)" at the start of a
+                         names.tsv comment); hand overrides in re/param_names_hand.tsv
+   re/data_names.tsv     global variable names + comment                                          seg:off  name  DS:...; meaning
+   re/structs.tsv        struct types + fields;  re/retype.tsv  types of globals / parameters / return values
+   re/comments.tsv       hand inline comments (PRE = above the line in the C, EOL = end of line)  seg:off  PRE  text
+   re/comments_bugs.tsv  GENERATED inline comments: one per code address named in BUGS_AND_QUIRKS.txt
+   re/overrides.tsv      hand repairs of Ghidra's analysis (NOFUNC, FUNC, DECODE, REDISASM, JTABLE, NORETURN, WORD,
+                         COMMENT), each with "# evidence"
+   re/modules.tsv        segment -> module name / description (auto names Mod_seg_off for unnamed functions)
+   Documents (game knowledge, cross-cutting; every claim cites addresses):
+   ORIGINAL_NOTES.txt    rules and mechanics by area (index: GAME_RULES_INDEX.txt) - QUICK analysis made while
+                         naming; a deep pass comes later (phase 2)
+   BUGS_AND_QUIRKS.txt   original-game bugs, numbered, each with status; the addresses become inline comments
+   PROCESS_LOG.txt       chronological method log;  STATUS.txt  resume file
+   Derived (regenerated, do not edit): re/current_WIZARDS/ (decompiled.c, functions.tsv, strings.tsv), re/names_auto.tsv,
+   re/MODULE_MAP.txt, module_map.html, re/frontier.txt, re/patch_map.tsv, re/coherency_history.tsv,
+   re/confidence_history.tsv, re/param_mismatch.txt.
+
+2. WHAT GOES WHERE
+   - Tied to ONE address (a name, a type, a parameter, a formula line, a bug site) -> the TSVs above, so it shows up
+     in Ghidra and in decompiled.c exactly there.
+   - Spans several functions (a game rule, the save format, a subsystem) -> ORIGINAL_NOTES, citing the addresses.
+   - Link both ways, never duplicate prose: an inline comment is one line + a pointer ("BUG #72", "ORIGINAL_NOTES
+     GROWTH"); a document line cites seg:off.
+
+3. CONFIDENCE (write the word into the comment; tools/coherency.py counts them every run)
+   CHECKED      verified instruction by instruction in the assembly (tools/dis16.py) or by an executable check
+   READ         (default when no word is written) from reading the decompile; plausible, not proven
+   PROVISIONAL  best guess; needs a second look - write what is unsure
+   GAME         confirmed in the running game (Chris, or the harness tools/harness/ reading the live RAM)
+   CORRECTION: was <old>   prefix when a name / field changes meaning (keeps the history visible)
+   Bugs use the same words plus READ+asm (reader checked asm), WIKI (community wiki only), OPEN (we disagree with
+   the community). Everything READ / PROVISIONAL is a revisit list for phase 2.
+   Answer keys (community wiki, Unofficial Patch notes via re/patch_map.tsv, later ReMoM) are used only AFTER our own
+   reading; a match is marked COMMUNITY-KNOWN (<source>), never copied in as our claim.
+
+4. NAMING STYLE
+   Functions: Area_Verb_Object (City_Growth_Rate, Diplo_Make_Peace); Screen_* = screen with its own input loop;
+   *_Redraw = redraw callback; *_Load = asset loader; AI_* = AI decisions; Help_Load_* = help-list loaders.
+   Auto names Mod_seg_off (e.g. Combat_8f51_0347) mean "not analysed yet".
+   Globals: lower_snake (p_ prefix for far pointers: p_cities); config_* = MAGIC.SET options.
+   Comment start "(a, b, c): ..." = the parameter list (feeds param_names.py: plain identifiers only, "_" = unknown).
+
+5. PHASES (Chris, project level)
+   Phase 1 (now): name / type / comment the whole program per area, read by me directly (no reader agents); mechanics
+   and bugs noticed on the way are recorded with their confidence, completeness is not expected.
+   Phase 2: complete re-read of the cleaned code, function by function, verifying rules and bugs (incl. the ~310
+   community fixes in work/reports/patch_crosscheck.txt B), upgrading READ -> CHECKED / GAME.
+   End of phase 1: one scored audit of names and formulas against ReMoM (answer key), to aim phase 2.
+
+6. EXECUTABLE CHECKS (strongest evidence for behaviour)
+   tools/check_city_calc.py SAVE   food, production, rebels, gold, upkeep, research, power vs every city of a save
+   tools/check_growth.py SAVE [NEXT_TURN_SAVE]   predicted growth per city (city screen "(+N)") / next-turn population
+   tools/harness/turn_check.py [SAVE]   loads the save in DOSBox-X (private desktop), ends the turn by keyboard and
+                                        compares every city's population counter with check_growth (GAME evidence)
+   Add one per formula when possible; a passing check upgrades the formula to CHECKED.
+
+7. GIT
+   Commit after each step with the PROCESS_LOG step number.
+   .gitignore keeps out game files, third-party tools, the Ghidra project and large scratch folders.
+
+8. PHASE-2 READING RULES (learned step 48-49)
+   - Ghidra DROPS some zero stores in big functions (ai_stack_count = 0 at ebda:2dae, loop counters reset to 0,
+     sums cleared to 0 - seen in e318:09e5, ebda:0302, ebda:2da6). A variable that "looks uninitialised" or a loop
+     that "looks dead" must be checked in the asm (tools/dis16.py) before it becomes a bug claim.
+   - Ghidra labels single ELEMENTS of a table as separate globals (DAT_3f33_4af8 = ai_category_weights[1]); work out
+     the table base before judging an index as off by one.
+   - Read control flow (break / continue / return) in re/current_WIZARDS/decompiled.c or the asm, not a filtered view
+     (tools/peek.py hid those keywords until step 48).
+   - Community patch bytes: tools/patch_show.py NAME (file format = offset line, then OLD byte, NEW byte). A 151-set
+     fix can target a bug an earlier community patch introduced - check the 1.31 bytes first.
+   - tools/dis16.py disassembles only 0x400 bytes from the start address - for a long function start a second run
+     further in before concluding an instruction is absent (step 50).
+   - Diplomacy rows: in human-AI diplomacy the AI's attitude lives in wizards[0].X[AI] (relation mirrored; bias and the
+     three interests are not). Diplomacy_Relation_Change's observer is never the human. Several AI routines read
+     wizards[0] (the human's row) where the other wizard was meant - check which row before describing a rule.

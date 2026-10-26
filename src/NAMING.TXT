@@ -1,0 +1,130 @@
+NAMING.TXT - the vocabulary of the recovered sources: the conventions a reader needs once, and the words that mean
+two things. (Blind review run 3's vocabulary pass, 2026-10-22: where a whole-codebase rename would have been churn
+for little gain, the convention is stated here instead; the smaller cases were renamed in the code.)
+
+WORDS WITH TWO MEANINGS
+  tile      Tile_* functions take a MAP SQUARE (x, y, plane); TILE_* constants are TERRAIN PICTURE ids (the value a map
+            square holds, terrain % TERRAIN_IDS_PER_PLANE). Comments say "square" for the place, "tile" for the picture.
+  pic       an LBX picture (a header with frames: Draw_Pic_Frame, Set_Pic_Frame, LBX_Reload) or a decoded BITMAP
+            (Pic_Create_Blank, Pic_Copy, Draw_Bitmap work on bitmaps only). The variable's comment says which.
+  status    Unit.order (UnitOrder), BattleUnit.status (BATTLE_UNIT_*), HeroStats.status (the level, or a negative
+            dead / unavailable code), AIStack.status (a UnitOrder), the landmass plan's status[] (LANDMASS_*), the
+            spell library (SpellState). Each field's comment names its enum.
+  bu / unit in the combat modules 'bu' is a battle-unit INDEX, a struct BattleUnit far * or a struct copy - the
+            parameter list says which; 'unit' is a battle unit in COMB*.C and an overland Unit elsewhere.
+  style     UI.C ui_button_color2 (Font_Select's second color set), TEXT.C's font styles (shadow / outline passes),
+            the fill style (fill_mode) of the text buttons - three unrelated numberings.
+  war       Wizard.hostility (HOSTILITY_*: the AI's stance, HOSTILITY_WAR 3) and Wizard.diplomacy_status (TREATY_*:
+            the treaty, TREATY_WAR 3) are two scales that share the value 3; comments name the field.
+  block     a heap block (HEAP.C: farmalloc'd, a 16-byte header, sub-blocks carved from it - p_scratch, p_world_block),
+            an EMS frame block (EMSLBX.C), the font / palette blocks (FONTS.LBX), and a 5 x 5 map block (REGIONS.C,
+            PATHWIN.C: REGION_*, the 'block edge bits').
+  region    a MouseRegion (the pointer image over a screen area), a UI_REGION control (a click area, UI_Add_Region), and
+            the map regions = the 5 x 5 blocks (MapRegion; WORLDGEN.C's region bits are REGIONS.C's block edge bits).
+  slot      always an index: a hero slot (Wizard.hired_heroes[]), an item slot (one of a hero's three; ITEM_SLOT_* is the
+            slot's type), a save slot (0..8, SAVE_SLOT_CONTINUE 8), a figure-cache slot (EMS), a spell slot (0..39 in a
+            realm, SPELL_SLOT), a help slot (help_entries[]). The word before 'slot' says which.
+  site      combat_site (CombatAt: where the battle is), BF_SITE_* (what BFGEN builds on the battlefield), THREAT_SITE /
+            STACK_CLASS_SITE (the AI's lairs and nodes), a depletion / new-mineral site (the random events).
+  aura      Node.aura_x / _y (the node's squares), BattleUnit.aura_color (the realm row of the enchantment outline),
+            the combat bonus auras (COMBAUTO.C p_aura_*), the item outline (ITEMPOP.C Item_Outline_Cycle_Tick).
+  range     a radius (scouting, visibility: 2 x range + 1 squares across), the combat spell-cost multiplier
+            (Combat_Range_Multiplier), and a run of terrain picture ids (TILE_*_RANGE_*).
+  zoom      NOTIFY.C's Window_Zoom_* / Zoom_Step_Rect (a box growing from a map square) and UTIL.C's screen transition.
+  list dialog UI.C's UI_Text_List_Select (ui_list_dialog_*) and NOTIFY.C's List_Select_Dialog (list_dialog_*) are two
+            separate implementations.
+  keep      battlefield_keep_pic is the castle keep's picture; CONFIRM_KEEP keeps a captured city; reusing the last
+            battlefield is battlefield_reuse_map.
+  missile   RANGED_CLASS_MISSILE / ATTACK_KIND_MISSILE are arrows and slings (ranged types 2x); Has_Shooting_Attack is
+            any shot (boulder, missile or magic); PROJECTILE_* are the battlefield pictures of a shot of any kind.
+  town      a city (the same record); the generator's neutral cities are 'towns' in comments, as the game's texts say.
+  neutral   PLAYER_NEUTRAL is the neutral player; the screens call its units "Monsters" (lairs and nodes) or "Raiders"
+            (from neutral cities). Names say neutral; the screen words appear only quoted.
+  defense   'defense' in names for the statistic; 'armor' (HELP_ARMOR, ITEM_SLOT_ARMOR) where the game's
+            own words name the help entry or the item slot. Comments spell American (defense, center, neighbor) except where
+            they quote the game.
+
+PREFIXES
+  p_        a pointer OR a segment word holding a block (p_scratch, p_world_block, p_palette, p_music_buf ...);
+            some segment words end in _seg instead. The declaration's type (unsigned = a segment) tells them apart.
+  battle    BATTLEFIELD_* the battlefield KIND (Combat_Terrain_Kind: land, city, a node, water) and its size
+            (BATTLEFIELD_W / _H); BACKDROP_* the battlefield's picture set; BF_SITE_* what BFGEN builds; BF_* /
+            BATTLE_TERRAIN_* the generated squares; BATTLE_UNIT_* the battle-unit status. battlefield_* globals are
+            the field's art, combat_* the battle's state.
+  ui_ / UI_ UI.C's exports carry UI_ (some older names do not: Wait_For_Key, Slider_*); other modules' ui_* globals
+            are their own screen state, not UI.C's.
+  Mem_ / Bit_ the unsuffixed Mem_* functions are NEAR and Mem_*_Far far; for Bit_* and Array_Delete the plain name
+            is the far one and _Near the near one.
+  control   a UI control id is named *_ctl, *_control or *_button by module (the matching-time names were kept);
+            *_button_pic is always a picture. UI_Get_Input returns -id for a right click on control id.
+  font      the font calls are Font_* or Set_* / Get_* (TEXT.C); the font block's +44h word (FONT_LINE_STEP) is the
+            line step: Set_Line_Spacing stores height + extra, Get_Text_Spacing returns the step - the height.
+
+PARALLEL NUMBERINGS (the same things, numbered differently)
+  realms    REALM_* (Nature 0, Sorcery 1, Chaos 2, Life 3, Death 4, Arcane 5) is the game's order. GEM_* and OUTLINE_*
+            use the alphabetical order (Chaos 0, Death 1, Life 2, Nature 3, Sorcery 4); WizardPreset's books and
+            NEWGAME's book pictures their own. The three node realms: NODE_* / TILE_*_NODE / BATTLEFIELD_*_NODE /
+            BF_SITE_*_NODE / LAIR_*_NODE each in their own order - the section comment in ENUMS.H gives it.
+  movement  MOVE_MODE_* (the 6 movement modes, index of Stack_Movement_Modes' array), MOVE_COST_* (the cost layers,
+            one more: walking), MOVE_* (UnitType.move_flags bits), COMBAT_MOVE_* (the combat move icon / type).
+  icons     STAT_ICON_* (the unit view's stat icons) and SCAN_ICON_* (the combat hover panel) index the same
+            pictures 0..14; the scan icons add 15..17.
+  targets   MAP_TARGET_* (the overland spell target kinds), CTARGET_* (the combat targeting cursor's modes),
+            TARGET_SQUARE / TARGET_CANCELLED (a combat pick's non-unit results; the attack code spells the same 99
+            CLICK_WALL).
+  hero picks HPICK_OFFER / HPICK_SUMMONED (Hero_Pick_Random's mode) repeat HIRE_OFFER_*'s values; HPICK_POOL_* is the
+            pool (all / basic / champions).
+  music     MUSIC_* ids are spread over the sections that use them (moods, battle, events, ending, outpost,
+            mastery); some mood codes equal track numbers of another section.
+  no building BLD_NONE 0 (no building id), BLD_NO_BUILDING -1 (a prerequisite slot that is empty), BLDSTATE_NONE -1
+            (a city's building state: not built).
+
+CONVENTIONS
+  pictures  a picture handle ends in _pic, an array of them in _pics; a buffer that is not a picture ends in _buf.
+            The loaders (Load_*_Art / _Graphics, Item_Graphics_Load, Spellbook_Load_Small_Pictures) keep their
+            matching-time names; each fills the screen-graphics block (Screen_Gfx_Reset).
+  NUM_ / MAX_ NUM_* is a table whose every record exists (towers, nodes, lairs, types, spells), MAX_* the capacity of
+            one that fills up (units, cities, a stack, the battle units, landmasses); counts that sit beside an id
+            family take NUM_ (NUM_CITY_ENCH_ROWS, NUM_DIPLO_MSG_VARIANTS).
+  never read a global no code reads is <module>_unused_<hex address>; in structs, pad_xx / unused_xx (xx the byte
+            offset in hex) are bytes neither program touches, unread_xx where only a write was found, zero_xx where the
+            data always holds 0. Older forms (unk_08, *_spare, zeroed_5a) mean the same.
+  uncalled  an empty function no code calls is <Area>_Uncalled_Nop_<hex code offset in its segment> (Map_, Map_Units_,
+            Move_, AI_): nothing else tells two of them apart; one that is called says by whom (*_Nop).
+  X_At      City_At, Lair_At, Player_City_At ... return the index at (x, y, plane) or -1; Map_Stack_At / Tile_Units_*
+            fill a list and its count (Map_Stack_At_Unlimited without the MAX_STACK cap).
+  water     TERRAIN.C's Tile_Is_Water / _Sea / _Sea_NoWrap / _Ocean / _Shore_Water (and MAPLAYER.C / WORLDGEN.C's
+            Tile_Is_Water_Gen) differ in which shore and river pictures count and in the x wrap: each header says.
+  redraws   a screen's redraw callback is <Screen>_Redraw; the screen part keeps its matching-time spelling
+            (LoadGame_Redraw, CityScr_Redraw ...).
+  unit view the subsystem is UnitView_* (functions), unit_view_* (state) and unitview_* (pictures) - matching-time names.
+  prefixes  a global keeps the prefix of the module that first used it (mapdraw_* in MAPLAYER.C, stack_popup_* in
+            CITYPROD.C ...); its declaration says where it lives.
+  players   a player index parameter is player, wizard, ai, owner or caster - all 0..5 (a combat caster below
+            CASTER_WIZARD is a battle unit).
+  percent   *_percentage (the Wizard fields, after the game's texts) and *_pct (computed) both hold whole percents.
+  relation  Wizard.relationship[], relation_bias and 'relation' in comments are the same -100 .. 100 scale.
+  peace     Wizard.peace_turns counts down after a peace treaty; comments call it the peace timer.
+  events    struct Events' fields abbreviate their event (quake_*, boom_*); each event's state field has its full name.
+  drivers   music_drv / music_type / music_driver_type / ConfigMom's driver words hold the same SOUND_DRV_* code.
+  LBX       LBX_Reload's 'seg' (GAME.H) and LBX.C's 'block' are the same heap-block segment.
+  stats buf p_unit_stats_buf is ONE struct BattleUnit (a unit's derived stats for the unit view and the AI), not the
+            p_battle_units table.
+  boxes     Draw_Rect_Outline (x1, y1, x2, y2), Draw_Box_Clipped (the same, clipped), Draw_Bevel_Box, Fill_Rect: the
+            parameter list, not the noun, says corner or size form.
+  Unit_Create MAGIC's sixth parameter is the city; WIZARDS' is the source (a city, or UNIT_SRC_*).
+  saves     game_config.save_slot_used[] / save_names[] (MAGIC.SET), save_slot_list[] (the load list, SETTINGS.C),
+            menu_save_slots[] (MAGIC.C's main menu): three lists of the same eight slots.
+  reports   report_<what>[] and report_<what>_count; report_globals_lost is a 0/1 flag.
+
+BUG AND QUIRK NUMBERS
+  BUG #n / QUIRK #n (or a bare #n) in a comment is that entry of BUGS_AND_QUIRKS.txt at the project root (its address,
+            how it was checked, the effect in play); the comment in place says what goes wrong.
+  BUG (seg:off) or a BUG without a number is not in the list yet (P4 numbers them).
+
+UNITS OF MEASURE
+  moves     every moves field (UnitType.moves, Unit.moves_max / moves_left, Item.moves) is in HALF moves: the
+            Dwarf's 4 is the game's 2.
+  food      Terrain_Food returns quarter units; the city sums and divides by 4.
+  population City.population is citizens; population_tens the growth toward the next one (x 10 people in a city,
+            growth houses x 100 in an outpost).
