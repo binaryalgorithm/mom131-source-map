@@ -20,11 +20,113 @@ field and global is named and described, and every known bug is marked in the co
 
 `WIZARDS.EXE` is built from 152 modules (one per file in `src/wizards/`). `MAGIC.EXE` is built from 49: its 7 own
 files plus 42 shared with the game (heap, LBX loading, graphics, UI, DOS I/O ...) - the same files in
-`src/wizards/`, compiled again. `MODULES.TSV` in each folder lists a program's modules in link order with the
-address of their code in the original executable. `src/NAMING.TXT` explains how things are named.
+`src/wizards/`, compiled again. `MODULES.TSV` in each folder maps each module to its code segment in the original
+executable (the link order is in `build/`). `src/NAMING.TXT` explains how things are named.
 
-**Not here yet:** the build kit (compiler settings, link order, the scripts that reproduce the identical
-executables). It follows. Until then the source is for reading.
+## Building the identical executables
+
+The steps below rebuild `WIZARDS.EXE` and `MAGIC.EXE` byte for byte. They are written so that a person - or an AI
+assistant working for one - can follow them; nothing is automated yet beyond two small helper scripts.
+
+### What you need
+
+| What | Where | Check |
+|---|---|---|
+| **Master of Magic v1.31** - your own copy | GOG ("Master of Magic Classic"); the GOG files are the ones verified | `WIZARDS.EXE` SHA-256 `83e273105b49ebb758b041c965298e45d491513e448e84ede2c6152232ad4e3d`, `MAGIC.EXE` `e9b96da031097fee92d8f00213f7406d5d22003c63e486b7f6394eaa078c3ebb` |
+| **Borland C++ 3.1** | WinWorld (winworldpc.com): "Borland C++ 3.1 and Application Frameworks (1992)", the 3.5" 1.44 MB disk set - `Borland CPP 3.1 and Application Frameworks (1992) (3.5-1.44mb).7z` | archive SHA-256 `76e155a7fb7eb0590930ecd513644c977497a020466a272943776fbf683d0f27` |
+| **DOSBox-X** (Borland C++ is a 16-bit DOS program) | dosbox-x.com / github.com/joncampbell123/dosbox-x - verified with 2026.10.01 | |
+| **Python 3** | python.org - only for the two helper scripts in `build/` | |
+
+Borland C++ 3.1 is not freeware (the rights are Embarcadero's); WinWorld hosts it as abandonware. It is not
+included here - get it yourself, and judge for yourself. Only 3.1 gives identical code (3.0 does not).
+
+### 1. Install the compiler (only the parts the build uses)
+
+Unpack the WinWorld archive: it holds the original install disks (`Disk01` ...). Make a folder `BORLANDC` with
+`BIN`, `INCLUDE` and `LIB` in it:
+
+- `BIN`: the command-line compiler and linker are in the multi-disk archive `CMDLINE` (`Disk03/CMDLINE.CA1` +
+  `Disk13/CMDLINE.CA2`), the assembler in `TASM` (`Disk07/TASM.CA1` + `Disk09/TASM.CA2`). Each `.CA` part is a
+  piece of a PKZIP file behind a 5-byte header: drop the first 5 bytes of every part, join the parts in order, and
+  unzip the result into `BIN`. Also unzip `Disk09/BIN.ZIP` into `BIN` (the DPMI files the compiler runs on).
+- `INCLUDE`: unzip `Disk01/INCLUDE.ZIP`.
+- `LIB`: unzip `Disk08/MLIB.ZIP` (`C0M.OBJ`, `CM.LIB` - the medium memory model) and `Disk07/XLIB.ZIP`
+  (`OVERLAY.LIB`).
+
+Check the six files that decide the output:
+
+```
+87c6dfbad817eeca31c069043f08063f7122663e51932ad089e6d1c563450d3b  BIN/BCC.EXE
+ab8b8b96c1bde5ff6f56c8be2c3b928d21ead7430e72b01e3b22f1fa179ad006  BIN/TLINK.EXE
+80534cd6a1e2c2b4376ae3f21954c6dbfa77a6998d5e0bf8b8bee6153f3174ea  BIN/TASM.EXE
+54e9630201745b88a0f2d22c3ba18743b54f351974b7bd67f2a0902ed1f7b480  LIB/C0M.OBJ
+8b658567c42c70e09543bd181ce4fff698d59d024b13e9e593c7003e08508e80  LIB/CM.LIB
+3504bd256c5564c52d73ea3b4b08ddbe113a016d7fcfbf2f186dcd83f7fc9b24  LIB/OVERLAY.LIB
+```
+
+In DOSBox-X the folder that holds `BORLANDC` is mounted as `C:` (so the compiler is `C:\BORLANDC\BIN\BCC.EXE`) and
+the build folder as another drive. The verified setup: `memsize=16`, `cycles=max`, `core=normal`, `xms=true`,
+`ems=false`, no sound; `PATH=C:\BORLANDC\BIN`.
+
+### 2. Make the sound-library stand-ins from your game
+
+Both programs link the Miles Design AIL 2.14 sound library, which is not Simtex code and not in this repository.
+The build links a stand-in made from your own executables:
+
+```
+python build/make_ail.py "path/to/your/Master of Magic" OUT
+```
+
+writes `OUT/S2FC1.ASM` (for `WIZARDS.EXE`) and `OUT/AIL.ASM` (for `MAGIC.EXE`). It checks your files' SHA-256 first.
+
+### 3. Compile - one fresh DOSBox-X session per module
+
+Use one build folder per program: `W` for `WIZARDS.EXE`, `L` for `MAGIC.EXE`. Copy into it the five headers of
+`src/include/` and the program's modules (`W`: every file of `src/wizards/`; `L`: the files listed in
+`src/magic/MODULES.TSV` - its own from `src/magic/`, the shared ones from `src/wizards/`), plus the stand-in
+(`S2FC1.ASM` into `W`, `AIL.ASM` into `L`). Then compile every module:
+
+```
+BCC -c -mm -a -d -IC:\BORLANDC\INCLUDE NAME.C        resident modules
+BCC -Y -c -mm -a -d -IC:\BORLANDC\INCLUDE NAME.C     overlay modules
+TASM /ml NAME.ASM                                     assembly modules and the stand-in
+```
+
+A C module is an **overlay module** (`-Y`) when its object file is listed between `/o` and `/o-` in that program's
+response file (`build/WIZARDS.RSP`, `build/MAGIC.RSP`); the rest are resident. Assembly modules always take plain
+`TASM /ml`, also the one overlay assembly module (`PATHRLX.ASM`). A shared file can be an overlay in one
+program and resident in the other - that is why each program has its own folder.
+
+**Important: start a NEW DOSBox-X session for every compile** (a batch file that runs one command, then exits).
+Borland C++ 3.1 reads leftovers of the previous run from memory: compiled one after another in one session, a few
+large modules (`WIZARDS.C`, `MAGIC.C`, `HEAP.C`) come out with different register choices and the executables no
+longer match. Sessions can run in parallel; a full build takes about a minute.
+
+After assembling the WIZARDS stand-in, put its relocation where the original link had it:
+
+```
+python build/fix_ail_obj.py W/S2FC1.OBJ
+```
+
+### 4. Link
+
+In each folder, with the DOS date set to the original link date - the overlay manager's `_EXEINFO_` record stores
+the link date in the executable - link with the response file:
+
+```
+DATE /F                     (DOSBox-X: use its own clock, so the date can be set)
+DATE 03/03/1995
+TLINK @WIZARDS.RSP          (in W; MAGIC.RSP in L)
+```
+
+`build/WIZARDS.RSP` / `build/MAGIC.RSP` are the exact response files of the verified link: the startup code, the
+main module, the overlays in stub order between `/o` and `/o-`, the resident modules in segment order, the map
+file, `CM.LIB` and `OVERLAY.LIB`. The link order decides the layout - do not reorder.
+
+### 5. Check
+
+The new `WIZARDS.EXE` and `MAGIC.EXE` must have the SHA-256 of the originals given above. If a hash differs, find the
+first differing byte: one module compiled in a shared session or with the wrong `-Y` is the usual cause.
 
 ## The bugs (`BUGS_AND_QUIRKS.txt`)
 
