@@ -1,0 +1,490 @@
+num	kind	case (setup -> action -> observe)	1.31 shows (bug)	fixed build shows
+1	DBG	BP on Event_Find_Depletion_Site / _New_Mineral_Site entry and return; force the event roll (save: events record) -> end turn	both return -1 at once (loop never runs); no event	a site is found; the event fires
+2	OV	save: an outpost (population 0, growth 0) in slot k, a normal city in slot k+1 -> end turn	the shifted city skips growth (pop/size forced as tested)	the shifted city grows normally
+3	DBG	save: human fame 0, AI fame high (and reverse) -> BP Turn_Random_Offers fame reads, end turn	AI offers use wizards[0].fame	each wizard's own fame
+4	OV	save: Grand Vizier on; human city A pop < 5 producing Trade Goods, city B (the loop index) pop >= 5 -> end turn	A's choice depends on B's population	A gets Housing x2 weight
+5	OV	save: outpost at city index >= 25 next to minerals -> end turns, compare growth chance (BP on Outposts_Grow grow %)	mineral bonus from the wrong square	bonus from the area squares
+6	OV	save: mana 0, upkeep > income, summons -> end turn; food shortfall with a ship carrying units	disbanding starts past the last unit; carrier type tested; report text garbled	the summons disband; correct names
+7	OV	save: transport with passengers over sea, remove the transport (kill) -> read the drowned list	list holds stack garbage	the carried units listed
+8	DBG	BP Mercenary_Offer_Roll compare	compares an uninitialised local	initialised value
+9	OV	save: two AIs met, relations / interests high -> end turns (the Random gate over many turns)	AI-AI alliance from war; trade changes nothing	pact first; spells move
+10	OV	save: AI casting Subversion on a third wizard (casting_spell, cost left 0) -> end turn	caster's own relation to the target drops too	only the others' relations drop
+11	OV	save: AI casting Drain Power on the human (casting_spell, cost left 0), human mana 1000 -> end turn	10..200 drained	50..150 (wiki)
+12	CB	battle vs an AI wizard knowing Holy Word with enemy fantastic units present -> AI combat turns	AI never casts Holy Word	AI casts it
+13	CB	combat animations off (settings); cast Death Spell / Holy Word / Flame Strike / Mass Healing / Call Chaos	effects missing or stale	effects applied
+14	CB	cast True Light, then try Mass Healing	Mass Healing refused	allowed
+15	CB	attack an AI defender; read the combat turn counter at the human's first move	turn 2 (two turn starts)	turn 1
+16	CB	enemy unit with all three warp flags (battle-unit edit via debugger) -> cast Warp Creature	game hangs	cast fails or picks another
+17	CB	Call Chaos with two victims, the second resists disintegrate (savestate retries)	stale damage applied to the resister	no damage
+18	CB	AI siege battle with 2+ missile units; BP Side_Missile_Strength return	last unit's value, not the sum	the sum
+19	CB	battle with deployment: melee units out of index order -> read deployment squares	picked by list position	by unit index
+20	CB	AI combat vs a side casting realm X; BP AI_Combat_Assess_Threats masks	bits tested at realm-1	at realm
+21	DBG	BP AI_Build_Strength_Tables d208:1009; Myrran race units	DI used before set; race 0xE test	correct indexes
+22	CB	wizard casts Life Drain in combat; read skill points	3x the drain added to skill	(intended? design note)
+23	CB	battles: river tiles; decoration B; city-wall art after a walled city then an unwalled battle	no rivers; decoration gaps; wall art sticky	rivers; art reset
+24	OV	save: human casting Raise Volcano (cost left 0) on a tile -> end turn; read the mineral byte	no mineral on the new volcano	sometimes a mineral
+25	OV	save: own city with Oracle and Nature's Eye -> read visibility around it	radius 4	radius 5
+26	DBG	AI settler deciding; BP City_Site_Evaluate with a site in human-unexplored land	unexplored squares add nothing	the AI's own map used
+27	OV	save: cities near x 0/59 sharing area; roads across the seam -> end turn, read area bits / road connections; map draw at x 0	no wrap at the seam	wrapped
+28	UI	select a stack; steady blink mode; BP Stack_Blink_Draw grid lookup	pixel coordinates used as grid	grid coordinates
+29	UI	own city with City Walls on the overland map (screenshot of the city tile)	same picture as no walls	walled picture
+30	UI	road building screen: click a far tile whose path passes 120 turns -> confirm, read the engineers' destination	order targets the full clicked end	the cut end
+31	UI	cityscape: Evil Presence + Cathedral; build City Walls; two cities with equal x*y on both planes	no overlay on Cathedral; no wall fade; identical layouts	overlay; fade; different
+32	DBG	BP AI_Neutral_Lair_Monsters re-pick loop	keeps the first lair	re-picks
+33	OV	save: enemy unit with Invulnerability on a tile; human casting Disenchant True there (cost left 0) -> end turn	Invulnerability never removed	removable
+34	OV	save: AI casting Nature's Cures / Stasis / Black Wind (casting_spell) -> end turn, read the targets	wrong unit index used	the right target
+35	OV	save: Call the Void / Enchant Road / Consecration at x 59 or y 39 -> end turn, read tiles	x 60 / row 40 reached (next row / past plane)	clipped
+36	DBG	AI with Flying Fortress known; BP AI_Target_Flying_Fortress	never a fresh target	targets its fortress
+37	OV	save: three cities near a Raise Volcano target -> end turn, read the event record / damage	2-slot array overrun; x stored as city	all three; city index
+38	OV	human casts Spell Binding / Disjunction on targets of known costs (savestate retries)	target owner's resistance raises the chance	lowers it
+39	UI	spellbook: a 30 MP spell with 20 MP per turn; overland book icons vs research book turns	1 icon vs 2 turns	2 / 2
+40	UI	research book of a Conjurer: estimated turns of a Death / Arcane non-summon	25% too few turns	no bonus
+41	OV	save: an AI has Evil Omens, the human casts a Life spell -> read the cost; reduction 100%+ -> cost 0	cost x1.5 for the caster too; no cap	(design) capped
+42	UI	magic screen with fortress heroes: Alchemy, then read the casting cap	cap without the hero bonus	with the bonus
+43	UI	city with Merchants' Guild / Dwarves + Prosperity / Shrine / Evil Presence / Gaia: scroll lines vs City_Calc totals	scroll differs from the real totals	matches
+44	UI	city able to build 12+ units: production list	Spearmen / Swordsmen dropped; 8 buildings max	all listed
+45	ST	CITYPROD.C 124 header: the population warning branch is unreachable (cityprod_option_total always equals the count)	-	-
+46	OV	save: AI relation values around the -100 threshold -> end turns, count audiences	offense logic only below -100	(design)
+47	DIP	Exchange Spells with an AI that dislikes you	AI accepts every listed exchange	the roll decides
+48	DIP	Exchange Spells first (sets the stale byte), then Offer Tribute -> Spells	tribute list filtered by the stale minimum	full list
+49	DIP	threaten an AI until it pays; read both golds	your gold up, AI gold unchanged	AI gold reduced
+50	DIP	save: human units vastly outnumber the AI's on its continent (>328:1) -> Threaten	AI declares war (wrap)	capitulates
+51	DIP	save: AI has no units / a token force on its continent -> Threaten / propose	token force scores worse than none	better
+52	DIP	Threaten submenu -> Forget It; read interests	-100 to all three	unchanged
+53	DIP	AI with no spell to give, threat scoring >= 200	ignored	pays gold
+54	DIP	Exchange Spells with spells of research cost > 255	values compared mod 256	full values
+55	DIP	accept an AI spell offer (message 0x30); read both libraries	the AI never gets its spell	both get theirs
+56	DIP	accept an AI pact at once; read gold / spell	incentive paid anyway	only if offered
+57	DBG	BP AI_Diplo_Turn_AI_Vs_AI peace test; DS:c3ea after a diplomacy screen	stale UI variant used	a roll
+58	ST	DIPLOACT.C Diplo_Make_Peace: +40 as a byte before the cap (unreachable at war)	-	-
+59	DIP	save: a city of A with Nightshade count == B + 1; A and B make peace	the Nightshade count cleared	kept
+60	DIP	2-player game: many audiences, tally text variants	last variant never; variant 0 twice as likely	uniform
+61	DIP	propose peace with treaty and peace interests set apart	scored on treaty interest	peace interest
+62	ST	Diplo_AI_Ask_Sweetener: the flag in DI works only because the caller leaves DI = 6	-	-
+63	DIP	Offer Tribute to an AI with < 25 gold; read options and golds	no gold option; deducted from wizards[0]	options by your gold
+64	DIP	AI proposal with a spell incentive and 0 gold; read the text	nothing appended	the spell named
+65	DIP	pending AI message for a wizard -> open its diplomacy screen twice in the turn	menu blocked all turn	menu after the message
+66	OV	relation event between AIs after talks; read interests	the spent interest overwritten	kept
+67	DIP	tribute a spell; read wizards[0].peace_interest[partner]	raised (used in later talks)	(as is)
+68	DBG	merchant / treasure item creation; BP Item_Create_Random type test	powers decided by stack leftovers	by the rolled type
+69	UI	forge: pick Spell Charges, unpick, finish a staff; read the item	spell + charges kept free	cleared
+70	UI	forge with 13 Nature books: power list (ITEMPOW record 62 needs 22)	no Merging	(data)
+71	UI	forge: a +6 Plate Mail of Invulnerability; read the auto-name	Plate Mail of Invulnerabili	full name
+72	OV	save: wizard without Alchemy / Warlord, treasure spell rolls (lair) -> read realms offered	never Arcane	Arcane possible
+73	DBG	treasure spell with a realm exhausted; BP Treasure_Pick_Spell eligibility	exhausted realm marked eligible again	stays out
+74	OV	lair with stored item values; conquer -> read the item cost	any prefab the books allow	capped by value
+75	OV	save: AI stack next to a lair with items -> AI conquers it (end turns)	items created, given to nobody	given
+76	OV	treasure retort Divine Power for a Death wizard (savestate retries)	given without the book check; no fame	checked; +10 fame
+77	CB	battle killing heroes with 7+ items (save: AI heroes with items) -> win	only 6 shown; rest lost	all shown
+78	OV	save: AI mage hero, items in the pool -> end turn	armour in the weapon slot	a staff / wand
+79	OV	destroy a prefab item; many lair rolls	that prefab never returns	can return
+80	UI	hero over water with its only Water Walking + Flight item; try to remove it	allowed?	refused
+81	UI	unit view of a Trireme	no food shown (pays 1)	1 food shown
+82	UI	unit view hotkeys X and D	X does nothing; D pages or dismisses	-
+83	UI	unit view: non-hero with 16 / 24 ability rows, page up from 0; hero item 0; moves	empty page; no aura on item 0; half moves not drawn	correct
+84	OV	save: only an AI has Chaos Surge; read a chaos creature's attack (unit view / battle record)	+2 only when the human has it	when its owner has it
+85	CB	Weakness on a unit with a thrown attack; read ranged in the battle record	thrown not reduced	-2
+86	CB	Chaos Channels demon-armour unit in combat; read defence	+6	+3
+87	UI	unit view of a non-hero magic shooter after a battle	Spell x N from a stale record	its own
+88	UI	combat info of a Mind Twisted / Shattered unit; hero view with Haste / Giant Strength / Merging items	gold box for Mind Twist; no Shatter loss; items not listed	-
+89	CB	Crusade active; a level-2 normal unit's hits in combat vs out of combat	+1 level twice	once
+90	UI	Famous wizard: hero unit view upkeep vs the real gold upkeep (end turn)	0 shown, charged	shown as charged
+91	CB	Mind Storm on a low-resistance unit; read resist	negative	0
+92	CB	Heroism cast in combat on a level-0 hero with Might; read melee	no Might bonus from level 3	bonus
+93	UI	forge with Artificer + Runemaster, then break the item; read mana	more mana back than paid	paid back only
+94	UI	Historian after turn 288 / scrolled	left-edge spike; newest not drawn; ticks early	-
+95	UI	Astrologer / Historian with an eliminated wizard	still listed	not listed
+96	OV	Time Stop running: read power_history over turns	keeps advancing	stops
+97	UI	Cartographer: neutral units; click the map	neutral units missing; stack deselected	-
+98	UI	own city producing None -> open the Cities list; read producing	switched to Housing	unchanged
+99	UI	two units in a tower with different planes; Armies list	one row, one plane's units; hover loops	both
+100	UI	Cities list: right-click an outpost in the top row	back to the map	back to the list
+101	UI	Armies list scrolled to the bottom, dismiss a unit; Cities list paging; minimap with an empty list	stale last row; up 5 / down 1; dot from an empty list	correct
+102	OV	save: AI knows Drain Power / Subversion / Cruel Unminding, target not casting -> AI turn	those spells cancelled unless the target casts	cast at any wizard
+103	OV	save: city above its maximum population (shrink its food area) -> end turn, read growth	still grows	no growth
+104	OV	save: city with growth points 95 and rate 30 -> end turn	+1 citizen, the rest dropped	the excess kept
+105	ST	Load_Game: a short (old-format) save clears 0x221 of the 0x230-byte hero-names block (no old-format saves exist for 1.31 play)	-	-
+106	UI	Settings: toggle an option, Esc; read game_config	the change stays in memory	reverted
+107	DEV	Game_Init_State reseeds the RNG from the timer on every load (not a bug; harness note)	-	-
+108	UI	conquer Raven's fortress (save edit) -> listen / log the sound index	0x23 (male?) for Raven	0x22
+109	UI	final score after turn 1000 (save: game_turn 1100) -> score screen	the turn bonus subtracts	floored at 0
+110	DBG	AI area-damage spell; BP AI_Target_Area_Damage distance	distance from city / unit <stack index>	from the loop city / unit
+111	DBG	AI Enchant Road; BP AI_Target_Enchant_Road	the city tile tested 24 times	the 5 x 5 area
+112	DBG	AI Evil Presence; BP AI_Pick_City_Spell_Target owner books test	needs Death books (inverted)	no Death books
+113	DBG	AI Earthquake vs a Nature-warded city; BP target test	Chaos Ward tested	Nature Ward
+114	DBG	AI Warp Node; BP AI_Target_Warp_Node wizard pick	Random(count) used as a wizard number; only warped nodes	a hostile wizard's nodes
+115	OV	save: AI casting Word of Recall (casting_spell, cost left 0) -> end turn	no target, nothing happens	a unit recalled
+116	DBG	AI Spell Binding / Disjunction; BP AI_Pick_Global_Enchant_Target priorities	200 / 250 read as -56 / -6	top priority
+117	DBG	AI ships answering transport requests; BP AI_Ship_Orders capacity sum	unit <request index> used	the moving ship
+118	DBG	BP AI_Collect_Landmass_Targets fortress loop	defence read before x / y set	at the fortress
+119	DBG	BP AI_Collect_Landmass_Targets city loop	x5/4 when the city index is 0	for human cities
+120	DBG	BP AI_Replan_Landmass plane argument	overwritten by cities' / units' planes	kept
+121	OV	save: human outposts at Impossible vs Intro -> growth over turns	x4 growth for the human too	AI only?
+122	OV	save: outpost with Wild Game in its area -> growth chance (BP Outposts_Grow grow %)	Wild Game adds nothing	adds
+123	UI	Surveyor on a site with Wild Game; compare its max population with the built city's	+0.5 food instead of +2	+2
+124	UI	Surveyor on a site at y <= 2	top-row tiles left out	counted
+125	OV	raze a city on hills; read the movement cost maps of its tile	cost 2 on every land map	the terrain's cost
+126	GAME	TC-126 (done): city values stored as bytes wrap past 255 at high difficulty	-	-
+127	OV	save: human casts Famine on an AI city, then conquers it -> read its enchantments	the curse stays on his new city	removed
+128	OV	save: conquer an AI city with an Oracle -> read the explored radius	2	the Oracle's
+129	OV	save: two Earthquakes on one city in a turn (events / casts) -> read buildings	removed buildings rolled again	only standing ones
+130	UI	mana shortfall strips unit enchantments -> turn report UNIT SPELLS DISSIPATED	garbage names	the units' names
+131	OV	save: Change Terrain / volcano at x 0 or 59 -> read the re-tiled neighbours	written unwrapped (wrong row)	wrapped
+132	OV	save: a building in state 2 (removed this turn) chosen and completed -> read its state	incremented (ghost state 3)	built (1)
+133	ST	Spellbook_Build: 13 paragraphs (104 spells) while Spellbook_Collect_Spells can append more (a full book of 200+ spells is unreachable without editing; save edit to know every spell possible -> UI)	-	-
+134	CB	hero with a hero spell id 128+ (e.g. a Death spell) -> combat spellbook	spell list stops at it	listed
+135	ST	Wizard_Begin_Casting AI branch: casting_cost_left never set for Enchant Item / Create Artifact (LATENT)	-	-
+136	OV	human vs AI Spell Blast on the same target state; read mana paid	initial - left vs base - left	the same rule
+137	DBG	BP AI_Build_Strength_Tables enemy list with a dead unit record	dead units counted	skipped
+138	DBG	AI Go-To with path cache record 0; BP Path_Cache_Invalidate	record 0 never invalidated	cleared
+139	DBG	BP AI_Choose_Research turns estimate	Research_Bonus_Pct given the realm, not the spell	the spell
+140	DBG	BP AI_Pick_Spell_Category attack-group test	power_history[83] byte tested	the spell group
+141	DBG	BP AI_Pick_Summon weights	Storm Giant weight not squared	squared
+142	DBG	BP AI_Target_Transmute mineral tests	bit tests take silver / gold / gems too	iron / coal only
+143	OV	save: Life / Chaos AI knows Tranquility, mana enough -> AI turns	casts it, drops it next turn	not cast
+144	DBG	AI Disenchant on human units; BP AI_Target_Disenchant return	x / y of a different unit	the chosen unit
+145	DBG	BP AI_Wizard_Choose_Production slips	Trade Goods count of this city in the loop	per city
+146	DBG	BP AI_Stack_Embark fallback loop	never runs (capacity 0)	units seek transport
+147	DBG	BP AI_Unit_Dispatch call of AI_Release_Goto_Near_Weak_City	plane pushed before set	the loop plane
+148	DBG	BP AI_Disband_For_Upkeep weakest summon	AI_Unit_Strength(type) as a unit index	the unit
+149	DBG	BP AI_Pool_Add_Strongest	ranked by type as unit index	by unit
+150	DBG	BP AI_Settler_Orders City_Site_Evaluate plane	[bp-2] never written	the landmass plane
+151	DBG	BP AI_Engineer_Orders water test	p_ai_own_stacks indexed by the square stack index	the right table
+152	DBG	BP AI_Landmass_Plan release step	p_threat_maps[2] (stale DI)	the plane
+153	DBG	BP AI_Landmass_Plan expansion target	distance from stale locals	from the home city
+154	DBG	save: a wizard casting Fire Elemental (spell 90); BP AI_Choose_Attack_Landmass	taken as a war target	Spell of Mastery
+155	ST	Diplo_Propose_Treaty: a computed difficulty local never used (QUIRK)	-	-
+156	OV	save: the human has many cities, an AI few -> end turn, read AI-AI relation drift	human's city count penalises every wizard	each wizard's own
+157	OV	save: AI army weaker than the human's -> relation drift over turns	(QUIRK) backwards from the guide	-
+158	OV	save: AI casting Spell of Mastery (progress) -> relation events	war roll on the wrong argument	on Mastery
+159	OV	save: relation -100 and a large negative event -> read the relation	wraps positive	clamped
+160	OV	human breaks a pact via Threaten; read relation_bias[0][partner]	goes UP	down
+161	ST	Diplo_Declare_War: base_relation -5 with no floor wraps after many wars (LATENT)	-	-
+162	OV	save: AIs at hostility, many turns; count AI-AI wars / breaks	rare (only on the treaty roll)	every turn's checks
+163	OV	save: wizard 3 allied to 1 and 2 at war -> end turns	not fixed (3 is not the lowest)	treaties broken
+164	DBG	BP AI_War_Check ally / quota rules	human's war list used	a's list
+165	DBG	BP AI_Ally_Pick_War_Request	never asks (picks fail)	asks
+166	DIP	AI proposes a treaty; read the incentive gold vs its treasury	sized by population, from nothing	from its gold
+167	OV	ship stack with a Wind Walker and Go-To units -> move	Go-To units left behind	carried
+168	OV	ship on Go-To with capacity N and N+1 land units -> arrive	N+1 carried	N
+169	OV	select part of a tile's units, Go-To -> read orders	every ready / done / Go-To unit ordered	selected only
+170	UI	unit view over water: dispel own Flight on a swimming unit	refused / warned though it swims	allowed
+171	OV	move a stack onto a tile with an own transport having moves -> read other units	all set Patrol, finished	unchanged
+172	OV	attack a treaty partner's stack (confirm) -> read broken_treaty_type / relation	the victim named the breaker	the attacker
+173	GAME	TC-173 (done): Chaos / Death Ward corrupts the moving stack list	-	-
+174	OV	AI stack of exactly 9 units wanting Plane Shift; BP Stack_Can_Plane_Shift	refused	allowed
+175	ST	Planar_Travel_Dest_Check: count / list never set before Path_Ward_Blocked (LATENT)	-	-
+176	UI	road building with a stack of engineers, some deselected; read the first tile's turns	every engineer counted	the working ones
+177	OV	Gift event for an AI (save: events record / Event_Roll forced) -> read items	AI gets nothing; item leaks	AI gets it
+178	OV	save: Plague on a size-1 town -> end turns	population set to 2	unchanged
+179	UI	Charismatic wizard with gold between half and full price; hero offer	no offer	offer at half price
+180	CB	full battle (36 units), cast a summon -> read units	ghost unit created	refused
+181	OV	auto-resolve battles with equal sides (many seeds) -> read the winner	undefined winner sometimes	defined
+182	OV	auto-resolve with a wizard of several realms; BP channels	books set, not add (QUIRK)	-
+183	OV	auto-resolve on a tile with dead units of an earlier battle (AI turn) -> read defender totals	dead units counted	skipped
+184	CB	heal a multi-figure unit reviving a figure; read hits	revived figure gets extra hits	at most full
+185	CB	hasted shooter, second shot; BP Combat_Exchange magic test	reads unit 3's ranged type	the shooter's
+186	CB	Blur unit with / without illusion immunity attacked	immunity checked on the wrong unit; too few rolls	-
+187	CB	Prayer on the defender; melee hit counts over many attacks	block bonus counted twice	once
+188	CB	immolated unit shooting	burns on ranged / thrown / breath	melee only
+189	CB	Righteousness item vs a Chaos / Death attack	only the resistance half	immune
+190	CB	Magician shooting a wall vs a unit; read ammo / spell points	ammo for wall shots; hero below 5 disabled	the same rules
+191	CB	attacker with Cloak of Fear attacks; count striking figures	attacker's own strikers reduced	defender's
+192	CB	First Strike unit attacked after a gaze killing a figure	killed figure still strikes	not
+193	CB	cast on a target; BP Combat_Cast_Spell enchantment reads	a random battle unit's enchantments	the target's
+194	ST	Raise / Animate Dead placement loop hangs when the deployment block is full (LATENT; CB possible with a full block)	-	-
+195	CB	unit casts Dispel Magic / Disenchant Area; BP side register	stray register side	the caster's side
+196	CB	kill several units of an AI; read relation change	only the last unit counted	all
+197	CB	hero with an Endurance item, then a unit without; BP Unit_Combat_Moves flag	phantom +2	none
+198	CB	AI shooter whose shot is refused (Wall of Darkness) -> AI turn	loops without end	gives up
+199	ST	Earth_To_Mud_Square: no bounds test near the battlefield edge (LATENT; CB possible at the edge)	-	-
+200	ST	Combat_Find_Path writes the path into the cost map (LATENT)	-	-
+201	UI	Surveyor on a river tile at row 1 next to sea at row 0	plain river, not River Mouth	River Mouth
+202	OV	Settle with a settler picked by Next Unit after an earlier right-click elsewhere -> read the selected stack	the old right-clicked tile's stack woken / selected	the next unit
+203	GAME	TC-203 (done): numpad move across the x = 0 seam goes one row off	-	-
+204	GAME	TC-204 (done): numpad move skips the plane check	-	-
+205	OV	cast an overland summon (save: casting Summon Hero / a summon, cost left 0) -> end turn; read the selected stack	new unit not selected	selected
+206	DBG	call Random(1000) many times (BP / trace the return)	never above 512; modulo bias	1..1000
+207	DEV	WITHDRAWN: not a bug	-	-
+208	UI	stack of a Wind Walker and a slower unit; selection panel moves	the Wind Walker's moves but the slow one keeps its own	consistent
+209	CB	confused unit changing sides; after its turn read confusion state	never cleared	cleared
+210	CB	Counter Magic on a side; the enemy wizard casts and is countered; read combat enchantments	the wrong enchantment weakened	Counter Magic's strength
+211	CB	human casts Dispel Evil: target picker	any realm's creature offered	Chaos / Death only
+212	CB	human casts Life Drain on a Death creature	allowed	refused
+213	OV	save: Chaos Channeled unit; cast a 'normal living units' spell (e.g. Resurrection) -> target accepted	counted as normal living	refused
+214	CB	thrown / breath unit with a to-hit bonus; hit rate over many attacks	no bonus	bonus
+215	CB	unit with Missiles and Weapon Immunity shot by a normal bow; read shields	10+	50
+216	CB	Regenerating unit recalled (Recall Hero / Word of Recall) -> battle end	stays (status reset)	recalled
+217	OV	AI conquers a city with many / few own units (save) -> raze decisions over tries	more units -> more razing (backwards)	-
+218	CB	Spell Lock cast in combat, then Dispel Magic on the unit	enchantments dispelled	blocked
+219	CB	Dispel Magic on an Invulnerable unit; Holy Weapon with Holy Arms	never removed; wrong wizard's Holy Arms	-
+220	CB	human casts Raise Dead / Animate Dead (pick list built)	names written through random pointers (memory)	-
+221	CB	Animate Dead an enemy corpse, win -> read the unit owner on the map	still the old owner	the caster
+222	CB	Call Lightning vs a Magic Immune and a Wraith Form unit; count bolts	Wraith Form spared, immune hit; bolts lost	-
+223	DBG	BP AI_Combat_Spell_Score +500 bonus	never used	used
+224	GAME	TC-224 (done): autosave mid turn change	-	-
+225	DIP	AI demands you break your alliance with X; read the stored field	wizards[0].demand_drop_ally never read	-
+226	OV	save: AI casting a spell, its fortress captured (Wizard_Fortress_Captured) -> end turns	the dead wizard's spell keeps progressing	cleared
+227	OV	conquer an outpost (save) -> read fame / relations / treaties	conquest rules skipped	applied
+228	CB	Wind Walking unit attacked in melee by a non-flyer	cannot be attacked	can
+229	CB	AI wizard with Flame Strike etc. and Prayer active on its side	the instant refused	cast
+230	CB	battle at a city with Spell Ward vs the warded realm; enemy casts it	cast freely	countered
+231	CB	Raise / Animate Dead with a fled / recalled unit in the list	living units offered	dead only
+232	CB	Demon Lord summoning in a full battle	no limit check	refused
+233	CB	unit whose stored damage >= its current max hits (lose an item / enchantment) -> enter battle	0 figures, active	at least 1 hit
+234	CB	Dispel Magic on a unit with Magic Immunity / Guardian Wind etc. in combat	abilities kept	removed
+235	CB	Flight cast in combat on a slow unit; read moves	no minimum	at least 3 moves
+236	CB	thrown attack vs a Weapon Immune unit; read shields	immunity ignored	applies
+237	CB	ship carrying land units flees a battle	carried units die	survive
+238	OV	save: realm with 11+ books, gain a spellbook from a lair	reads past the table	no extra spells
+239	OV	peace treaty with an AI; read peace_turns each turn	-2 per turn	-1
+240	OV	save: AI with Nature's Wrath active and known, mana enough -> AI turns	recasts it	not
+241	OV	save: AI with Time Stop running, mana >= 3000 -> AI turns	can recast Time Stop	not
+242	OV	save: AI with Time Stop and mana 0 -> end turn	one more frozen turn	ends at once
+243	CB	confused unit flipped to the other side, then Dispel removes Confusion -> battle end	unit stays with the other side	returns
+244	CB	confused AI unit with 'moves randomly'	commanded normally	random move
+245	OV	Summon Champion with no champions left (save) -> cast	usually fails	a hero from the pool
+246	CB	Terror with resistance auras; BP Combat_Turn_Start roll	aura counted twice	once
+247	CB	Flame Strike / Holy Word / Death Spell vs a Wraith Form unit	unit spared	hit
+248	CB	Holy Weapon cast in combat; read to-hit	no bonus	+1
+249	UI	lair treasure of exactly 1 gold / 1 mana	not mentioned	shown
+250	UI	city production preview of a unit type; read To Hit	stray bonus	-
+251	CB	open-field battle: walk through the centre square	blocked	passable
+252	UI	AI audience during Next_Turn: mouse cursor	hourglass	arrow
+253	DBG	BP AI_Hostility_Replan chance with a high relation_bias	more hostile	less
+254	OV	unit with Water Walking and non-corporeal in a stack; read movement modes	counted twice	once
+255	ST	DISPUTED: deployment slot 9 outside cities matches the move-cost model (see the entry)	-	-
+256	OV	enemy in a tower registered on the other plane; plan a path through	ignored as an obstacle	blocks
+257	CB	Terror vs Death-immune units	can be frozen	immune
+258	CB	Ghoul (Create Undead) kills a Death-immune unit	counted for undead creation	not
+259	OV	save: Gaia's Blessing city with a Chaos Node in its area -> end turns	node tile turned to hills (10% a turn)	untouched
+260	CB	Call Lightning with sound effects off (RC6) -> heap state	Heap_Release without a mark	balanced
+261	CB	neutral units with a Holy Bonus aura (lair) -> resistance	no bonus	bonus
+262	CB	Dispel Magic on a cursed unit of the caster's side	curse always removed	rolled
+263	CB	illusion-immune shooter outside a Wall of Darkness	blocked	shoots
+264	UI	conquer a wizard whose loot includes the spell you research -> open the Magic screen	crash / garbage	new research asked
+265	OV	AI banishes the human (save) -> human does not resign; read the AI's spells	no loot	loot
+266	GAME	TC-266 (done): any city-damage spell destroys an outpost	-	-
+267	OV	Time Stop running; read game_turn	advances (QUIRK)	-
+268	CB	cast Haste in combat; read moves	no extra movement that turn	doubled
+269	UI	powerful wizard (mana x power > 32767): spellbook turns	wrong	right
+270	CB	tower defenders on the other plane value; attack the tower	they stay out	fight
+271	CB	attack an outpost with Wall of Fire (city enchant)	no wall	wall
+272	OV	swamp tile food (Terrain_Food) (QUIRK)	0	1/2 (manual)
+273	UI	hero with a Lion Heart item: health bar / healing out of combat	no +3	+3
+274	OV	big city shrinking (save: pop high, famine) -> read size	size above 5	capped
+275	OV	save: banished AI casting Spell of Return -> mana each turn	reserve set to gold (loses mana)	added
+276	OV	Lawful AI that broke a treaty with X conquers X's town -> raze odds	+25	-
+277	OV	part of a stack shifting planes onto a partly filled tile	refused	allowed
+278	CB	AI with Disrupt vs a walled city	never targets walls	targets
+279	CB	Dispel Magic on a square with a dead unit	dead unit rolled	skipped
+280	CB	defender casts Entangle; the attacker's moves that turn	not slowed	slowed
+281	OV	attack a treaty partner in a tower / lair kind (combat_site 2+)	no question	asked
+282	OV	conquest loot of a wizard who knows many more spells (save)	stack overrun	bounded
+283	OV	neutral cities with Barbarian Spearmen / Swordsmen -> raids over turns	never raid	raid
+284	CB	hasted fast shooter (more than 10 MP) shoots; read moves left	can move / shoot again	turn ends
+285	OV	Wait with units only on the other plane (QUIRK)	never hands over	-
+286	CB	webbed magic shooter vs bow unit; web strength over turns	missiles cut webs, magic does not	magic too
+287	OV	start the program and play 5 turns (QUIRK)	no events for 5 turns	-
+288	CB	battle at the summoning circle; AI Recall (QUIRK)	recall wasted	-
+289	CB	possessed enemy hero in your control; its item spell / auras	read from the controller's hero table	the owner's
+290	CB	battle vs a lair with Mana Leak / Darkness; Disenchant Area	neutral enchantments untouchable	dispelled
+291	CB	summon in combat on a battlefield with node aura / Prayer	no effects that turn	effects
+292	CB	caster with a breath / thrown attack casts its last spell points	ranged attack lost	kept
+293	UI	Caster-40 unit with no mana: the combat Spell button	stays on (QUIRK)	-
+294	OV	auto-resolve with a powerful wizard (big channel x spend)	overflow	-
+295	CB	AI unit walks through Wall of Fire into the city	no damage	damage
+296	CB	invisible unit on the gate square in an open-field battle	AI targets it	not
+297	OV	first contact and treaty in the same turn -> end turn	treaty erased	kept
+298	OV	save: Healer stack with units of higher and lower index -> end turn, read hits	higher-index units heal less	the same
+299	CB	Wall of Fire cast in combat, then Disenchant Area	never removed	removable
+300	CB	enemy vortex on a unit's square, Disenchant Area	two rolls; own vortex removable	one roll; own kept
+301	OV	move toward a sea tile holding your own transport; path cost of tiles with own units	passable at cost 2	normal costs
+302	CB	unit walks to the bottom-right edge squares (x+y 30 / 31)	allowed outside the diamond	blocked
+303	CB	AI / auto combat kills the last enemy mid-turn	turn goes on	stops
+304	DBG	AI with Move Fortress after losing its fortress; BP AI_Target_Move_Fortress	city at the dead record looked up	skipped
+305	DBG	BP AI_Pick_Spell_Category / AI_Hostility_Replan relation reads	transposed relation	the AI's own
+306	CB	dispel an overland-only enchantment (Endurance) in combat; resistance cost	x5	x1
+307	OV	AI Plane Shift on a tile the human cannot see -> heap state (dbg)	mark released without being set	balanced
+308	DBG	AI boarding at shore tiles; BP Tile_Is_Shore_Water	most shore variants missed	all shore
+309	CB	no human unit active; Combat_Select_Next_Unit fallback	attacker's first unit	the human's
+310	OV	non-corporeal unit placed next to a full island city (summon)	no tile found	water tile used
+311	DBG	AI engineers; BP Road_Order_Start first tile	path[0] timed, the stack's tile built	the same tile
+312	DBG	AI as defender choosing a Dispel target; BP AI_Target_Dispel	attacker's side data	its own side
+313	CB	non-flying missile-only AI unit vs a flyer; BP AI_Target_Score	melee scored	-200
+314	UI	capture a city, raze from the results scroll ('R') vs the Raze dialog	plunder twice; fame differs	the same
+315	OV	conquer a wizard's fortress with spells to loot (save) -> message buffer	data segment overwritten	bounded
+316	CB	ship with Endurance under Wind Mastery: moves overland vs in combat	different order	the same
+317	OV	AI stack with mixed speeds on a move order -> AI turn	stack falls apart	stays
+318	DBG	AI_Attack_Value of a melee-40 hero with flags 0x10 + 0x40 + 2	-6884 (wrap)	positive
+319	DBG	AI with more than 80 unit tiles on a landmass; BP AI_Build_Stacks	later units dropped	counted
+320	OV	ally's army on an unmelded node near the AI -> AI turns	AI attacks it	ignored
+321	DBG	one unit through Combat_Retreat_Resolve / Tile_Room_For_Unit / AI_Stack_Embark sea tests	answers differ	consistent
+322	DIP	AI with lowest interest < -100 but positive bias -> open an audience	greets, then 'out of time'	refuses at once
+323	DBG	AI landmass with exactly 6 own cities; BP AI_Landmass_Plan	marked no targets	-
+324	OV	save: AI with nothing left to research -> magic allocation over turns	skill stops rising	rises
+325	CB	Wrack vs a multi-figure unit failing k figures	k x k damage; list overrun past 36	k
+326	CB	walled city battle, then a field battle; has_city_walls	walls carry over	cleared
+327	CB	defender at its own fortress with > 16,383 mana, auto-resolve	no battle magic; defender loses a channel term	magic
+328	DBG	BP AI_Ship_Orders free places	wrong unit counted	-
+329	DBG	BP AI_Ship_Orders landing tile enemy test	wrong tile tested	-
+330	CB	AI pace unit that cannot reach its target; BP AI_Rally_Point	reads path[-1]	-
+331	DBG	BP AI_Combat_Assess_Threats masks across actions	never cleared	cleared
+332	CB	AI wizard defending its own fortress with > 16,383 mana; count spells cast	none	casts
+333	UI	a long Wait_Ticks pause (e.g. 30 ticks) timed	cut to 4 ticks	full
+334	ST	DOS_File_Open: no carry test - a failed open (full disk / read-only) is not noticed (not reproducible safely in play)	-	-
+335	ST	EMS LBX loaders, append mode slips (LATENT, harmless with the shipped data)	-	-
+336	OV	remove a city with a pending 'completed' notice (raze) -> read the other notices	scrambled	intact
+337	UI	city view with 12 enchantments, previous page from page 1	stays on page 1	last page
+338	ST	UI_Poll_Input_Keyboard runs only without a mouse driver (harness has a mouse)	-	-
+339	ST	clipped picture decoders lose DS above 63 KB frames (LATENT; no such frame in the data)	-	-
+340	UI	a text with two trailing spaces through Str_Trim (e.g. a name)	one space removed	both
+341	ST	Paragraph_Print_To_Pic right / centre alignment wrong bitmap (LATENT; no caller uses it)	-	-
+342	CB	battlefield with rocks: sprites drawn	rocks from the tree list	rock pictures
+343	CB	battle with 257 sprites	fatal error at 257	limit 256
+344	UI	owned tower on the map: colours	not the owner's colours	owner's
+345	UI	cityscape of a city with 15+ small buildings	one building misplaced	-
+346	ST	Sound_Fatal_Error message text (needs a wrong sound setup; static check of SOUND.C)	-	-
+347	CB	AI teleporter / merger dies attacking a visible target	alive with 0 figures	dead
+348	CB	AI unit kills its target with moves left	steps into the dead target's square; flat 2 moves	-
+349	CB	all human units immobilised; open Info	turn ends	not
+350	CB	Flying Fortress city: non-flying teleporter / melee across the edge	allowed	refused
+351	OV	AI walking units next to a full ship	board anyway; stuck	wait
+352	GAME	TC-352 (done): tower spacing counter never initialised	-	-
+353	OV	city with a Miners' Guild and iron / coal; production cost of a unit	cut doubled	+50%
+354	MG	new game: preset wizard vs custom with the same books; count spells	one more per realm; 10 books get 11's set	equal
+355	MG	world generator: mineral sites near the edges (magic_trace)	some off the map	inside
+356	MG	world: Myrror city squares' road bit	never set; one unrelated square set	set
+357	MG	world: lair guards	nature creatures only for caves / dungeons / keeps / lairs	by type
+358	MG	world: node realm balance with many Sorcery nodes	fixed 4 / 6 / 6 split	trimmed
+359	MG	world: High Elf AI capital forest rule	wrong square; extra fortress records past 6	-
+360	MG	world: islets around sites in open water	grow east / south / south-west only	all directions
+361	ST	MAGIC.EXE Unit_Create reads an uninitialised city index (LATENT)	-	-
+362	MG	new game Hard / Impossible: AI extra summon guard	wrong spell; can un-know a known spell	-
+363	MG	new game: AI preset retorts after the shuffle	one byte cleared	-
+364	MG	new game: hero Lucky roll	also rolls Agility	-
+365	MG	world: tundra picture 0xb6 count	never placed	placed
+366	MG	world: ocean variety pass bounds	one row / column past the map	inside
+367	ST	MAGIC Block_Edge_Bits_Build east-edge pre-check, data nothing uses (LATENT)	-	-
+368	DBG	path search near the bottom rows; BP Path_Find window	writes past the 40-row grid	clamped
+369	OV	Change Terrain to grassland many times; count tile 0xad	never 0xad	sometimes
+370	MG	new game: AI with Nature primary	Nature secondary too	another realm
+371	ST	Font_Select called with too few arguments (stack leftovers as the third colour set)	-	-
+372	UI	city breakdown screen redraw rate	rate from stack garbage	-
+373	UI	game menu save-name fields caret colours	garbage table	-
+374	ST	EMS_Cache_LBX_Range_Core dead code (LATENT)	-	-
+375	OV	save: 15+ human outposts deserting in one turn -> report	names overrun the 14-name list	-
+376	DBG	BP AI_Choose_Attack_Landmass distance	stale value for threatened coast tiles	-
+377	UI	window zoom (e.g. city screen open): line colours	two of three pairs	three
+378	UI	warped picture with a corner above the screen	frame dropped	drawn
+379	ST	Cities_Count_Nightshade tests the Shrine twice (no effect)	-	-
+380	ST	Draw_Move_Type_Icons clears 9 words of a 6-word list (no effect)	-	-
+381	ST	Near_Alloc_Error message (fatal path only)	-	-
+382	ST	AI planning tables in the neutral player's spell library (no effect found)	-	-
+383	ST	Wait_Ticks_Or_Input dead code	-	-
+384	ST	DOS_Drive_Ready dead code	-	-
+385	ST	Palette_Tint_Upload percent >= 100 (LATENT)	-	-
+386	ST	Pic_Load_Palette EMS page mapping (LATENT)	-	-
+387	ST	Paragraph_Layout_Lines position codes (no 1.31 text uses them)	-	-
+388	ST	Paragraph_Add_Hotkey_Regions dead code	-	-
+389	UI	Confirm_Box: press Esc / click outside	not cancelled (Esc answers Yes via abs)	cancelled
+390	ST	Zoom_Step_Rect bottom clamp 315 (LATENT)	-	-
+391	UI	window zoom branches mixing edges	zero-length / doubled lines	-
+392	UI	Notify_Picture_Box dim / mode 1	darken dead; wrong redraw	-
+393	ST	Pic_Shift_Rows_H (no visible effect)	-	-
+394	ST	Pic_Keep_Rect dead code	-	-
+395	ST	Anim_EMS_Read_Frame error path	-	-
+396	ST	Pic_Draw_Rect_Outline dead code	-	-
+397	SAME	= #346	-	-
+398	ST	LBX_Error case 14 falls into 15 (error text only)	-	-
+399	ST	Pic_EMS_Next_Pages handle not loaded (LATENT)	-	-
+400	UI	mouse over a page flip: Mouse_Restore_Under_Back (effect unchecked)	other page restored from the front buffer	-
+401	UI	text input box with a default wider than the field	trimmed to nothing (len -= len)	-1 per step
+402	UI	click / Enter on the text line already being edited	commits but (see entry)	-
+403	ST	Slider_Set_From_Mouse vertical branch / list select quirks (LATENT)	-	-
+404	ST	Load_UnitView_Art loads 34 pictures into 33 slots (harmless)	-	-
+405	DBG	Path_Relax sweep order (effect unchecked)	-	-
+406	DBG	Screen_Wizard_Target / Overland_Extra_Power_Dialog Heap_Release without a block (heap state)	-	-
+407	ST	Engine_Init_Short dead code	-	-
+408	OV	cast Disjunction / Spell Ward / Spell Binding / Great Unsummoning / Death Wish (save) -> casting state after	result stored wrongly (effect unchecked)	-
+409	OV	human Enchant Item: the forged item record vs the handed-out record	cost from record 136	137
+410	OV	tile 602 (tundra variant) where Tile_Is_Tundra is used (e.g. food / movement)	not tundra	tundra
+411	MG	new game custom wizard with no realm of 2+ books, Esc on the race screen	(see entry)	-
+412	MG	world: Dark Elf neutral towns' garrison size	half	full
+413	MG	world: Myrror node placement land test (magic_trace)	Arcanus land tested	Myrror's
+414	ST	Node_Pick_Realm aura terrain counts overwritten, never used	-	-
+415	MG	world: neighbour-variant pass at row 39	row 40 read off the map	bounded
+416	ST	Place_Neutral_Cities terrain prerequisite index (LATENT: none of the races needs one)	-	-
+417	DBG	AI knowing 50+ spells; BP AI_Init_Buffers fill	no bound (overrun)	bounded
+418	DBG	AI threat map with a dead unit not yet compacted	threat added; write at index -1	skipped
+419	DBG	AI with Suppress Magic known; BP AI_Pick_Spell_Category	weighted into a category with no slot	-
+420	DBG	AI with Incarnation known; BP AI_Pick_Summon	wrong type read, inverted	-
+421	DBG	AI with no stack; BP AI_Pick_Unit_For_Enchant	p_ai_own_stacks[-1] read	-
+422	DBG	AI Corruption / Raise Volcano target offsets (many picks)	-3 .. +1	-2 .. +2
+423	DBG	AI Corruption / Raise Volcano target plane	the last city examined	the target's
+424	DBG	BP AI_More_Myrror_Cities_Than_Human counters	never initialised	-
+425	DBG	AI releasing a stack with ordered slots; BP AI_Build_Stacks	p_units[-1].order written	-
+426	DBG	BP AI_Tower_Other_Side_Worth plane test	city plane not tested	-
+427	DBG	BP AI_Replan_Landmass cost sums	not reset	reset
+428	OV	human defends and wins against a stack with items (save) -> loot location	as if from the vault	at the battle
+429	ST	Attack_At_Unit_Unused dead code	-	-
+430	CB	battlefield decoration A near the edge	cluster leaves the field	bounded
+431	UI	Evil Omens active; extra-power dialog for a Nature / Life spell	cost without Omens	with Omens
+432	ST	City_Build_Options unsigned bytes vs -1 (see entry for effect)	-	-
+433	DBG	BP City_Terrain_Prereq 110 search	break leaves the column loop only	-
+434	UI	cityscape building pictures (opaque bounds)	height compared with the best width	-
+435	DBG	BP AI_Combat_Spell_Score figures test	never true	-
+436	CB	battle unit 19 is a caster (fill 19 units) -> its spells	treated as a wizard caster	unit
+437	CB	a side with 13-15 combat enchantments: icon pages	icons 12..14 unreachable	all
+438	UI	combat info of a unit with a thrown / breath / gaze attack	no ranged icon	icon
+439	DBG	AI_Attack_Value of a unit with melee 0 and a ranged attack	0	the ranged value
+440	CB	AI wizard with Wall of Fire known defending its city	never casts it	casts
+441	CB	wizard with 3-4 spell points: Spell button	lit, nothing castable	off
+442	ST	p_combat_bldgs_lost points at Combat_End's local list (stale after return)	-	-
+443	CB	city battle with inhabitants killed; read combat_pop_lost	wrong (j reused)	right
+444	UI	human loses a city attack: results scroll text	victory text	defeat
+445	UI	combat figure pictures facing	always 7	the unit's
+446	CB	battlefield rows 20-21: unit pathing (reach)	not swept	swept
+447	CB	hero magic shooter vs a wall with 3-4 spell points; hit shown	refused below 5; uninitialised hit shown	-
+448	CB	combat spell on a dead / fled target state	tests ignore the state	-
+449	DBG	AI Recall Hero value for a strong hero	16-bit wrap	-
+450	CB	battle on chaos water tiles: picture entries 4..7	read past a 4-entry array	-
+451	DBG	BP AI_Unit_Execute gate search	never runs	runs
+452	CB	AI unit with innate Healing	never heals (no case)	heals
+453	DBG	BP AI_Choose_Target ally without a target	p_battle_units[-1] read	-
+454	DBG	BP AI_Move_Path with target -1	bad unit read	-
+455	CB	human picks a wall square for a unit spell	unit unset	-
+456	CB	unit pushed off a square at the top row	3 x 3 shifted down	-
+457	ST	Combat_Load_Armies writes combat_skill_left of wizard 6 (one record past the table)	-	-
+458	SAME	= the trade part of #9	-	-
+459	ST	EMS_Cache_LBX_File without EMS (harness has EMS)	-	-
+460	ST	EMS_LBX_Uncache dead code	-	-
+461	ST	EMS_LBX_Reload_Into_Handle name (works with the shipped names)	-	-
+462	UI	game menu help: F1 / right-click on areas past the 6 controls	entries 6..26 keep stale ids	-
+463	ST	ItemForge_Auto_Name returns its stack buffer (the callers copy at once)	-	-
+464	UI	items screen right-click item views during another player's ... (see entry)	wizard 0's heroes read	-
+465	UI	items screen: vault slot click	hired_heroes[6] read	-
+466	OV	lair hero reward at the fortress with a full capital stack	a unit pushed out	-
+467	UI	minimap highlight near the right edge	y bound applied to x	-
+468	UI	fog corner at the right / bottom map edge	not wrapped	wrapped
+469	OV	road building stack with engineers of different speeds	the last unit's path length	-
+470	UI	window zoom of a wide rectangle	saved rectangle short	-
+471	OV	Plane Shift with a non-corporeal / Wraith Form unit (save)	(see entry) not tested	-
+472	OV	Death Wish / Great Unsummoning kills a hero with items -> read its slots	cleared to 0	-1
+473	OV	AI casting Spell Binding (save) -> the bound enchantment	a GlobalEnchants slot used as a spell	the spell
+474	UI	palette cycle with to < from	turn tests reversed	-
+475	UI	learn a spell (research complete) -> the learned screen's realm	(spell - 2) / 40 wrong for some	right
+476	CB	human at its own fortress with > 16,383 mana: combat spellbook	nothing castable	castable
+477	UI	spellbook casting screen: help on the right page	reads the left page	right page
+478	CB	Call Lightning damage vs Lightning Bolt	from Wall of Stone's record	its own
+479	CB	vortex at the battlefield edge column / row	lets W / H through	bounded
+480	UI	stack popup first frame	rebuild read before set	-
+481	UI	Surveyor: bottom 2 pixel rows of a square	read the row above	-
+482	OV	city loses its qualifying building with Nightshade nearby -> count	keeps the old count	reset
+483	ST	Tile_Water_Bonus_Unused dead code	-	-
+484	OV	Change Terrain (or a volcano) on a tile; read the movement cost maps	not updated	updated
+485	ST	UI_Text_List_Select_Scrolling never ends with enabled == 0 (dead code)	-	-
+486	UI	unit type view (production preview) of a type with poison / stoning / gaze	strengths from the last unit's stats	its own
+487	OV	stack with a Wraith Form unit; movement modes (mode 8)	&& / || mixed	-
+488	UI	wizard info screen help on the relation lines	retorts on slots 14..17	-
+489	OV	save: non-qualifying city (Cremona) given a Nightshade count of 3 -> end turn	count 0 (rolled away as spell 0)	not rolled against itself

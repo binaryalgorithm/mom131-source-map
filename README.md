@@ -167,7 +167,24 @@ its code; the latest result is under the entry and in the map. Some entries are 
 real but cannot change play.
 
 `CONVENTIONS.txt` describes how the source is written and how sure each statement is. It also refers to the
-project's analysis tools and evidence files (`tools/`, `work/`), which are not published.
+project's analysis tools and evidence files (`tools/`, `work/`), which are not published - apart from the
+regression harness in `tools/harness/` and its runners.
+
+## The regression suite (`tools/harness/`)
+
+Every numbered entry of `BUGS_AND_QUIRKS.txt` has a case that reproduces it - in the running game (a script drives
+the real v1.31 in DOSBox-X on a hidden Windows desktop: it edits a save, presses the game's own keys, reads the
+emulated memory, sets debugger breakpoints and watchpoints) or statically (the faulty code is present in the
+executable under test). The latest tally: 193 entries shown in the running game, 289 statically, 3 LATENT (the code
+is wrong but cannot change play), 4 without a case by design. Run against a fixed build, a fixed entry turns NOT
+SHOWN - so the suite doubles as a test bench for patches and for ports.
+
+Windows, Python 3, DOSBox-X and your own game; `python tools/harness/setup.py ...` prepares a git-ignored `work/`
+folder, then `python -P tools/harness/regress.py --kind ST` runs the static cases, `regress.py 2 47 203` single
+cases. Everything else - what you need, the debugger build, writing a case, the lessons - is in
+[`tools/harness/README.txt`](tools/harness/README.txt); every case with its setup and last result is in
+[`tools/harness/TEST_CASES.txt`](tools/harness/TEST_CASES.txt). `re/` holds the address / name tables the harness
+reads (the same names as the source).
 
 ## Notes (`docs/`)
 
