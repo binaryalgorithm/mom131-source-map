@@ -171,7 +171,9 @@ project's analysis tools and evidence files (`tools/`, `work/`), which are not p
 
 ## Notes (`docs/`)
 
-[`docs/`](docs/README.md) holds reference notes from the work: how the graphics engine works, the save file layout,
+[`docs/`](docs/README.md) holds reference notes from the work: [how the source was recovered](docs/HOW_IT_WAS_DONE.md),
+the game's rules as the code computes them, a cross-check of our bugs against the community patch, how the graphics
+engine works, the save file layout,
 every screen's controls and hotkeys (from the source and from the running game), the music / sound labels, a porting
 note on 32-bit math, how to drive the DOSBox-X debugger from a script, and how the source was matched byte for byte
 to the original (Borland C++ 3.1 code-generation rules, the link method).

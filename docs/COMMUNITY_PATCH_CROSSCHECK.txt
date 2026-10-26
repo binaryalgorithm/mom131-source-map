@@ -1,0 +1,2386 @@
+COMMUNITY PATCH CROSS-CHECK - our numbered bugs vs the community patch files for WIZARDS.EXE
+============================================================================================
+The community patch is the fans' long-running bug-fix project for Master of Magic 1.31: Insecticide 1.40 (Kyrub),
+the Unofficial Patch 1.50 / 1.51 (Seravy), and the Community Patch 1.52 - 1.60 (Seravy and Drake178, released with
+Slitherine and shipped with Master of Magic Classic). It is built from numbered patch files, one per change, each
+with its authors' own description; the Master of Magic wiki's Community_Patch, Unofficial_Patch_1.50 and Insecticide
+pages describe them. All credit for the fixes is theirs.
+
+How this list was made: the byte changes of every patch file in the CP 1.60 'Patches' archive (folders 140 = 1.40
+Insecticide IWnnn, 151 / 152 = the 1.5x W-numbered files, Optional) were located in the v1.31 WIZARDS.EXE and mapped
+to the functions they change (names and addresses as in the map, index.html). Patch titles are the first line of
+each file's own description, shortened. Notes:
+- A patch that adds code usually writes it over a function the shipped game never runs (a code cave) - e.g.
+  Dev_Choice_Box - so 'changes' can name an unrelated dead function.
+- 'written over earlier patch code': most of the bytes the file expects are not the 1.31 bytes, because it changes
+  code an earlier patch file wrote; such a file may fix a bug of that earlier patch rather than of 1.31.
+- 'our entries' = the BUGS_AND_QUIRKS.txt entries that name the file. For bug-fix files no entry names, our review
+  verdict is given where we made one; files with no line are features, balance changes, text changes or not
+  reviewed. Only WIZARDS.EXE is covered (not MAGIC.EXE's patch files).
+Generated 2026-10-26 by the project's cross-check script.
+
+Part A: 195 of the 491 entries of BUGS_AND_QUIRKS.txt name a community patch file that fixes them (the other 296 name
+none - fixed by no patch file we found, or not fixed). Part B: all 777 patch files that change WIZARDS.EXE code,
+231 of them cited by our entries.
+
+============================================================================================
+PART A - OUR BUGS THAT A PATCH FILE FIXES (number, status, first line of the entry, patch files)
+============================================================================================
+   9 GAME      AI-vs-AI treaty roll (AI_Diplo_Turn_AI_Vs_AI 7269:04c5, phase-2 re-read): with S = bi...
+               -> W078DIPL, W540FIX
+  13 SRC       With combat animations OFF, Death Spell / Holy Word / Flame Strike / Mass Healing rea...
+               -> W737FIX
+  20 SRC       Combat AI realm-threat bits built as 1<<realm but tested as 1<<(realm-1) (Bless, Resi...
+               -> W640FIX
+  38 GAME      Human Spell Binding and Disjunction rolls (Spell_Binding_Resolve bcc7:16e6, Disjuncti...
+               -> W269FIX
+  43 SRC       Breakdown scrolls are display re-computations that differ from the real totals: Merch...
+               -> W218FIX, W493, W666FIX, W667FIX, W668FIX, W669, W669FIX, W670FIX
+  46 GAME      AI-initiated audiences: AI_Diplo_Turn_Vs_Human runs its offense / peace / proposal lo...
+               -> W082DIPL, W085DIPL
+  66 GAME      Relation events overwrite the interest spent in talks (Diplo_Relation_Change, asm-che...
+               -> W068DIPL
+  67 GAME      Tribute spell's peace-interest bonus - SETTLED by phase 2 (wiki claim does not hold f...
+               -> W068DIPL
+  75 READ+asm  Lair items won by an AI are created but never given to anyone (6d36:03bf); the record...
+               -> IW040
+  95 READ+asm  Astrologer + Historian name list show eliminated wizards (only "contacted" is tested,...
+               -> W041FIX
+  96 GAME      Historian keeps advancing during Time Stop (Wizard_Update_Power_Stats outside the Tim...
+               -> W613FIX
+ 112 CHECKED   AI Evil Presence targeting: AI_Pick_City_Spell_Target e318:4b49 requires the target c...
+               -> W219FIX
+ 113 CHECKED   AI curse targeting tests Chaos Ward (city slot 11) for Earthquake as well as Chaos Ri...
+               -> W280AI
+ 114 CHECKED   AI Warp Node targeting (AI_Target_Warp_Node e318:56ab): picks the human (50%) or Rand...
+               -> W510AI
+ 116 SRC       AI Spell Binding / Disjunction priorities (AI_Pick_Global_Enchant_Target e318:5773) o...
+               -> W238FIX
+ 120 CHECKED   AI landmass re-plan (AI_Replan_Landmass ebda:5b81): the plane argument (kept in DI) i...
+               -> W571FIX
+ 123 READ+asm  Surveyor / AI settler site value (City_Site_Evaluate c751:2bb6): Wild Game adds 2 to...
+               -> W528FIX
+ 128 GAME      Same function: the new owner (human) explores radius 2 around a conquered city whatev...
+               -> W712FIX
+ 131 GAME      Terrain re-tiling at the map seam: Terrain_Retile_3x3 (cbdf:0422) calls Terrain_Autot...
+               -> W612FIX
+ 132 GAME      Ghost buildings: City_Production_Step (c3f5:0050) completes a building with state = 1...
+               -> W210FIX
+ 134 READ+asm  Hero spells: Combat_Spellbook_Build (9a4b:060d) reads a hero's own 4 spells as SIGNED...
+               -> IW074
+ 139 GAME      AI research choice: AI_Choose_Research (e318:0000) estimates each candidate's turns with
+               -> W651FIX
+ 140 READ+asm  AI_Pick_Spell_Category (e318:09e5): in the 'has an attack-spell group' test the 14th...
+               -> W229AI
+ 141 READ+asm  AI summon choice: AI_Pick_Summon (e318:1995) weights each known summon by (base cost...
+               -> IW144
+ 145 READ+asm  AI production choice, two index slips in AI_Wizard_Choose_Production (eab0:00e8): (a)...
+               -> IW149, IW153
+ 149 GAME      AI attack pool: AI_Pool_Add_Strongest (ebda:3ef2) ranks the units a stack releases fo...
+               -> W249FIX
+ 150 READ+asm  AI settler site search: AI_Settler_Orders (ebda:4661) scores each candidate tile with
+               -> W448AI
+ 155 QUIRK     Human asks a partner to declare war on another wizard (Diplo_Propose_Treaty 6ea7:084b...
+               -> IW042
+ 156 GAME      Expansion penalty counts the HUMAN's cities for every wizard: Diplo_Relation_Drift (7...
+               -> W391DIPL
+ 157 GAME      Army envy works backwards from the strategy guide: Diplo_Relation_Drift (7057:0170) t...
+               -> W061DIPL
+ 159 GAME      Relation overflow: Diplo_Relation_Change adds the scaled amount to the relation as a...
+               -> W384FIX
+ 160 GAME      Breaking a treaty rewards the breaker: Diplo_Break_Treaty(a, b) (7057:12a6) sets pena...
+               -> W070DIPL, W390DIPL
+ 161 LATENT    Diplo_Declare_War (7057:109c) lowers base_relation by 5 both ways with no floor; afte...
+               -> W388FIX
+ 162 GAME      AI-vs-AI hostility runs only on the rare treaty roll: in AI_Diplo_Turn_AI_Vs_AI the c...
+               -> W076DIPL, W631FIX
+ 163 GAME      Diplo_Break_Conflicting_Alliances (7057:0853) only fixes a conflict when the wizard a...
+               -> W452DIPL
+ 164 SRC       AI_War_Check(target a, AI b) uses the HUMAN's war list in its two ally/quota rules (7...
+               -> W090DIPL
+ 165 READ+asm  AI allies never ask the human to join a war: AI_Ally_Pick_War_Request (736d:084c), ca...
+               -> W281DIPL
+ 166 GAME      AI treaty incentive gold is sized by POPULATION and paid from nothing: AI_Diplo_Propo...
+               -> W077DIPL, W632FIX
+ 167 GAME      Moving a ship stack that needs no carrying leaves Go-To units behind: Stack_Build_Mov...
+               -> W545FIX
+ 168 GAME      Ships on a Go-To carry one unit more than their capacity: GoTo_Build_Group (5315:129d...
+               -> W479FIX
+ 172 GAME      Attacking a treaty partner names the VICTIM as the treaty breaker: Overland_Attack (7...
+               -> W390DIPL
+ 174 GAME      AI stacks of exactly 9 units can never plane-shift: Stack_Can_Plane_Shift (81df:0d24...
+               -> W593FIX
+ 176 SRC       Road building's first tile counts engineers that do not work: Screen_Road_Building (5...
+               -> IW047
+ 177 GAME      The Gift event gives AI wizards nothing and leaks the item: Event_Roll creates the it...
+               -> W516FIX
+ 179 SRC       Hero hiring prices: Screen_Hire_Hero (aab2:0574) prices a hero at cost + level x cost...
+               -> IW098
+ 180 LATENT    A combat summon cast when the battle is full becomes a ghost unit: Combat_Cast_Spell...
+               -> W556FIX
+ 184 READ+asm  Healing a multi-figure unit that revives a figure can grant it extra hit points: Batt...
+               -> W113FIX, W700FIX
+ 185 READ+asm  A hasted shooter's second shot tests the wrong unit: in Combat_Exchange's ranged path...
+               -> W744FIX
+ 186 READ+asm  Blur is checked against the wrong unit and rolls too few times: Attack_Resolve (a22c:...
+               -> W156FIX
+ 187 GAME      Melee to-defend bonuses count twice: Attack_Resolve subtracts the defender's block bo...
+               -> IW081
+ 188 GAME      Immolation fires on every attack kind: Attack_Resolve runs the Immolation damage (abi...
+               -> W153FIX, W154FIX
+ 189 READ+asm  A Righteousness ITEM only half works: Resist_Bonus gives +30 resistance against Chaos...
+               -> W694FIX
+ 191 GAME      Cloak of Fear works backwards on the attack: Combat_Exchange takes Cloak_Of_Fear_Coun...
+               -> IW079
+ 192 SRC       First Strike attackers can strike with figures already killed by a gaze: in the First...
+               -> W746FIX
+ 193 READ+asm  Combat spells read the target's combat and item enchantments from a random battle uni...
+               -> W603FIX
+ 195 READ+asm  Dispel Magic and Disenchant Area cast by a UNIT pick the side from a stray register:
+               -> IW103
+ 196 READ+asm  The relation penalty for killing a wizard's units counts only the last battle unit: C...
+               -> W159DIPL
+ 198 SRC       The AI shooting loop has no way out when the shot is refused: AI_Unit_Execute's missi...
+               -> IW045, W455AI
+ 199 LATENT    Earth to Mud ignores the battlefield edges: Earth_To_Mud_Square (df82:2f22) rewrites...
+               -> W656FIX
+ 200 LATENT    Combat_Find_Path (e29d:0000) builds its reversed path list in the movement-cost map i...
+               -> W625FIX
+ 204 GAME      Numpad movement skips the plane check for stacks without Planar Travel: Stack_Key_Mov...
+               -> W796FIX
+ 205 GAME      After an overland summon (Summon_Hero_Cast, Overland_Cast_Spell summons, Resurrection...
+               -> W564FIX
+ 208 SRC       The stack's shown move total ignores the Wind Walker rule when a slower unit follows...
+               -> IW017
+ 209 READ+asm  Confusion: when a confused unit's borrowed turn ends, Combat_Main (75eb:06c5-0702) fl...
+               -> IW044, W255
+ 210 READ+asm  Counter Magic weakens the wrong enchantment when it stops a WIZARD's spell: Combat_Sp...
+               -> IW056
+ 211 GAME      Dispel Evil hits creatures of every realm when the human casts it: the target picker
+               -> IW061
+ 212 GAME      Life Drain can be cast by the human on Death creatures and Death-Immune units: Combat...
+               -> IW062
+ 213 GAME      Chaos Channeled units count as normal living units: Unit_Is_Normal_Living (a0ec:0b8d)...
+               -> IW078
+ 214 QUIRK     Thrown, breath and gaze attacks get no to-hit bonus at all: in Attack_Resolve (a22c:0...
+               -> IW080
+ 215 GAME      Weapon Immunity overrides Missiles (and other) Immunity: Defender_Shields (a22c:1627)...
+               -> IW083
+ 216 GAME      Regeneration cancels Recall: Recall Hero (205) and Word of Recall (47) mark the battl...
+               -> IW088
+ 217 READ+asm  AI raze decision has the army term backwards: AI_Decide_Raze (a76b:13bb) adds own uni...
+               -> IW096
+ 218 READ+asm  A Spell Lock cast during the battle does not stop Dispel Magic: Dispel_Square (b1af:0...
+               -> IW104, W326FIX
+ 219 GAME      Dispel Magic never removes Invulnerability and tests the wrong wizard's Holy Arms: Di...
+               -> IW105
+ 220 READ+asm  Raise Dead and Animate Dead write unit names to random memory: building the pick list...
+               -> IW107, W172FIX
+ 221 SRC       Animate Dead on an ENEMY corpse changes only the battle owner: Animate_Dead (b1af:238...
+               -> IW108
+ 222 GAME      Call Lightning spares Wraith Form, not Magic Immunity, and loses bolts: Call_Lightnin...
+               -> IW112, W176FIX
+ 223 READ+asm  The AI never counters Wrack, Mana Leak or Call Lightning with Disenchant Area on purp...
+               -> IW124
+ 224 GAME      The autosave is written in the middle of the turn change: Next_Turn (9ec1:0000) calls...
+               -> W032FIX
+ 225 GAME      An AI's 'break your alliance with X' demand names the wrong wizard: Diplo_Demand_Drop...
+               -> W062DIPL
+ 226 GAME      An eliminated wizard keeps casting: Wizard_Fortress_Captured (78ba:0000) clears the l...
+               -> W102FIX
+ 227 GAME      Taking an OUTPOST skips the conquest rules: in Overland_Attack (7d45:0000) a won city...
+               -> W107FIX
+ 228 GAME      Wind Walking makes a unit untouchable for melee in combat: Unit_Is_Airborne (7eb0:1eb...
+               -> W108FIX
+ 229 SRC       The AI treats Flame Strike, Call Chaos, Mass Healing, Holy Word and Death Spell like...
+               -> W122FIX
+ 230 SRC       Spell Ward does nothing in combat: the five ward slots of the City record are read on...
+               -> W125FIX
+ 231 GAME      Raise Dead and Animate Dead can 'raise' living units: both candidate filters (Raise_D...
+               -> W127FIX, W731FIX
+ 232 SRC       The Demon Lord's summon ability has no limit checks: Demon_Lord_Summon (8f51:22fa) cr...
+               -> W129FIX
+ 233 GAME      'Ghost units': Battle_Unit_Init (9748:0ee9) sets figures_alive = figures - Unit.damag...
+               -> W138FIX, W216FIX
+ 234 SRC       Dispelling an enchantment in combat does not remove the abilities it gave: Unit_Apply...
+               -> W139FIX
+ 235 GAME      Flight cast during a battle gives no movement minimum on the turn it is cast: Combat_...
+               -> W143FIX
+ 236 SRC       Thrown attacks ignore Weapon Immunity: Attack_Damage_Flags (a22c:01f0) marks a non-ma...
+               -> W152FIX
+ 237 SRC       Units carried by a ship die when the ship flees: at the end of a battle Combat_End (a...
+               -> W160FIX
+ 238 GAME      A spellbook found when a realm already has 11+ books reads past its table: Wizard_Gai...
+               -> W170FIX
+ 239 GAME      The AI's truce after a peace treaty runs at double speed: peace_turns (Wizard +0x4b0,...
+               -> W223DIPL
+ 240 GAME      The AI recasts 'anti-realm' globals it already has: AI_Pick_Anti_Realm_Global (e318:2...
+               -> W231AI
+ 241 SRC       The AI can cast Time Stop while its Time Stop is running: AI_Pick_Attack_Spell (e318:...
+               -> W232AI
+ 242 GAME      An AI that runs out of mana keeps the world frozen one more turn: AI_Drop_Bad_Globals...
+               -> W237AI
+ 243 READ+asm  Confusion + Dispel steals a unit: a confused unit whose roll is 'fights for the other...
+               -> W255FIX
+ 244 SRC       Confusion's 'moves randomly' result does nothing to AI units: only Combat_Main's huma...
+               -> W262FIX
+ 245 GAME      Summon Champion with no champions left usually fails: Hero_Pick_Random (a0ec:0839) tr...
+               -> W285FIX
+ 246 GAME      Resistance auras count twice against Terror: Combat_Turn_Start (7719:0047) rolls Terr...
+               -> W314FIX
+ 247 GAME      Wraith Form shields its unit from Flame Strike, Holy Word and Death Spell: Flame_Stri...
+               -> W318FIX, W525FIX, W529FIX, W715FIX
+ 248 GAME      Holy Weapon cast during a battle gives no to-hit bonus: Unit_Apply_Modifiers (9748:12...
+               -> W323FIX
+ 249 GAME      Lair treasure of exactly 1 gold or 1 mana is not mentioned: Treasure_Show (6d36:06f7)...
+               -> W379FIX
+ 250 SRC       The city production preview can show stray To Hit bonuses: Battle_Unit_Init_From_Type...
+               -> W336FIX, W644FIX
+ 251 GAME      An invisible obstacle in the middle of open-field battles: Combat_Mark_Wall_Obstacles...
+               -> W348FIX
+ 252 QUIRK     The mouse shows the hourglass while an AI wizard talks to you: Next_Turn (9ec1:0151)...
+               -> W350FIX
+ 253 GAME      The AI's hidden liking makes it MORE hostile: AI_Hostility_Replan (f978:12ac) builds...
+               -> W372FIX, W389DIPL
+ 254 GAME      A unit with Water Walking AND non-corporeality counts twice for crossing water: Stack...
+               -> W398FIX
+ 255 DISPUTED  Deployment slot 9 (the central square): Combat_Deploy_Side (8f51:1f73) skips it for e...
+               -> W410FIX
+ 256 GAME      Pathfinding ignores enemies standing in a Tower of Wizardry from the other plane: Pat...
+               -> W407FIX
+ 257 GAME      Terror (a Death combat enchantment) freezes Death-Immune units: Combat_Turn_Start (77...
+               -> W440FIX
+ 258 GAME      Death Immunity does not stop a Create Undead attacker's damage: in Attack_Resolve (a2...
+               -> W496FIX
+ 259 GAME      Gaia's Blessing can turn a Chaos Node into hills: City_Gaias_Blessing_Turn (b425:1850...
+               -> W492FIX
+ 260 READ+asm  Call Lightning with Sound Effects off can corrupt memory: Call_Lightning_Turn (b66a:0...
+               -> W465FIX
+ 261 GAME      Neutral units never get Holy Bonus resistance: Combat_Start_Auras (a22c:194b) adds ea...
+               -> W425FIX
+ 262 READ+asm  Dispel Magic always removes unit curses: in Dispel_Square's curse branch (b1af:13a4-1...
+               -> W431FIX
+ 263 SRC       Illusion-immune units cannot shoot through Wall of Darkness: Ranged_Target_Blocked (8...
+               -> W470FIX
+ 264 READ+asm  The Magic screen can crash after conquering a wizard: when a learned spell is the one...
+               -> W483FIX
+ 265 SRC       Banishing the HUMAN gives the winner no spells: Wizard_Banish (78ba:148a) calls Conqu...
+               -> W502FIX
+ 266 GAME      Any city-damaging spell or event destroys an outpost: City_Collateral_Damage (4a3f:12...
+               -> W526FIX, W648FIX
+ 267 GAME      The turn counter keeps running during Time Stop: Next_Turn (9ec1:0000) does game_turn...
+               -> W560FIX
+ 268 GAME      Haste adds no movement on the turn it is cast: in Combat_Cast_Spell's unit-enchantmen...
+               -> W567FIX
+ 269 GAME      The spellbook's 'turns to cast' goes wrong for powerful wizards: Spellbook_Build (9a4...
+               -> W450FIX
+ 270 SRC       Tower defenders from the other plane stay out of the battle: Combat_Load_Armies (7eb0...
+               -> W469FIX
+ 271 READ+asm  Wall of Fire and Wall of Darkness do nothing at an outpost: Battlefield_Generate (df8...
+               -> W541FIX, W687FIX
+ 272 GAME      Swamps give no food: Terrain_Food (f319:00a1) sends the swamp tile (raw 0xa6) through...
+               -> W607FIX
+ 273 GAME      A Lion Heart ITEM gives no extra hits outside combat: Unit_Max_Hits (9748:0a98; calle...
+               -> W680FIX
+ 274 GAME      A shrinking big city gets a size that does not exist: when Turn_City_Growth (c3f5:14e...
+               -> W605FIX
+ 275 GAME      A banished AI wizard loses its mana every turn: while the AI casts Spell of Return, A...
+               -> W582FIX
+ 276 SRC       A Lawful AI razes the towns of wizards IT betrayed: AI_Decide_Raze (a76b:13bb) gives...
+               -> W583DIPL
+ 277 GAME      Planar Travel / Astral Gate shifts can be refused for a full stack you did not move:
+               -> W599FIX
+ 278 READ+asm  The AI cannot target walls with Disrupt: AI_Target_Disrupt (8cf2:2065) checks has_cit...
+               -> W585AI
+ 279 SRC       Dispels also hit dead units: Dispel_Square (b1af:0656, combat Dispel Magic / Disencha...
+               -> W655FIX, W673FIX
+ 280 SRC       Entangle does not slow anyone the turn it is cast: Entangle's -2 moves is applied onl...
+               -> W617FIX
+ 281 READ+asm  The 'you have a treaty - attack anyway?' question is skipped for one battle kind: Ove...
+               -> W665FIX
+ 282 GAME      Spell trading / conquest looting can overrun the stack: Diplo_Tradeable_Spells (aba4:...
+               -> W683FIX
+ 283 GAME      Barbarian Spearmen and Swordsmen never go raiding: AI_Neutral_City_Raiders (f978:05fa...
+               -> W634FIX
+ 284 SRC       A ranged attack does not always end the shooter's turn: Combat_Unit_Attack (a22c:1da4...
+               -> W747FIX
+ 285 GAME      Wait never hands over to the other plane: Find_Next_Unit (5315:08dd) looks for the ne...
+               -> W750FIX
+ 286 SRC       Webbed units break free with missiles, not magic: Combat_Turn_Start (7719:0047) lets...
+               -> W784FIX
+ 287 GAME      No random events for 5 turns after every program start: Event_Roll (6ad6:0000) forces...
+               -> W810FIX
+ 288 QUIRK     Recall spells can be wasted in a battle at the Summoning Circle (where they would sen...
+               -> W704FIX, W717FIX
+ 289 SRC       A hero whose control changed in battle (Possession, Confusion 'fights for the other s...
+               -> W719FIX, W721FIX, W722FIX, W723FIX, W724FIX, W725FIX, W728FIX
+ 290 SRC       Combat enchantments cast by neutral creatures cannot be dispelled: Disenchant_Area_Co...
+               -> W741FIX
+ 291 SRC       Creatures summoned in combat skip the battlefield effects until the next turn: Combat...
+               -> W701FIX
+ 292 SRC       Casting a spell can strip a unit's thrown / breath / gaze attack: after a battle unit...
+               -> W705FIX
+ 293 QUIRK     The Spell button stays on for a Caster-40 unit with no mana left: Unit_Has_Combat_Abi...
+               -> W689FIX
+ 294 GAME      Auto-resolve battle magic overflows for strong wizards: Combat_Strategic (888b:00c9,...
+               -> IW051, W654FIX
+ 295 SRC       AI units walk through Wall of Fire unharmed: the wall's damage is applied by Wall_Of_...
+               -> W569FIX
+ 296 SRC       The AI always 'sees' a unit on the city-gate square: AI_Target_Scan (9218:1836) accep...
+               -> W793FIX
+ 297 GAME      A treaty made in the turn of first contact is erased at the end of that turn: contact...
+               -> W517FIX
+ 298 GAME      Units healed by a Healer can lose most of that turn's natural healing, depending on t...
+               -> W679FIX
+ 299 SRC       Wall of Fire / Wall of Darkness cast during combat cannot be dispelled: Combat_Wall_C...
+               -> W742FIX
+ 300 SRC       Disenchant Area (combat) gives enemy Magic Vortices on a unit's square a second dispe...
+               -> W740FIX
+ 301 GAME      Moving toward a sea tile that holds your own transport makes every tile with your own...
+               -> W598FIX
+ 302 GAME      The battlefield's open diamond is two squares too big on one side: Battlefield_Build_...
+               -> W559FIX
+ 303 GAME      Killing the last enemy does not stop an AI / Auto combat turn: Battle_Apply_Damage (8...
+               -> W561FIX
+ 304 READ+asm  AI Move Fortress targeting ignores a lost fortress: AI_Target_Move_Fortress (e318:3c7...
+               -> W416FIX
+ 305 GAME      Two AI hostility calculations read the hidden relation transposed: AI_Pick_Spell_Cate...
+               -> W389DIPL
+ 306 SRC       Overland-only unit enchantments resist dispels at five times their cost: both Dispel_...
+               -> W444FIX, W673FIX, W738FIX
+ 307 GAME      AI Plane Shift on a tile the human cannot see releases a scratch-heap mark it never s...
+               -> W663FIX
+ 308 SRC       AI boarding ignores most shore tiles: Tile_Is_Shore_Water (f319:0f4e), the water test...
+               -> W614FIX
+ 309 READ+asm  Combat_Select_Next_Unit (83d2:0e5a) falls back to the ATTACKER's first unit instead o...
+               -> W495FIX
+ 310 GAME      Placement code does not let Non-Corporeal units onto water: Tile_Room_For_Unit (81df:...
+               -> W433FIX
+ 311 READ+asm  AI engineers time their first road tile by the wrong tile: Road_Order_Start (81df:0a8...
+               -> W588FIX
+ 312 READ+asm  AI_Target_Dispel (8a20:1657, combat AI choice of a Dispel Magic target) uses the atta...
+               -> W640FIX
+ 313 GAME      Combat AI scores melee attacks on flyers by non-flyers that have only a missile attac...
+               -> W471FIX
+ 314 GAME      Razing a captured city from the combat results scroll ('R') pays the plunder twice an...
+               -> W682FIX
+ 315 GAME      Finding spells in a conquered wizard's fortress overwrites the start or end of the da...
+               -> W684FIX
+ 316 SRC       Ships' movement bonuses stack in a different order in combat than overland: Unit_Move...
+               -> W698FIX
+ 317 READ+asm  AI stacks on a move / attack order (status 0x10) fall apart when their units have dif...
+               -> W424AI
+ 318 SRC       The AI's / auto-combat's attack rating overflows 16 bits for strong units: AI_Attack_...
+               -> W572FIX
+ 319 SRC       AI_Build_Stacks (ebda:2da6) drops units from stacks it has already recorded once the...
+               -> W549AI
+ 320 SRC       The AI attacks units of wizards it is not hostile to when they stand on an unmelded n...
+               -> W491AI
+ 321 SRC       The 'can this unit be at sea' test is built differently at each place, so the same un...
+               -> W368, W369FIX
+ 322 GAME      An AI can accept an audience and end it before the first menu: Diplo_Pick_Greeting (7...
+               -> W385DIPL
+ 323 READ+asm  AI landmasses with exactly 6 own cities are marked 'no targets': AI_Landmass_Plan (f4...
+               -> W301AI
+ 324 GAME      An AI with nothing left to research stops raising its casting skill: AI_Magic_Allocat...
+               -> W672FIX
+ 325 SRC       Wrack deals squared damage and can overrun its stack list: Wrack_Turn (b66a:0106) rol...
+               -> W529FIX, W697FIX
+ 326 READ+asm  City walls can carry over into the next battle: Battlefield_Generate_Map (df82:05d8)...
+               -> W155FIX
+ 327 READ+asm  Auto-resolved (strategic) combat magic has two more defects in Combat_Strategic (888b...
+               -> IW051
+ 328 READ+asm  AI ship-space bookkeeping uses the wrong unit: in AI_ebda_0ee6 (ebda:0ee6) every AI s...
+               -> W265FIX
+ 329 READ+asm  AI disembarking checks the wrong tile for enemies: when AI_ebda_0ee6 (ebda:0ee6) look...
+               -> W330AI
+ 342 READ+asm  Combat rocks are drawn from the tree list (COMMUNITY-KNOWN W686, confirmed in the asm).
+               -> W686
+ 344 READ+asm  Owned towers are not shown in their owner's colors (COMMUNITY-KNOWN W692, confirmed i...
+               -> W692
+ 347 SRC       A teleporting or merging AI unit that dies in its attack can come back to life with 0...
+               -> W577
+ 348 SRC       AI melee movement after an attack (COMMUNITY-KNOWN W578, confirmed by reading AI_Move...
+               -> W578
+ 349 SRC       Combat: with all your units immobilized, opening the Info screen ends your turn (COMM...
+               -> W451
+ 350 SRC       Flying Fortress lets more than flying units in, and does not stop melee across the ci...
+               -> W501, W543
+ 351 SRC       AI settlers (and other walking units) board ships without checking for room, and the...
+               -> W581
+ 353 GAME      A Miners' Guild DOUBLES the iron / coal unit-cost cut instead of adding 50%: City_Pro...
+               -> W251FIX
+ 102 GAME      AI wizard-target spells: AI_Pick_Wizard_Target e318:72bc applies the Spell Blast cond...
+               -> W239FIX
+ 103 GAME      Growth only stops when population EQUALS the maximum (c751:139f cmp / jne): a city ab...
+               -> W220FIX
+ 104 GAME      Growth overflow beyond 100 (1000 citizens) in one turn is discarded: at most +1 popul...
+               -> IW132, W082DIPL, W213, W272FIX, W540FIX
+
+============================================================================================
+PART B - EVERY PATCH FILE THAT CHANGES WIZARDS.EXE (folder/file, its title, the functions it changes, our entries)
+============================================================================================
+140/IW001  Displays bonus To Hit and To defend in the corner instead of as an ability icon for To Hit and no...
+      changes: Dev_Choice_Box 1d4d:0609; Draw_Unit_View 5e1f:0a79; data
+140/IW003  Ships all have a carry capacity of 8
+      changes: data
+140/IW004  I assume these changes are unintended accidents. Later patches undo them.
+      changes: data
+140/IW005  Removal of Intro difficulty, addition of Extreme difficulty
+      changes: City_Growth_Rate c751:1360; AI_Neutral_Stack_Orders f978:0987; AI_Stack_Garrison_OK f48f:2979; data
+140/IW006  AI Production category priorities
+      changes: data
+140/IW007  text constant "To Hit" into "to Hit"
+      changes: Hero_Level_Up_Lines 82d7:0681; data
+140/IW008  Removes text constant ",as swiftness spell", because no such spell exists.
+      changes: data
+140/IW013  Report monsters found in lairs when scouting as "Many" if there are 4 or more.
+      changes: Lair_Prompt 6d36:04ce; data
+140/IW017  Fixes windwalking bug, Total movement allowance of stack does not always match windwalker's
+      changes: Stack_Selected_Moves 55bb:0ec8
+      our entries: #208
+140/IW030  On the Magic screen the bonus SP from Archmage is visible
+      changes: MagicScr_Draw 6080:0693
+140/IW040  AI players can now find items in treasure
+      changes: Lair_Enter 6d36:0164
+      our entries: #75
+140/IW042  Fixes bug when player proposes "Declare War on", bonus for Alliance and Wizard Pact not added.
+      changes: Diplo_Propose_Treaty 6ea7:0535
+      our entries: #155
+140/IW043  AI consider treaty offer and declaration of war home continent forces comparison : unknown bug fixed
+      changes: AI_War_Check 736d:0251; Diplo_Proposal_Response 7057:058e
+      not in our list - disputed: our reading of 1.31 differs
+        why: 1.31 is consistent (an AI strong near its own fortress is readier for war and less willing to accept);
+             the patch swaps the two outputs and retunes the constants - a policy change (7057:061d, 736d:03e3)
+140/IW044  fixes bug : after Confusion returns control of a unit it doesn't set the confusion type flag to "...
+      changes: Combat_Main 75eb:0000
+      our entries: #209
+140/IW045  Fixes bug : item invisibility not considered in "Unit_Visible?" procedure
+      changes: Combat_Unit_Visible_To_Enemy 7719:11cc
+      our entries: #198
+140/IW047  Fixes bug : Engineers without a Build order count into building capacity
+      changes: Stack_Move 7b88:0000
+      our entries: #176
+140/IW048  Changes automatic pathfinding behavior on the overland map regarding considering occupied tiles f...
+      changes: Path_Apply_Obstacles 7b88:1325
+140/IW049  AI players are not allowed to flee on turn 1 of the battle
+      changes: Combat_Check_Winner 8593:0000
+140/IW051  fixing of spending mana in strategic combat
+      changes: Combat_Strategic 888b:00c9
+      our entries: #294 #327
+140/IW052  fixing of spellbook realm effects overwriting each other instead of adding together
+      changes: Combat_Strategic 888b:00c9
+140/IW054  Adds "AI cannot target heroes with possession".
+      changes: AI_Combat_Spell_Target 8a20:0000
+140/IW056  Fix bug : same variable used for two different purposes in Counter Magic
+      changes: Combat_Spell_Action 8cf2:004b
+      our entries: #210
+140/IW057  Spell Save items now work on Life Drain, Death Spell, Holy Word
+      changes: Combat_Cast_Spell 8a20:1a8e; Mass_Spell_Animate b1af:15ed; Holy_Word_All b1af:1a3b; Combat_Spell_Animate b1af:1d21
+140/IW058  Fix AI bug : "Haste" dispelling receives priority as though it was a control changing effect
+      changes: AI_Target_Dispel 8a20:1657
+      not in our list - balance / AI tuning, not a bug
+140/IW059  No more than 3 Magic Vortexes per player
+      changes: Combat_Spell_Choice_Invalid 8cf2:1548
+140/IW060  Spell Save modifiers procedure change.
+      changes: Spell_Resist_Modifier 8cf2:1c78
+140/IW061  Fixes bug : Dispel Evil works on creatures of all realms instead of only Chaos and Death
+      changes: Combat_Spell_Pick_Target_UI 8f51:0347
+      our entries: #211
+140/IW062  Fixes bug : Life Drain can target eath Immune units
+      changes: Combat_Spell_Pick_Target_UI 8f51:0347
+      our entries: #212
+140/IW063  Enables AI to use Healing Spell ability on units
+      changes: AI_Unit_Execute 9218:0344; data
+      not in our list - a new feature
+140/IW064  Items from dead heroes are now awareded to the winner after strategic combat
+      changes: Overland_Attack 7d45:0000
+140/IW065  Change to an AI function that was turned unused by another patch.
+      changes: AI_Rally_Point 9218:0e65
+140/IW066  Fixes bug : AI adds the ranged attack strength of armies to the variable each turn instead of ove...
+      changes: AI_Combat_Turn 9218:108c
+140/IW067  Entirely disables the AI's tactic for the case when they have ranged superiority.
+      changes: AI_Combat_Turn 9218:108c
+140/IW068  AI can now use units with Illusion Immunity to target invisible units with attacks.
+      changes: AI_Target_Scan 9218:1836
+140/IW069  When two targets have equal priority, attack the one with less hp left instead of the one with more
+      changes: AI_Target_Scan 9218:1836
+140/IW073  Fixes : Chaos Channels defense applied twice
+      changes: Battle_Unit_Combat_Modifiers 9748:2339
+140/IW074  Fixes bug : heroes who have the ability to use spells with ID>=128 can't use those spells.
+      changes: Combat_Spellbook_Build 9a4b:060d; Combat_Castable_Spell_List c165:2669
+      our entries: #134
+140/IW075  Removes additional upkeep reduction on highest difficulties for AI
+      changes: Unit_Gold_Upkeep 9ef8:0653
+140/IW078  Fixes bug : Chaos Chanelled units count as normal units for certain purposes
+      changes: Unit_Is_Normal_Living a0ec:0b8d
+      our entries: #213
+140/IW079  Fixes bug : Cloak of Fear affects user not enemy
+      changes: Combat_Exchange a22c:0332
+      our entries: #191
+140/IW080  Fixes bug : Ranged To Hit bonus doesn't apply to ranged attacks
+      changes: Attack_Resolve a22c:0a69
+      our entries: #214
+140/IW081  Fixes bug "To Def" is subtracted from enemy To Hit chance on top of increasing own chance To Defend.
+      changes: Attack_Resolve a22c:0a69
+      our entries: #187
+140/IW082  Central 4 tiles of cities in combat benefit from the City Wall bonus
+      changes: Attack_Resolve a22c:0a69
+140/IW083  Fixes bug : Weapon Immunity overrides Missiles Immunity
+      changes: Defender_Shields a22c:1627
+      our entries: #215
+140/IW084  During strategic combat, the defender gets +2 DEF if a city wall is present
+      changes: Combat_Start_Auras a22c:194b
+140/IW085  When AI is calculating attack target priorities,
+      changes: AI_Target_Score a22c:2630
+140/IW087  AI adds extra priority for attack targets already damaged if they are reachable
+      changes: AI_Target_Score a22c:2630
+140/IW088  Fixes bug : regeneration prevents the effect of the Recall spells
+      changes: Combat_End a4fa:0000
+      our entries: #216
+140/IW089  At end of combat, the defender no longer gets their remaining overland movement set to zero.
+      changes: Combat_End a4fa:0000
+140/IW090  Chaos Channelled units can get EXP from combat
+      changes: Combat_End a4fa:0000
+140/IW091  Fixes bug in "Total ranged strength in army" procedure only counting the last unit
+      changes: Side_Missile_Strength a76b:0000
+140/IW092  Fixes AI bug in comparing total army strengths to get the general situation of battle.
+      changes: Battle_Odds a76b:05cf
+      not in our list - balance / AI tuning, not a bug
+140/IW093  Unit total movement : variable for Endurace wasn't set to 0 at beginning
+      changes: Unit_Combat_Moves a76b:0c4d
+140/IW095  AI is less likely to raze other AI cities
+      changes: AI_Decide_Raze a76b:13bb
+140/IW096  Fixed bug in AI razing decision
+      changes: AI_Decide_Raze a76b:13bb
+      our entries: #217
+140/IW098  Fixes bug : Even if Charismatic discount applies the full price of a hero must be available for t...
+      changes: Screen_Hire_Hero aab2:0574; Mercenary_Offer_Roll c751:1bab
+      our entries: #179
+140/IW099  Makes AI reject hero offers if hero ID<=Number of heroes*4.
+      changes: AI_Hire_Hero aab2:0e65; Turn_Random_Offers c3f5:1dc7
+140/IW100  Arcane spells appear in a more limited quantity in research options
+      changes: Research_Pool_Build aba4:024f; Research_Candidates_Refill aba4:0000
+140/IW101  Changes to spell finding/trading priority calculations
+      changes: Spell_Trade_Value aba4:04be
+140/IW102  Chaos Channels will never overwrite a ranged attack on a unit with a Breath attack
+      changes: Chaos_Channels_Apply acd6:0ddf
+140/IW103  Fixes bug : Disenchant Area and Dispel Magic dispels own spells when cast by units
+      changes: Disenchant_Area_Combat b1af:0000; Dispel_Square b1af:0656
+      our entries: #195
+140/IW104  Fixes : combat cast spell lock does not prevent dispelling
+      changes: Dispel_Square b1af:0656
+      our entries: #218
+140/IW105  Dispel Magic checks wrong player's Holy Arms spell
+      changes: Dispel_Square b1af:0656; data
+      our entries: #219
+140/IW106  Merging provides immunity against Crack's Call
+      changes: Cracks_Call_Square b1af:1503
+140/IW107  Partially fixes the memory corruption caused by casting Raise Dead and Animate Dead - by redirect...
+      changes: Raise_Dead b1af:1f5d; Animate_Dead b1af:2384
+      our entries: #220
+140/IW108  Animate Dead, fixes bug : does not set new owner of overland unit if enemy unit was raised
+      changes: Animate_Dead b1af:2384
+      our entries: #221
+140/IW110  Unknown change to dialog/warning of casting Summon Hero and Summon Champion (not sure what the bu...
+      changes: Summon_Hero_Cast b425:0000
+      not in our list - not a bug in 1.31 (our reading)
+        why: the patched dialog code does the same thing in another form
+140/IW112  Fixes bug : Wraith Form blocks Call Lightning instead of Magic Immunity
+      changes: Call_Lightning_Turn b66a:03c9
+      our entries: #222
+140/IW114  Suppress magic does not counter Spell of Return anymore
+      changes: Overland_Cast_Spell ba2c:09c4
+140/IW115  AI combat spellcasting spell type weight per combat situation table modification
+      changes: AI_Combat_Spell_Score c165:00bd
+140/IW116  Mana Leak does not add +500 to AI disenchant area priority anymore
+      changes: AI_Combat_Spell_Score c165:00bd
+140/IW117  AI Resist elements and elemental armor decision checks wrong enemy effect realm
+      changes: AI_Combat_Spell_Score c165:00bd
+140/IW118  AI less priority of combat Wall of Stone, Wall of Fire casting
+      changes: AI_Combat_Spell_Score c165:00bd
+140/IW120  Various AI combat spell priority changes
+      changes: AI_Combat_Spell_Score c165:00bd; data
+140/IW123  AI combat spellpriority for Mana Leak changes
+      changes: AI_Combat_Spell_Score c165:00bd
+140/IW124  Fixes bug : Disenchant Area extra priority wasn't added to total (Wrack, Call Lighting)
+      changes: AI_Combat_Spell_Score c165:00bd
+      our entries: #223
+140/IW125  AI considers Immolation a lower threat of Chaos Realm for casting protective spells in combat.
+      changes: AI_Side_Attack_Profile c165:216c
+140/IW126  Changes to procedure that disbands AI units periodically to make room
+      changes: AI_Disband_Obsolete_Units c3f5:31a3; AI_Average_Unit_Cost c3f5:3411
+140/IW128  Fix : Great Wasting and Armageddon sets total pacifying value instead of reducing it.
+      changes: City_Rebels c751:272c
+140/IW129  Changes to how AI hires mercenaries
+      changes: AI_Pick_Min_Landmass_Unused d208:1fdf; AI_Accept_Mercenary_Offer d208:0000; AI_Magic_Allocation d208:0863
+140/IW132  Attempts to make it so that cities don't lose the extra population when growing to the next unit...
+      changes: Turn_City_Growth c3f5:14ed
+      our entries: #104
+140/IW134  AI can buy items from the merchant.
+      changes: Turn_Overland_Casting c3f5:1b61; Turn_Random_Offers c3f5:1dc7
+140/IW135  Changes to AI power distribution
+      changes: AI_Magic_Allocation d208:0863; AI_Choose_Strategy f978:1061
+140/IW136  Last hero ID number in an AI routine fixed
+      changes: AI_Build_Strength_Tables d208:0cd7
+140/IW137  Changes to AI alchemy use
+      changes: AI_Balance_Gold_Mana d208:20c3
+140/IW141  AI research selection changes
+      changes: AI_Choose_Research e318:0000
+140/IW142  AI will not cast expensive overland spells when low on mana
+      changes: AI_Choose_Overland_Spell e318:08e6
+140/IW143  Fixing the AI internal list of spell types known to select from
+      changes: AI_Build_Known_Spell_Groups e318:1888
+140/IW144  Various priority changes to AI overland spell selection
+      changes: AI_Pick_Summon e318:1995; AI_Pick_Unit_Enchant e318:22a2
+      our entries: #141
+140/IW145  When AI runs out of mana, it won't automatically cancel ALL global enchantments, only Suppress Ma...
+      changes: AI_Drop_Bad_Globals e318:4888
+140/IW147  AI summoning circle casting timer (more frequently)
+      changes: AI_Target_Summoning_Circle e318:749e
+140/IW148  AI will not buy production if completion percentage is zero (4x cost)
+      changes: AI_City_Production_Turn eab0:0000
+140/IW149  Fixes bug in AI change production procedure : wrong index is used when counting towns producing T...
+      changes: AI_Wizard_Choose_Production eab0:00e8
+      our entries: #145
+140/IW150  Change to AI trade goods preference formula
+      changes: AI_Wizard_Choose_Production eab0:00e8
+140/IW151  AI will not build settlers if population is 1
+      changes: AI_Wizard_Choose_Production eab0:00e8
+140/IW152  Changes AI's preferences of when to produce a unit vs a building
+      changes: AI_Wizard_Choose_Production eab0:00e8
+140/IW153  changes preferred building order of basic buildings for AI
+      changes: AI_Wizard_Choose_Production eab0:00e8
+      our entries: #145
+140/IW154  Changes formula to decide if a Neutral city produces a building or unit
+      changes: AI_Neutral_Choose_Production eab0:085c
+140/IW155  AI Buy decision changes - Will buy buildings in larger cities less, will buy nonsettler units in...
+      changes: AI_City_Maybe_Buy eab0:0b28
+140/IW156  AI Overland unit movement orders assignment bugs fixed and adjustments
+      changes: AI_Unit_Dispatch ebda:0000
+140/IW158  AI settlers sending procedure changes
+      changes: AI_Settler_Tower_Target ebda:5430; AI_Settler_Orders ebda:4661
+140/IW159  Fixes a bug in "Is sea square" function
+      changes: Tile_Is_Sea f319:15b7
+      not in our list - disputed: our reading of 1.31 differs
+        why: 1.31 counts the river-mouth shore tiles (raw 0xC5-0xC8) as sea, like its general water test; the patch
+             drops them - a rule change (f319:1631)
+140/IW162  Changes stack size to be considered "large" for the purpose of marking the continent as "large st...
+      changes: AI_Field_Stack_Targets ebda:1930
+140/IW164  AI will not immediately disband units if income is negative, unless gold or mana reserves are too...
+      changes: AI_Disband_For_Upkeep ebda:358e
+151/W032FIX  Autosave fixes
+      changes: Human_End_Turn 5297:0199; Next_Turn 9ec1:0000; Autosave c74a:0000
+      our entries: #224
+151/W035DIPL  Personality to diplomacy modifier table changes
+      changes: data
+151/W036AI  Personality effect on the AI wanting to cast overland curses or other directly harmful spells
+      changes: data
+151/W040FIX  There is no warning message to stop unit production if town has 9 units.
+      changes: Screen_City_Production 4e5c:0000
+151/W041FIX  Fixes bug : Nature Awareness estabilished contact with eliminated wizards
+      changes: Reveal_Map_All 51b2:08a6; Visibility_Rebuild 7851:0119
+      our entries: #95
+151/W042FIX  Fixes insecticide only bug : Nature Awareness automatically casts Detect Magic as well
+      changes: Reveal_Map_All 51b2:08a6
+      written over earlier patch code (0/5 original bytes match 1.31)
+151/W043FIX  Entire stack will not lose movement points when one unit runs out
+      changes: Stack_Move_Click 5315:021c
+151/W046FEAT  Alchemist allows converting 10k at once instead of 999
+      changes: Alchemy_Draw 6080:1e08
+151/W047FEAT  Wizard gold and mana is displayed higher on the F9 or right click screen
+      changes: Wizard_Info_Draw 62a9:012c
+151/W049FIX  Displayed amount of Scouting does not match description of ability
+      changes: UnitView_Build_Abilities 679a:0000
+151/W050FIX  Summon Demon displays the maximum amount of demons the unit has instead of the amount remaining.
+      changes: UnitView_Build_Abilities 679a:0000
+151/W051FIX  Unit display displays base abilities instead of current
+      changes: UnitView_Build_Abilities 679a:0000
+151/W052FEAT  Life Steal, Death Touch shows save modifier
+      changes: UnitView_Build_Abilities 679a:0000
+151/W056DIPL  Fixes : Diploatic event "here is some gold for your attack" causes a crash
+      changes: Screen_Diplomacy 6ea7:0000
+151/W057DIPL  Fixes : When the AI offers a spell for a treaty, spell name is missing
+      changes: Diplo_Append_Tribute_Text 6ea7:0269
+151/W058DIPL  "Declare War on" is not available for targets you can propose to "Break Alliance with"
+      changes: Diplo_Propose_Treaty 6ea7:0535
+151/W059DIPL  Offer refusal flavor text more frequent
+      changes: Diplo_Show_Reply 6ea7:0aaa
+151/W060DIPL  Threaten new formula for success
+      changes: Diplo_Threaten_Menu 6ea7:0f12
+151/W061DIPL  Diplomacy Fine Tuning - End of Turn effects
+      changes: Diplo_Relation_Drift 7057:008b
+      our entries: #157
+151/W062DIPL  Fixes bug in AI request breaking alliance : Wizard name shown is missing/wrong
+      changes: Diplo_Demand_Drop_Ally 7057:04aa
+      our entries: #225
+151/W063DIPL  Refusal of "Break Alliance with" AI request
+      changes: Diplo_Demand_Drop_Ally 7057:04aa
+151/W064DIPL  New formula for player propose treaty reply decision.
+      changes: Diplo_Proposal_Response 7057:058e
+151/W065DIPL  When checking for lowest "interest" variable, Peace Interest is ignored
+      changes: Diplo_Min_Interest 7057:076a
+151/W066DIPL  AI forming a Peace Treaty will set the Peace Treaty variable instead of ignoring the treaty entirely
+      changes: Diplo_Make_Peace 7057:0952
+151/W067DIPL  Peace Treaty lasts longer
+      changes: Diplo_Make_Peace 7057:0952
+151/W068DIPL  Diplomatic event happened procedure modifications
+      changes: Diplo_Relation_Change 7057:0ae1
+      our entries: #66 #67
+151/W069DIPL  Diplomatic event happened procedure modifications 2
+      changes: Diplo_Relation_Change 7057:0ae1
+151/W070DIPL  Fixes bug : Breaking a treaty adds to HREL instead of reducing it.
+      changes: Diplo_Break_Treaty 7057:12a6
+      our entries: #160
+151/W071DIPL  Breaking a treaty does not reduce the HREL of unrelated wizards
+      changes: Diplo_Break_Treaty 7057:12a6
+151/W072DIPL  Offer Tribute altered effect
+      changes: Diplo_Offer_Tribute 7057:1620
+151/W073DIPL  Trade offers reduce diplomatic interest variables less drastically.
+      changes: Diplo_Exchange_Spells 7057:1bc1
+151/W074DIPL  Trade offers can increase relations more
+      changes: Diplo_Exchange_Spells 7057:1bc1
+151/W075DIPL  Fixes bugs : Player not getting spell offered if spell ID>=128 and AI not getting spell, ever.
+      changes: Screen_Diplomacy_Incoming 7269:0000
+151/W076DIPL  Fixes bugs : AI runs "War Needed" procedure only when positive AI to AI diplomacy is checked inst...
+      changes: AI_Diplo_Turn_AI_Vs_AI 7269:0390
+      our entries: #162
+151/W077DIPL  Fixes bugs with AI gold/spell offers
+      changes: Screen_Diplomacy_Offer 7269:0726; AI_Diplo_Turn_AI_Vs_AI 7269:0390
+      our entries: #166
+151/W078DIPL  AI to AI positive diplomacy changes and bug fixes
+      changes: AI_Diplo_Turn_AI_Vs_AI 7269:0390
+      our entries: #9
+151/W079DIPL  AI to AI diplomacy skips the "too close to my town" check to break pacts
+      changes: AI_Diplo_Turn_AI_Vs_AI 7269:0390
+151/W080DIPL  AI to AI war declaration on AI ALLY being in war.
+      changes: AI_Diplo_Turn_AI_Vs_AI 7269:0390
+151/W081DIPL  If "Gold reward" conversation is queued up, skip conversation replacing rolls and keep it queued.
+      changes: AI_Diplo_Turn_Vs_Human 736d:006b
+151/W082DIPL  Removal of roll that prevents AI to player diplomacy from happening 99% of the time
+      changes: AI_Diplo_Turn_Vs_Human 736d:006b
+      our entries: #46 #104
+151/W083DIPL  Lowered chance of AI deciding not to warn the player about something they wanted to warn them about
+      changes: AI_Diplo_Turn_Vs_Human 736d:006b
+151/W084DIPL  Preliminary peace offer roll removed
+      changes: AI_Diplo_Turn_Vs_Human 736d:006b
+      not in our list - balance / AI tuning, not a bug
+151/W085DIPL  AI to player positive diplomacy event chance improved
+      changes: AI_Diplo_Turn_Vs_Human 736d:006b
+      our entries: #46
+151/W086DIPL  AI uses code 4 "Player declares war reaction" text group if declaring war after the player threat...
+      changes: Diplo_Threaten_Menu 6ea7:0f12
+151/W088DIPL  Peace Treaty variable isn't ignored for AI to AI war declaration considerations.
+      changes: AI_War_Check 736d:0251
+151/W089DIPL  AI war declaration considerations in "Need for war" procedure.
+      changes: AI_War_Check 736d:0251
+151/W090DIPL  AI war declaration considerations in "Need for war" procedure, part 2
+      changes: AI_War_Check 736d:0251
+      our entries: #164
+151/W091DIPL  When the AI moves towards war, there is less chance to cancel the action and do nothing
+      changes: AI_Break_Or_Declare 736d:06f4
+151/W092DIPL  Alliance allows the player to move into the territory of AI towns
+      changes: AI_Border_Tension 736d:092d
+151/W093DIPL  Near town warning texts
+      changes: AI_Border_Tension 736d:092d
+151/W094DIPL  End of turn temporal diplomacy variable increase
+      changes: Diplo_Interest_Regrow 736d:0c9f
+151/W095DIPL  AI to player positive diplomacy offer changes
+      changes: AI_Diplo_Propose_To_Human 7442:0000
+151/W096DIPL  AI Breaking treaty due to a warning trigger displays the treaty broken message instead of the war...
+      changes: AI_Diplo_Propose_To_Human 7442:0000; AI_React_To_Offense 7442:055d
+151/W097DIPL  AI Treaty offer, additional gold or spell changes
+      changes: AI_Diplo_Propose_To_Human 7442:0000
+151/W098DIPL  Fixes bug : Peace treaty cannot trigger
+      changes: AI_React_To_Offense 7442:055d
+      not in our list - disputed: our reading of 1.31 differs
+        why: the gate is contact + a pending relation change, which any human-caused event sets (offenses too) and
+             which decays by Random(5) a turn - so not "never" (7442:0584)
+151/W099DIPL  AI Warning to player consequences roll
+      changes: AI_React_To_Offense 7442:055d
+151/W100DIPL  AI Peace Treaty proposal roll
+      changes: AI_React_To_Offense 7442:055d
+151/W101DIPL  End of turn TREAT, TRADE, PEACE adjustment 2
+      changes: Diplo_Interest_Drift 7442:0748
+151/W102FIX  Fixes bug : AI keeps casting spell of return when defeated, if they were already doing it.
+      changes: Wizard_Fortress_Captured 78ba:0000
+      our entries: #226
+151/W103DIPL  Banishing or Defeating a wizard will not always yield a penalty
+      changes: Wizard_Banish 78ba:148a; Wizard_Fortress_Captured 78ba:0000
+151/W104AI  AI will give up and not cast spell of return if their skill is below 25 instead of 40
+      changes: Wizard_Banish 78ba:148a
+151/W106DIPL  Attacking diplomacy effects.
+      changes: Overland_Attack 7d45:0000
+151/W107FIX  Fixes bug : Razing an outpost does not count as conquering a city.
+      changes: Overland_Attack 7d45:0000
+      our entries: #227
+151/W108FIX  Fixes bug : Wind Walking enchanted units cannot be attacked in combat as though they were flying.
+      changes: Unit_Is_Airborne 7eb0:1eb0
+      our entries: #228
+151/W109FEAT  Display combat turn
+      changes: Combat_Draw_Mana_Panel 80d6:0aac
+151/W110FEAT  Display ammo AND mana if unit has both.
+      changes: Combat_Draw_Hover_Info 8593:0bd6
+151/W111FIX  Fix strategic combat insecticide bug
+      changes: Combat_Strategic 888b:00c9
+      written over earlier patch code (0/26 original bytes match 1.31)
+151/W112FEAT  In strategic combat, damage is spread out between units
+      changes: Combat_Strategic 888b:00c9
+151/W113FIX  Fixes the healing bug that grants extra hearts and heals more than needed.
+      changes: Battle_Unit_Heal 888b:139a
+      our entries: #184
+151/W114AI  Replacing the default AI "unit defensive rating" calculation
+      changes: AI_Toughness_Value 888b:1623
+151/W115AI  AI "unit offensive rating" modifications
+      changes: AI_Attack_Value 888b:17aa
+      not in our list - balance / AI tuning, not a bug
+151/W116AI  AI Life Drain targeting
+      changes: AI_Combat_Spell_Target 8a20:0000
+151/W117AI  AI will not priorize already damaged units with Fireball
+      changes: AI_Combat_Spell_Target 8a20:0000
+151/W118AI  AI will not target units that have Haste or Invisibility with the same enchantment again.
+      changes: AI_Combat_Spell_Target 8a20:0000
+151/W119AI  AI will not target attack=2 units with Shatter. A minimum of 3 is needed to consider the spell.
+      changes: AI_Combat_Spell_Target 8a20:0000
+151/W120AI  AI will not target resist = 9+ units after save penalties with resist based curses.
+      changes: AI_Combat_Spell_Target 8a20:0000
+151/W121FIX  AI will not target Death Immune units with Possession
+      changes: AI_Combat_Spell_Target 8a20:0000
+151/W122FIX  AI will not consider "Flame Strike" as a combat enchantment
+      changes: AI_Combat_Spell_Target 8a20:0000
+      our entries: #229
+151/W123AI  AI warp creature targeting, considered below this resistance
+      changes: AI_Target_Warp_Creature 8a20:12fb
+151/W124AI  AI dispel magic target selection
+      changes: AI_Target_Dispel 8a20:1657
+151/W125FIX  Fixes bug : Spell Ward does not counter combat spells
+      changes: Combat_Spell_Action 8cf2:004b
+      our entries: #230
+151/W126AI  AI will use calculated amount of mana for Counter Magic slider instead of overriding it with a ra...
+      changes: Combat_Spell_Action 8cf2:004b
+151/W127FIX  Fixes : Raise Dead, Animate Dead can raise "Not involved" units carried by ship
+      changes: Raise_Dead b1af:1f5d; Combat_Spell_Choice_Invalid 8cf2:1548; AI_Combat_Spell_Score c165:00bd; Animate_Dead b1af:2384
+      our entries: #231
+151/W129FIX  Fixes : Can summon a demon if already having 9 units
+      changes: Demon_Lord_Summon 8f51:22fa
+      our entries: #232
+151/W130AI  Flying units stay idle to stall when enemy army is significantly more powerful
+      changes: AI_Combat_Stance 9218:0000; AI_Target_Scan 9218:1836; AI_Choose_Target 9218:144d
+151/W131FIX  Fix insecticide bug : Doom Bolt effect misaligned
+      changes: AI_Unit_Execute 9218:0344
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W132AI  AI won't try to use units for spellcasting if remanining MP<10
+      changes: AI_Target_Scan 9218:1836
+151/W136FIX  Fix : Merging has no effect on items
+      changes: Hero_Item_Bonus 9748:0000
+151/W138FIX  Fixes "Ghost unit" bug
+      changes: Battle_Unit_Init 9748:0ee9
+      our entries: #233
+151/W139FIX  Fixes "Dispelled ability is not gone" bug
+      changes: Unit_Apply_Modifiers 9748:122d
+      our entries: #234
+151/W140FIX  Fix : Invisiblity enchanted units are not invisibile
+      changes: Unit_Apply_Modifiers 9748:122d
+151/W141FIX  Fixes bug : Chaos Surge has no effect if cast by an AI player
+      changes: Unit_Apply_Modifiers 9748:122d
+151/W142FEAT  When a unit has both "melee +to hit" and "ranged +to hit", it gets merged into "global +to hit"
+      changes: Unit_Apply_Modifiers 9748:122d
+151/W143FIX  Fixes : Flight spell does not grant the minimum of 3 movement in combat
+      changes: Unit_Apply_Modifiers 9748:122d
+      our entries: #235
+151/W144FIX  Fix : Undead do not gain the advertised immunities
+      changes: Unit_Enchant_Bonus 9748:1740
+151/W146FIX  Fix : Black Sleep does not cause the affected units to lose filght or other movement types.
+      changes: Battle_Unit_Combat_Modifiers 9748:2339
+151/W148FIX  Safety precaution : Dead units cannot die again
+      changes: Unit_Kill_Or_Dismiss 9ef8:0de4
+151/W149FEAT  Changes to "over9units" stack splitting procedure
+      changes: Stack_Limit_Enforce 9ef8:1e02
+151/W151AI  "Unit Overland Value" calculation
+      changes: AI_Unit_Strength a0ec:0de8; UnitType_AI_Strength a0ec:0ccf
+151/W152FIX  Fixes bug : Thrown ignores Weapon Immunity
+      changes: Attack_Damage_Flags a22c:01f0
+      our entries: #236
+151/W153FIX  Fixes bug : units don't use gaze or other special effects
+      changes: Combat_Exchange a22c:0332; Attack_Resolve a22c:0a69
+      our entries: #188
+151/W154FIX  Fixes bug : Immolation works on ranged attacks
+      changes: Attack_Resolve a22c:0a69
+      our entries: #188
+151/W155FIX  Fixes bug : Invisible city walls bug
+      changes: Battlefield_Generate_Map df82:05d8; Attack_Resolve a22c:0a69
+      our entries: #326
+151/W156FIX  Fixes Blur bugs
+      changes: Attack_Resolve a22c:0a69
+      our entries: #186
+151/W158AI  AI combat unit targeting priority
+      changes: AI_Target_Score a22c:2630
+151/W159DIPL  Fixes bug : only the last unit in combat counts for "killed units" diplomatic penalty/event
+      changes: Combat_End a4fa:0000
+      our entries: #196
+151/W160FIX  Fixes : Not involved units always die when fleeing
+      changes: Combat_End a4fa:0000
+      our entries: #237
+151/W163AI  AI : Army total ranged capacity new calculation
+      changes: Side_Missile_Strength a76b:0000
+151/W164AI  AI will consider idle units part of the army strength calculation
+      changes: Battle_Odds a76b:05cf
+151/W165AI  AI will consider combat situation "very bad" only if enemy is 5 times stronger not 3
+      changes: Battle_Odds a76b:05cf
+151/W166DIPL  Spell value in trading
+      changes: Spell_Trade_Value aba4:04be; AI_Choose_Research e318:0000
+      written over earlier patch code (0/36 original bytes match 1.31)
+151/W167FIX  Spell of Mastery cannot be traded or found
+      changes: Diplo_Tradeable_Spells aba4:05e2
+151/W168DIPL  Adjusted diplomatic value of curses
+      changes: Hostile_Spell_Relations aba4:075e
+151/W169DIPL  Diplomatic penalty of casting and maintaining global enchantments
+      changes: Global_Enchant_Relations aba4:088b
+151/W170FIX  Fixes bug : Books found in game have different spell amount and rarity than starting books
+      changes: Wizard_Gain_Spellbook aba4:0ea1
+      our entries: #238
+151/W171FIX  Fixes bug : Spell Binding has no effect for the AI
+      changes: Spell_Binding_Cast af2c:08bf
+151/W172FIX  Fixes bug : Raise/Animate Dead crashes on 7+ dead units
+      changes: Raise_Dead b1af:1f5d; Animate_Dead b1af:2384
+      our entries: #220
+151/W173FIX  Fixes bug : Animated enemy unit does not disappear after combat
+      changes: Animate_Dead b1af:2384
+      written over earlier patch code (18/55 original bytes match 1.31)
+151/W176FIX  Fix Call Lightning bug : there are fewer bolts than intended
+      changes: Call_Lightning_Turn b66a:03c9
+      our entries: #222
+151/W177FIX  Fixes bug : Unit resisting Disintegrate from Call Chaos takes random amount and type of damage.
+      changes: Call_Chaos_Apply b66a:229c
+151/W179AI  AI can cast more than one spell in an overland turn
+      changes: AI_Overland_Turn d208:002f; Wizard_Begin_Casting b8ad:08c4
+151/W181AI  AI combat spellcasting new logic
+      changes: AI_Combat_Spell_Score c165:00bd; data
+151/W182AI  AI combat spellcasting spell type weight per combat situation table modification
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W183AI  Disenchant priority boost from Call Lightning, Wrack
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W184AI  Web priority changes
+      changes: AI_Combat_Spell_Score c165:00bd
+      written over earlier patch code (5/13 original bytes match 1.31)
+151/W185AI  Iron Skin priority
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W186AI  Dispel Magic priority
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W187AI  Guardian Wind gets "Don't use" priority if no enemy missile users, instead of just 0.
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W188AI  Flight additional priority for no enemy flying units
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W189AI  Mind Storm is category "C" instead of "D"
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W190AI  Extra priority if Invulnerability is present
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W191AI  Fireball priority
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W192AI  Magic Vortex category "D" instead of "A"
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W193AI  Flame Strike, Prayer, etx priority
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W194AI  Warp Reality priority change
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W195AI  Healing gains "C" type base priority instead of none
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W196AI  Invulnerability extra priority
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W197AI  Berserk, Life Drain extra priority
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W198AI  Death Spell, targets at 8 effective resistance count instead of 10
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W199AI  Animate Dead priority
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W200AI  Disenchant bonus priority
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W201AI  Entangle priority no longer zero
+      changes: data
+151/W202AI  Counter Magic priority redirection
+      changes: data
+151/W203AI  Blur priority redirection
+      changes: data
+151/W205AI  Dispel Evil redirection
+      changes: data
+151/W206AI  Lionheart redirection
+      changes: data
+151/W207AI  Dispel Magic redirection to Dispel Magic True
+      changes: data
+151/W208AI  AI Unit value in combat
+      changes: Unit_Combat_Value c165:1e7f
+151/W210FIX  Fixes bug : If a destroyed building is re-built it becomes a ghost building
+      changes: City_Production_Step c3f5:0050
+      our entries: #132
+151/W212FEAT  Better Grand Vizier
+      changes: Vizier_Choose_Production eab0:0bcd; City_Production_Step c3f5:0050
+151/W213FEAT  Excess population carries over when hitting 1000
+      changes: Turn_City_Growth c3f5:14ed
+      our entries: #104
+151/W214FIX  Fixes bug : misaligned jump address in hero appear chance calculation.
+      changes: Turn_Random_Offers c3f5:1dc7
+      not in our list - not a 1.31 bug (fixes earlier patch code)
+151/W216FIX  Fixes : Units affected by "Ghost Unit" bug do not heal.
+      changes: Unit_Heal_Step c3f5:2503
+      our entries: #233
+151/W217AI  AI Dismiss obsolete units changes
+      changes: AI_Disband_Obsolete_Units c3f5:31a3; AI_Average_Unit_Cost c3f5:3411
+151/W218FIX  Fixes bug : Evil Presence does not reduce power
+      changes: City_Calc_Power c751:0eeb
+      our entries: #43
+151/W219FIX  Fixes : AI can only target cities owned by Death wizards with Evil Presence
+      changes: AI_Pick_City_Spell_Target e318:4b49
+      our entries: #112
+151/W220FIX  Fixes bug : city population negative growth does not get applied if max population is reached
+      changes: City_Growth_Rate c751:1360
+      our entries: #103
+151/W221FEAT  New Astrologer Total Magic Power rating
+      changes: Wizard_Stat_Magic_Power c751:260f
+151/W222FEAT  New Astrologer army strength rating
+      changes: Wizard_Stat_Army_Strength c751:2631
+151/W223DIPL  Fixes bug : AI players reduce their peace treaty counter twice, and may go below 0
+      changes: AI_Overland_Turn d208:002f
+      our entries: #239
+151/W224AI  AI power distribution
+      changes: AI_Magic_Allocation d208:0863; AI_Choose_Strategy f978:1061
+      not in our list - balance / AI tuning, not a bug
+151/W225AI  AI Alchemy use
+      changes: AI_Balance_Gold_Mana d208:20c3
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W226FIX  Fixes bug : When AI converts gold to mana, new mana overwrites old amount instead of being added
+      changes: AI_Balance_Gold_Mana d208:20c3
+      not in our list - not a bug in 1.31 (our reading)
+        why: the store runs only when the value is 0, so the "mov" the patch replaces equals the "add" it writes
+             (d208:22a1)
+151/W227AI  AI will not disband units in Stasis
+      changes: AI_Disband_Stasis_Units d208:2a3a
+151/W228AI  AI research selection changes
+      changes: AI_Choose_Research e318:0000
+151/W229AI  AI Overland spell type selection changes
+      changes: AI_Pick_Spell_Category e318:09e5
+      our entries: #140
+151/W230AI  AI Overland spell type selection - less disjunction spam
+      changes: AI_Pick_Spell_Category e318:09e5
+151/W231AI  Fixes bug : AI casts enchantments in the "anticolor" group without checking their presence
+      changes: AI_Pick_Anti_Realm_Global e318:2888
+      our entries: #240
+151/W232AI  AI spell priority in group "harmful spell"
+      changes: AI_Pick_Attack_Spell e318:2f1c
+      our entries: #241
+151/W233AI  AI disable Move Fortress casting
+      changes: AI_Pick_City_Spell e318:3318
+151/W234AI  AI disjunction type spell choice
+      changes: AI_Pick_Disjunction e318:38fd
+151/W235AI  Fixes Bug : AI targets Flying Fortress wrong
+      changes: AI_Target_Flying_Fortress e318:3d79
+151/W236AI  Reduces chance of AI using a random ward on a city that already has the primary two needed ward r...
+      changes: AI_Target_Spell_Ward e318:446d
+151/W237AI  Fixes Bug : AI cancels Time Stop late and loses all fantastic units
+      changes: AI_Drop_Bad_Globals e318:4888
+      our entries: #242
+151/W238FIX  Fixes Bug : AI ignores enchantments with disjunction priority over 127
+      changes: AI_Pick_Global_Enchant_Target e318:5773
+      our entries: #116
+151/W239FIX  Fixes Bug : AI spells that target players have no effect
+      changes: AI_Pick_Wizard_Target e318:72bc
+      our entries: #102
+151/W242AI  AI ideal stack size : 1 higher
+      changes: AI_Unit_Dispatch ebda:0000
+151/W243AI  Defenders needed procedure is ran every turn instead of every 3 turns
+      changes: AI_Send_Stacks_To_Garrisons ebda:0302
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W244AI  AI Split patrolling stacks
+      changes: AI_Send_Stacks_To_Garrisons ebda:0302; AI_Build_Attack_Pool ebda:3e36; AI_Pool_Add_Strongest ebda:3ef2
+151/W245AI  Defenders needed procedure improvements
+      changes: AI_Send_Stacks_To_Garrisons ebda:0302
+      written over earlier patch code (2/9 original bytes match 1.31)
+151/W246AI  AI Mark possible overland attack targets
+      changes: AI_Collect_Landmass_Targets ebda:2270
+      written over earlier patch code (53/141 original bytes match 1.31)
+151/W247AI  AI poorly defended town detection radius 1->3
+      changes: AI_Release_Goto_Near_Weak_City ebda:3331
+151/W248AI  AI don't disband fantastic units during Time Stop due to Time Stop's huge maintenance
+      changes: AI_Disband_For_Upkeep ebda:358e
+      written over earlier patch code (0/35 original bytes match 1.31)
+151/W249FIX  Fix bug : AI calls "unit value" evaluation with wrong parameter when splitting stacks
+      changes: AI_Pool_Add_Strongest ebda:3ef2
+      our entries: #149
+151/W250AI  AI Don't avoid using Settlers if another player's unit is nearby
+      changes: AI_Settler_Orders ebda:4661
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W251FIX  Fixes bug : Miner's Guild adds 100% to Coal, Iron instead of 50%
+      changes: Tile_Mineral_Unit_Cost_Pct f319:09fb
+      our entries: #353
+151/W252AI  Peaceful and Lawful wizards don't get hostile without being attacked first
+      changes: AI_Hostility_Replan f978:12ac
+      not in our list - balance / AI tuning, not a bug
+151/W253FIX  Fix : Evil presence effect not showing up on cathedrals
+      changes: Cityscape_Draw_Objects cd8b:1f41
+151/W254AI  If AI unit has no target to attack in melee, it moves into the city to cause damage
+      changes: AI_Unit_Execute 9218:0344
+151/W255FIX  Fixes : Confusion doesn't revert control at end of turn
+      changes: Dispel_Square b1af:0656; Combat_Turn_Start 7719:0047; Combat_Main 75eb:0000
+      our entries: #209 #243
+151/W256AI  AI will ignore units that temporarily switch sides under confusion when dispelling in combat
+      changes: AI_Target_Dispel 8a20:1657; AI_Combat_Spell_Score c165:00bd
+151/W257AI  Required for W258, has no effect on its own after installing W207
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W258AI  Combat AI improvements 2
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W259DIPL  AI ignore ally spells when deciding on using the disjunction spell group
+      changes: AI_Pick_Spell_Category e318:09e5
+      written over earlier patch code (4/29 original bytes match 1.31)
+151/W260DIPL  AI ignore ally spells when selecting a target for Disjunction, Disjunction True
+      changes: AI_Pick_Global_Enchant_Target e318:5773
+151/W261FIX  Fixes : Invunerability cannot be dispelled.
+      changes: Dispel_Square b1af:0656
+151/W262FIX  Fix bug : AI ignores effect "unit moves randomly" on confusion
+      changes: AI_Combat_Turn 9218:108c
+      our entries: #244
+151/W263AI  AI combat units will move around randomly if they can find no valid target to attack.
+      changes: AI_Combat_Turn 9218:108c
+      written over earlier patch code (0/32 original bytes match 1.31)
+151/W264FEAT  Finding heroes is possible with a stack of 9 units.
+      changes: Lair_Enter 6d36:0164; Treasure_Roll 6d36:0cd2
+151/W265FIX  Fixes : AI calculates carrying capacity of ships on the way to pick up units wrong
+      changes: AI_Ship_Orders ebda:0ee6
+      our entries: #328
+151/W266FIX  Fixes : AI ignores units already at the destination when calculating how many more ships are needed
+      changes: AI_Ship_Orders ebda:0ee6
+151/W267AI  AI power distribution : Allocate 100% on mana when casting Time Stop
+      changes: AI_Magic_Allocation d208:0863
+      written over earlier patch code (9/30 original bytes match 1.31)
+151/W268AI  AI will automatically use alchemy if gold exceeds 24000 to make mana.
+      changes: AI_Balance_Gold_Mana d208:20c3
+151/W269FIX  Spell Binding cannot fail
+      changes: Spell_Binding_Resolve bcc7:16e6
+      our entries: #38
+151/W271FIX  AI won't consider uncontacted players as valid targets for overland curses
+      changes: AI_List_Hostile_Wizards d208:1f8a
+151/W272FIX  Depletion and New Minerals work
+      changes: Event_Find_Depletion_Site cbdf:0d99; Event_Find_New_Mineral_Site cbdf:0f48
+      our entries: #104
+151/W273FIX  Depletion and New Minerals will be postponed if no valid target is found at time of execution
+      changes: Events_Process 6ad6:0947
+151/W274FIX  AI ship pickup fix 3
+      changes: AI_Ship_Orders ebda:0ee6
+      written over earlier patch code (3/58 original bytes match 1.31)
+151/W275FIX  Fixes bug : Warp Creature crashes after 3 success on same unit
+      changes: Warp_Creature_Apply b66a:0000
+151/W276FIX  Fixes bug : No ores are generated from volcanoes
+      changes: Volcano_Roll_Mineral cbdf:0bd6
+151/W278DIPL  Warning messages add a cumulative chance of DoW on future warnings until "first warning" is cleared
+      changes: AI_React_To_Offense 7442:055d
+151/W279AI  Fortress town targeting priority for curses
+      changes: AI_Build_Strength_Tables d208:0cd7
+151/W280AI  AI targeting Earthquake checks for Nature Ward instead of Chaos Ward and Consecration
+      changes: AI_Pick_City_Spell_Target e318:4b49
+      our entries: #113
+151/W281DIPL  AI can request a declaration of war from the allied player
+      changes: AI_Ally_Pick_War_Request 736d:084c; Screen_Diplomacy_Offer 7269:0726; Screen_Diplomacy_Incoming 7269:0000; data
+      our entries: #165
+151/W282DIPL  Refusal of DoW request from AI doesn't break alliance
+      changes: AI_Ally_Pick_War_Request 736d:084c; Screen_Diplomacy_Offer 7269:0726; Screen_Diplomacy_Incoming 7269:0000; data
+      written over earlier patch code (0/133 original bytes match 1.31)
+151/W284FEAT  Unit view displays innate spells on heroes.
+      changes: UnitView_Build_Abilities 679a:0000
+151/W285FIX  Fixes bug : Summon champion fails finding a hero when there are no champions left
+      changes: Hero_Pick_Random a0ec:0839
+      our entries: #245
+151/W286AI  AI will try 100 times to find a good target for Corruption/Raise Volcano instead of 25 times.
+      changes: AI_Target_Corruption_Volcano e318:6bd6
+151/W288AI  AI won't disband settler if having multiples on the same continent, won't disband engineers after...
+      changes: AI_Disband_Extra_Settlers d208:2886
+151/W289AI  AI Warp Wood, Guardian Wind priorities
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W290FIX  Fixes game crashing on turn 384 from patch W274FIX.TXT (overflow)
+      changes: AI_Ship_Orders ebda:0ee6
+      written over earlier patch code (1/33 original bytes match 1.31)
+151/W291FIX  Fixes the "more than 6 items found, rest vanish" bug.
+      changes: Items_Screen_Award 6356:14bd
+151/W292FEAT  Adds 4 more slots to vault
+      changes: Items_Slot_Click 6356:0e74; Items_Screen_Draw 6356:0581; Screen_Items 6356:0000
+151/W293FIX  Fixes bug : AI equips shields in Staff slots
+      changes: Hero_Items_AI_Equip_Best 87aa:02e5
+151/W294AI  AI can use vault. AI upgrades equipment on heroes every turn before moving.
+      changes: Hero_Items_AI_Reequip 87aa:008d; AI_Drop_Bad_Globals e318:4888
+151/W295AI  AI considers people casting spell of mastery as war for selecting target continent
+      changes: AI_Choose_Attack_Landmass f48f:3f14
+151/W296AI  AI reevaluate continent states more frequently
+      changes: AI_Send_Pool_To_Rally ebda:020d
+151/W297AI  "Jihad" hostility adds more priority to home continent of target
+      changes: AI_Choose_Attack_Landmass f48f:3f14
+151/W298AI  AI personality effect on hostility reevaluation
+      changes: AI_Hostility_Replan f978:12ac
+151/W299DIPL  Hostility change based on treaty status
+      changes: Diplo_Relation_Change 7057:0ae1
+151/W300DIPL  Breaking a treaty,DoW, or making peace resets main action continent
+      changes: Diplo_Break_Treaty 7057:12a6; Diplo_Make_Peace 7057:0952; Diplo_Relation_Change 7057:0ae1
+151/W301AI  Fixes bug : AI sets continent containing exactly 6 owned towns to "uninteresting/depleted" state
+      changes: AI_Landmass_Plan f48f:2b22
+      our entries: #323
+151/W302FIX  Fixes bug : Movement type lost from Web or Black Sleep does not return after dispel
+      changes: Unit_Apply_Modifiers 9748:122d
+      written over earlier patch code (0/106 original bytes match 1.31)
+151/W303AI  New AI overland buff targeting procedure
+      changes: AI_Pick_Unit_For_Enchant e318:52c8; AI_Pick_Unit_Enchant_Target e318:4ef0
+      written over earlier patch code (368/1052 original bytes match 1.31)
+151/W304FEAT  Display "+x To Range" and "+x To Melee" on unit view
+      changes: Dev_Choice_Box 1d4d:0609; data
+151/W305FEAT  Unit movement is displayed as a number instead of many small icons in unit view
+      changes: Draw_Unit_View 5e1f:0a79
+151/W306FIX  Fixes "To Hit", "To Def" not displayed if it's negative
+      changes: Dev_Choice_Box 1d4d:0609
+      written over earlier patch code (0/4 original bytes match 1.31)
+151/W307FEAT  More detailed lair scouting
+      changes: Lair_Prompt 6d36:04ce; data
+151/W308AI  AI won't consider cells occupied by enemy units as "free" when moving.
+      changes: Path_Apply_Obstacles 7b88:1325
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W309FEAT  Strategic combat heroes avoid damage
+      changes: Combat_Strategic 888b:00c9
+151/W310FIX  Lawful AI razing decision bugfix
+      changes: AI_Decide_Raze a76b:13bb
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W312AI  AI elements to protect against calculation
+      changes: AI_Side_Attack_Profile c165:216c
+151/W313AI  AI defensive buffs casting priority (anti-magic)
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W314FIX  Fixes bug : Resistence to All/Prayermaster/Holy Bonus resistence applied twice for Terror resist...
+      changes: Combat_Turn_Start 7719:0047
+      our entries: #246
+151/W315AI  AI combat, removes use of obsolete tactic code 66h, 67h
+      changes: AI_Combat_Stance 9218:0000
+151/W316AI  Greater precision stack power rating
+      changes: AI_Tile_Enemy_Strength f48f:1e2d; AI_Build_Threat_Map f48f:3aab; AI_Disband_For_Upkeep ebda:358e; AI_Pool_Add_Strongest ebda:3ef2
+151/W317FIX  Floating Island fix
+      changes: data
+      written over earlier patch code (0/2 original bytes match 1.31)
+151/W318FIX  Fixes Wraith Form giving immunity against Flame Strike, Death Spell, Holy Word
+      changes: Flame_Strike_All b1af:195a; Holy_Word_All b1af:1a3b; Death_Spell_All b1af:1bce
+      our entries: #247
+151/W319AI  Fixes : AI ship carrying settlers is stuck instead of disembarking
+      changes: AI_Ship_Orders ebda:0ee6
+      not in our list - an AI strategy change (no coding defect in 1.31 found)
+151/W320AI  Select a random shore tile on settler destination continent instead of any tile based on a unset...
+      changes: AI_Landmass_Plan f48f:2b22
+151/W321AI  Prefer Ship Wrights Guild on small or Tiny land size
+      changes: AI_Wizard_Choose_Production eab0:00e8
+151/W322AI  AI will reevaluate all continents more frequently
+      changes: AI_Landmass_Plan f48f:2b22
+151/W323FIX  Fixes : Holy Weapon not working in combat
+      changes: Unit_Apply_Modifiers 9748:122d; Unit_Enchant_Bonus 9748:1740
+      our entries: #248
+151/W326FIX  Fixes all Spell Lock bugs
+      changes: Dispel_Square b1af:0656; Mass_Spell_Animate b1af:15ed
+      our entries: #218
+151/W327AI  new AI combat unit buff targeting procedure
+      changes: AI_Target_Disintegrate 8a20:14e0; AI_Combat_Spell_Target 8a20:0000
+151/W328AI  AI Dispel Magic targeting priority 2
+      changes: AI_Target_Dispel 8a20:1657
+151/W329FIX  If spell treasure is rare or very rare, arcane spells will not be given
+      changes: Treasure_Pick_Spell aba4:0319
+151/W330AI  Additional AI ship/continent fixes
+      changes: AI_Ship_Orders ebda:0ee6; AI_Choose_Attack_Landmass f48f:3f14
+      our entries: #329
+151/W331AI  Fixes AI bug : If "no target" continent is the main action continent, status not set
+      changes: AI_Field_Stack_Targets ebda:1930
+      not in our list - an AI strategy change (no coding defect in 1.31 found)
+151/W332AI  AI ship disembarking fix part 2
+      changes: AI_Ship_Orders ebda:0ee6; AI_Unit_Dispatch ebda:0000
+      written over earlier patch code (6/74 original bytes match 1.31)
+151/W333AI  AI can send units from mid sized stacks to fill up the stack building point.
+      changes: AI_Build_Attack_Pool ebda:3e36
+      written over earlier patch code (0/15 original bytes match 1.31)
+151/W334AI  AI can attack targets on sea with ships
+      changes: AI_Disband_Extra_Settlers d208:2886; AI_Ship_Orders ebda:0ee6; AI_Overland_Turn d208:002f
+151/W335AI  AI ship production
+      changes: AI_Wizard_Choose_Production eab0:00e8
+151/W336FIX  Fixes bug : Unit production info shows random numbers for To Melee and To Ranged
+      changes: Battle_Unit_Init_From_Type 7504:0000
+      our entries: #250
+151/W337FIX  Disables AI target overriding which causes walking units to attack fliers
+      changes: AI_Choose_Target 9218:144d
+151/W338FIX  AI ship disembarking fix part 3 (fixes bug in 332)
+      changes: AI_Ship_Orders ebda:0ee6; AI_Unit_Dispatch ebda:0000
+      written over earlier patch code (0/22 original bytes match 1.31)
+151/W339AI  Force main action continent selection if neutral town too strong to take
+      changes: AI_Choose_Attack_Landmass f48f:3f14
+151/W340AI  AI can use Planar Travel and Plane Shift on units
+      changes: AI_Plane_Shift_Stacks ebda:38de
+151/W341AI  AI units can travel through an Astral Gate
+      changes: AI_Plane_Shift_Stacks ebda:38de; Unit_Settle_Exec 81df:01ab; Stack_Can_Plane_Shift 81df:0cb8
+      not in our list - not a 1.31 bug (fixes earlier patch code)
+151/W342AI  AI will not cast Astral Gate on fortress
+      changes: AI_Target_Astral_Gate e318:42c2
+151/W343AI  AI can cast Astral Gate on cities.
+      changes: AI_Pick_City_Spell e318:3318
+151/W344AI  AI can attack targets on sea with flying/waterwalking units or stacks
+      changes: AI_Landmass_Has_Free_Node f48f:20b6; AI_Flyers_To_Target_Landmass ebda:1d21
+151/W345FEAT  Units entering a ship don't automatically get set to patrol.
+      changes: Stack_Board_Transport 7b88:1a3d
+151/W346AI  AI will not target Spell Locked units with banish and dispel evil
+      changes: AI_Combat_Spell_Target 8a20:0000
+151/W347FIX  Fixes bug : Units get autoselected and continue automoving during enemy Time Stop
+      changes: Human_End_Turn 5297:0199
+      written over earlier patch code (0/45 original bytes match 1.31)
+151/W348FIX  Fixes bug : Nonexisting central structure prevents AI attack
+      changes: Combat_Mark_Wall_Obstacles a76b:0064
+      our entries: #251
+151/W349FIX  Fixes bug : Items in slot 128+ are invisible when placed into the vault
+      changes: Screen_Items 6356:0000; Items_Screen_Draw 6356:0581
+      not in our list - disputed: our reading of 1.31 differs
+        why: vault items are signed words tested > -1, and every writer found copies whole words - the described
+             corruption was not found (6356:039a, 6356:07f9)
+151/W350FIX  Fixes bug : Hourglass cursor when AI talks to player
+      changes: Next_Turn 9ec1:0000
+      our entries: #252
+151/W351FIX  AI turn order fix
+      changes: AI_Overland_Turn d208:002f; data
+151/W353FIX  Fixes crash bug introduced in previous AI patches (dispel, overland spell lock targeting)
+      changes: AI_Target_Dispel 8a20:1657; AI_Pick_Unit_For_Enchant e318:52c8
+      written over earlier patch code (0/3 original bytes match 1.31)
+151/W354FIX  Fixes vault ZF bug
+      changes: Items_Slot_Click 6356:0e74
+      written over earlier patch code (3/11 original bytes match 1.31)
+151/W355AI  AI combat disenchant area and dispel magic priority
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W357AI  AI overland movement problem fixes
+      changes: AI_Overland_Turn d208:002f; AI_Units_At_Sea_Orders ebda:0ab4; AI_Flyers_To_Target_Landmass ebda:1d21; AI_Build_Stacks ebda:2da6
+      not in our list - an AI strategy change (no coding defect in 1.31 found)
+151/W358AI  AI overland movement problem fixes
+      changes: AI_Landmass_Has_Free_Node f48f:20b6
+      written over earlier patch code (4/485 original bytes match 1.31)
+151/W359AI  AI overland sea attack 2
+      changes: AI_Disband_Extra_Settlers d208:2886; AI_Landmass_Has_Free_Node f48f:20b6
+      written over earlier patch code (0/2 original bytes match 1.31)
+151/W360AI  AI stackbuilding does not override attack or go orders
+      changes: AI_Unit_Dispatch ebda:0000; AI_Units_At_Sea_Orders ebda:0ab4; AI_Send_Pool_To_Rally ebda:020d; AI_Wizard_Choose_Production eab0:00e8
+151/W361AI  AI Main Action Continent selection
+      changes: AI_Choose_Attack_Landmass f48f:3f14; data
+151/W362FIX  Fixes "unit enchantments dispelled" showing wrong unit name.
+      changes: Mana_Shortfall_Unit_Enchants c3f5:12f3
+151/W363FIX  Fixes possible memory corruption bug
+      changes: Units_Stranded_By_Removal 7504:0c94; Upkeep_Shortfall_Food c3f5:0bcd; Mana_Shortfall_Summons c3f5:1009; Upkeep_Shortfall_Gold c3f5:0d77
+151/W365AI  Adds exception : neutral units are allowed to bump into enemy stacks, only AI controlled ones can...
+      changes: Path_Apply_Obstacles 7b88:1325; AI_Stack_Order_Attack_Tile f48f:0cd9
+      written over earlier patch code (0/6 original bytes match 1.31)
+151/W366DIPL  Troops attacked warning message cannot override town attacked warning message
+      changes: Diplo_Relation_Change 7057:0ae1
+      written over earlier patch code (0/51 original bytes match 1.31)
+151/W367AI  Fixes : AI settlers get stuck over water due to previous changes.
+      changes: AI_Overland_Turn d208:002f
+      written over earlier patch code (18/37 original bytes match 1.31)
+151/W368FIX  New "is unit able to walk on sea" check procedure
+      changes: Units_Stranded_By_Removal 7504:0c94; AI_Flyers_To_Target_Landmass ebda:1d21
+      our entries: #321
+      written over earlier patch code (17/104 original bytes match 1.31)
+151/W369FIX  Various sea capability check fixes using the procedure from 368
+      changes: Combat_Retreat_Resolve 7eb0:0287; AI_Stack_Embark ebda:1ea4; Retreat_Place_Units_On_Tile 7eb0:0ceb; AI_Units_At_Sea_Orders ebda:0ab4
+      our entries: #321
+151/W370FIX  Fixes : Mass Healing cannot be cast during True Light
+      changes: Combat_Spell_Choice_Invalid 8cf2:1548
+151/W372FIX  Fixes AI bug : HREL has opposite of desired effect on hostility evaluation
+      changes: AI_Hostility_Replan f978:12ac
+      our entries: #253
+151/W373AI  Fixes previous patch cancel road building order on AI engineers
+      changes: AI_Overland_Turn d208:002f
+151/W374DIPL  Militarist / Expansionist declaration of war is now possible for Lawful personality.
+      changes: AI_War_Check 736d:0251
+151/W375DIPL  End of turn peace interest variable changing adjustment
+      changes: Diplo_Interest_Drift 7442:0748
+      written over earlier patch code (0/24 original bytes match 1.31)
+151/W376AI  AI combat army comparison : confused units that are switching sides count for both armies
+      changes: Battle_Odds a76b:05cf
+151/W377DIPL  Player Peace treaty offer roll
+      changes: Diplo_Propose_Treaty 6ea7:0535; AI_Side_Attack_Profile c165:216c
+151/W378DIPL  Peace treaty offer reduction to peace willingness variable
+      changes: Diplo_Proposal_Response 7057:058e
+151/W379FIX  Fixes bug : treasure text does not display gold or mana if the amount is exactly 1.
+      changes: Treasure_Show 6d36:06f7
+      our entries: #249
+151/W380AI  AI will not use Plane Shifting, Planar Travel, or Astral Gate with units that are in the fortress...
+      changes: AI_Units_At_Sea_Orders ebda:0ab4; AI_Plane_Shift_Stacks ebda:38de
+151/W381FEAT  381 : Raising undead is possible in Automatic Combat
+      changes: Combat_Strategic 888b:00c9; AI_Toughness_Value 888b:1623; data
+151/W382AI  382 : AI prayer casting priority +7 per unit owned in combat
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W383AI  AI High Prayer casting priority, also not casting Prayer if HP is in effect
+      changes: AI_Combat_Spell_Score c165:00bd; data
+      written over earlier patch code (2/34 original bytes match 1.31)
+151/W384FIX  Fixes bug : overflow possible in the relations variable
+      changes: Diplo_Relation_Change 7057:0ae1
+      our entries: #159
+      written over earlier patch code (0/39 original bytes match 1.31)
+151/W385DIPL  Changes check for starting an audience to match ending condition
+      changes: Diplo_Pick_Greeting 7057:0000
+      our entries: #322
+151/W386DIPL  No temp. rel. penalties are given if the Threathen/Break menu item is entered and left without an...
+      changes: Diplo_Threaten_Menu 6ea7:0f12
+151/W387FIX  Fixes : AI does not lose gold offered when threatened
+      changes: Diplo_Threaten_Menu 6ea7:0f12
+151/W388FIX  Fixes : No range checking on Starting Relations change at DoW
+      changes: Diplo_Break_Treaty 7057:12a6
+      our entries: #161
+151/W389DIPL  Fixes : Hostility evaluation and hostile spell use adds the wrong player's hidden relation
+      changes: AI_Pick_Spell_Category e318:09e5; AI_Hostility_Replan f978:12ac
+      our entries: #253 #305
+151/W390DIPL  Break Treaty fix
+      changes: Diplo_Break_Conflicting_Allies 7057:0853; Overland_Attack 7d45:0000; Diplo_Break_Treaty 7057:12a6
+      our entries: #160 #172
+151/W391DIPL  Fixes bug : Player's number of cities are checked for overextension penalty even towards AI players.
+      changes: Diplo_Relation_Drift 7057:008b
+      our entries: #156
+151/W392AI  When disembarking on the main action continent, the check for the cell to be free is missing
+      changes: AI_Ship_Orders ebda:0ee6
+151/W393AI  When disembarking on the colonization continent with a settler stack, the check for the cell to b...
+      changes: AI_Ship_Orders ebda:0ee6
+151/W394FIX  Fixes bug : AI doesn't reset orders when it should, resulting in units falling off ships into the...
+      changes: AI_Overland_Turn d208:002f
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W395AI  AI will ignore stacks containing any ship in the procedure that assigns nonship water unit orders.
+      changes: AI_Units_At_Sea_Orders ebda:0ab4; AI_Flyers_To_Target_Landmass ebda:1d21
+      written over earlier patch code (1/86 original bytes match 1.31)
+151/W396FIX  AI will always reset orders on units stacked together with a ship
+      changes: AI_Overland_Turn d208:002f
+      written over earlier patch code (75/171 original bytes match 1.31)
+151/W397FEAT  397 : There is a check for drowning at end of every turn
+      changes: Unit_Drown_Check 7504:099e; Units_Stranded_By_Removal 7504:0c94; Units_Compact 5297:0000; Turn_Heal_Units c3f5:2622
+151/W398FIX  398 : New movement type stacking procedure
+      changes: Stack_Movement_Modes 5d70:00b8
+      our entries: #254
+151/W399AI  399 : AI will not leave a Wall of Shadows protected city if enemy has ranged advantage
+      changes: AI_Combat_Turn 9218:108c
+151/W400AI  400 : AI will not attempt to disembark to main action continent of none is selected
+      changes: AI_Ship_Orders ebda:0ee6
+      written over earlier patch code (0/4 original bytes match 1.31)
+151/W401DIPL  401 : Attacking will not reduce Hostility if it's already higher than 2.
+      changes: Diplo_After_Attack 7d45:0a4a
+151/W402DIPL  402 : Peace counter is symmetric, expires at same turn for both players. Peace does not cancel ci...
+      changes: Diplo_Make_Peace 7057:0952
+151/W403DIPL  403 : Performing a hostile action reduces the peace counter
+      changes: Diplo_Relation_Change 7057:0ae1
+151/W404DIPL  404 : Fixes bug - Player to Ai peace offer uses the wrong player's peace interest variable
+      changes: Diplo_Proposal_Response 7057:058e
+      written over earlier patch code (19/44 original bytes match 1.31)
+151/W405DIPL  405 : Fixes bug - Generic temp variable decrease will no longer reduce the peace interest of the...
+      changes: Diplo_Interests_Minus10 7057:0a98; Screen_Diplomacy_Incoming 7269:0000
+      not in our list - disputed: our reading of 1.31 differs
+        why: the patch removes the -10 peace interest (a policy change); the "wrong player" it names is not visible
+             in the function (7057:0add)
+151/W406DIPL  406 : Stricter generic war declaration
+      changes: AI_War_Check 736d:0251
+151/W407FIX  Fix bug : shortest path finding does not recognize enemies standing in towers
+      changes: Path_Apply_Obstacles 7b88:1325
+      our entries: #256
+151/W408AI  AI units with 0 melee can attack if they have a thrown, breath, gaze or touch attack of any kind.
+      changes: AI_Unit_Execute 9218:0344
+151/W410FIX  Fixes bug : City defenders start combat from invalid central structure position
+      changes: Combat_Deploy_Side 8f51:1f73
+      our entries: #255
+151/W412FEAT  Holy Bonus, Resist to All displays bonus amount (1 or 2)
+      changes: UnitView_Build_Abilities 679a:0000
+151/W413AI  AI flying/waterwalking/windwalking stacks over sea now also consider land targets
+      changes: AI_Landmass_Has_Free_Node f48f:20b6
+      written over earlier patch code (7/456 original bytes match 1.31)
+151/W414AI  AI main action continent selection change
+      changes: AI_Choose_Attack_Landmass f48f:3f14
+151/W415AI  AI fly/waterwalk stack attack : recognize enchanted units
+      changes: AI_Landmass_Has_Free_Node f48f:20b6
+      written over earlier patch code (6/584 original bytes match 1.31)
+151/W416FIX  Fixes AI bug : AI cancels Spell of Return when selecting target
+      changes: AI_Target_Move_Fortress e318:3c7d
+      our entries: #304
+151/W417FIX  Fixes bug : Chaos Channels wings not recognized as flight on overland
+      changes: AI_Landmass_Has_Free_Node f48f:20b6; Stack_Movement_Modes 5d70:00b8
+      written over earlier patch code (9/679 original bytes match 1.31)
+151/W418FIX  Fixes bug : Wind Walking not recognized as flight for the stack
+      changes: Stack_Movement_Modes 5d70:00b8
+      written over earlier patch code (3/150 original bytes match 1.31)
+151/W419DIPL  Hostility reevaluation counter reset fix
+      changes: Diplo_Relation_Change 7057:0ae1; Overland_Attack 7d45:0000
+151/W420AI  AI fly/waterwalk stack attack update : recognize Wraithform enchantment
+      changes: AI_Landmass_Has_Free_Node f48f:20b6
+      written over earlier patch code (19/586 original bytes match 1.31)
+151/W421FIX  Fixes insecticide bug : artificer halves gold required for merchant offers
+      changes: Turn_Random_Offers c3f5:1dc7
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W422FIX  Fixes division by zero crash if enemy army power is too low in diplomacy
+      changes: Wizard_Update_Power_Stats c751:22a2
+      not in our list - disputed: our reading of 1.31 differs
+        why: every live reader of the army-strength statistic guards against 0; only a function the game never calls
+             divides by it unguarded
+151/W423FIX  Disables AI wall crusher use because it is not working
+      changes: AI_Target_Score a22c:2630
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W424AI  Fixes AI bug : stacks that have the order to move together split up
+      changes: Stack_Move 7b88:0000
+      our entries: #317
+151/W425FIX  Fixes bug : Neutrals don't gain resistance from Holy Bonus
+      changes: Combat_Start_Auras a22c:194b
+      our entries: #261
+151/W426AI  AI will consider the Crack's Call+Web combo when deciding to cast Web
+      changes: AI_Combat_Spell_Score c165:00bd
+      written over earlier patch code (7/34 original bytes match 1.31)
+151/W428FEAT  Astrologer and Historian update
+      changes: Wizard_Stat_Spell_Research c751:2699; Wizard_Update_Power_Stats c751:22a2; Astrologer_Redraw 64e7:0ec3; Wizard_Stat_Magic_Power c751:260f
+151/W429AI  AI will prefer spells that target heroes in combat
+      changes: AI_Combat_Spell_Score c165:00bd
+      written over earlier patch code (0/106 original bytes match 1.31)
+151/W430AI  AI will consider the Crack's Call+Web combo only if target has flight
+      changes: AI_Combat_Spell_Score c165:00bd
+      written over earlier patch code (0/54 original bytes match 1.31)
+151/W431FIX  Fixes bug : Dispel Magic always works on unit curses
+      changes: Dispel_Square b1af:0656
+      our entries: #262
+151/W432FIX  Fixes bug : Crusade counts as 2 levels for calculating unit health in combat
+      changes: Battle_Unit_Max_Hits 9748:0c80
+151/W433FIX  Fixes bug : Game crashes when summoning a noncorporeal unit into a full city on an island.
+      changes: Tile_Room_For_Unit 81df:080d; AI_Units_At_Sea_Orders ebda:0ab4
+      our entries: #310
+151/W434FEAT  Heroes cannot desert due to lack of gold, always other units will be selected.
+      changes: Upkeep_Shortfall_Gold c3f5:0d77
+151/W435AI  AI cannot disband heroes if low on gold.
+      changes: AI_Disband_For_Upkeep ebda:358e
+      written over earlier patch code (0/21 original bytes match 1.31)
+151/W437DIPL  Forming a Peace Treaty cannot improve Visible Relations (REL) over 0 (neutral).
+      changes: Diplo_Make_Peace 7057:0952
+151/W438DIPL  Successfully conquering another wizard's city will now use "Declaration of War" message
+      changes: Overland_Attack 7d45:0000
+151/W439FEAT  City Growth is always being reported
+      changes: Turn_City_Growth c3f5:14ed
+      written over earlier patch code (0/7 original bytes match 1.31)
+151/W440FIX  Fixes bug : Terror works on Death Immune enemies.
+      changes: Combat_Turn_Start 7719:0047
+      our entries: #257
+151/W441AI  AI will target ores with Corruption and Raise Volcano
+      changes: AI_Target_Corruption_Volcano e318:6bd6; AI_Nature_Casting_Penalized e318:38a5
+151/W443FIX  Fixes combat dispel and disenchant with Runemaster bugs
+      changes: Combat_Cast_Spell 8a20:1a8e
+      written over earlier patch code (4/14 original bytes match 1.31)
+151/W444FIX  Fixes overland Disenchant Area not removing Invulnerability
+      changes: Disenchant_Area_Overland ba2c:00e4
+      our entries: #306
+151/W445FIX  Combat movement is inconsistent
+      changes: Combat_Find_Path e29d:0000
+151/W446AI  AI uses windwalkers to carry the entire stack over sea instead of only the windwalker.
+      changes: AI_Flyers_To_Target_Landmass ebda:1d21
+151/W447FIX  Combat turn order bugs
+      changes: Combat_Leadership_Side 7eb0:0181; Combat_End_Human_Turn 7eb0:01f9; Combat_Main 75eb:0000; Combat_Turn_Start 7719:0047
+151/W448AI  Improved AI settling decision
+      changes: AI_Settler_Orders ebda:4661; Dist_Max_Plus_Half_Min 1df0:00fd
+      our entries: #150
+151/W449DIPL  AI will not accept a "Declare War on" request if they have a Peace Treaty with the target
+      changes: Diplo_Army_Near_Fortress 6ea7:1922; Diplo_Propose_Treaty 6ea7:0535
+151/W450FIX  Overland spellbook displays wrong amount of turns bug
+      changes: Spellbook_Build 9a4b:026b
+      our entries: #269
+151/W451FIX  Fixes immobilization combat turn bugs
+      changes: Combat_Main 75eb:0000; Combat_Select_Next_Unit 83d2:0e5a
+      our entries: #349
+151/W452DIPL  Removes AI Alliance-War conflicting interest resolution
+      changes: Diplo_Break_Conflicting_Allies 7057:0853; AI_Diplo_Turn_AI_Vs_AI 7269:0390; Combat_Main 75eb:0000
+      our entries: #163
+151/W453DIPL  Break Alliance With and Declare War On proposals now consider AI Military
+      changes: Diplo_Army_Near_Fortress 6ea7:1922; Diplo_Propose_Treaty 6ea7:0535
+      written over earlier patch code (36/114 original bytes match 1.31)
+151/W454FEAT  New unit selection order and starting position order during combat
+      changes: Combat_Deploy_Side 8f51:1f73; Combat_Find_Next_Unit 83d2:0f17
+151/W455AI  AI cannot recognize combat cast Wall of Darkness
+      changes: AI_Target_Scan 9218:1836
+      our entries: #198
+151/W456FIX  Fix naval combat terrain bug : certain cells not available for ships but for walking units
+      changes: Battlefield_Generate_Map df82:05d8; Combat_Load_Armies 7eb0:18f3
+      not in our list - cosmetic
+151/W457FEAT  Floating Island puts a visible "island" under the units
+      changes: Sprite_List_Add dc99:28a8; Combat_Draw_Battlefield dc99:001b
+151/W458FIX  Fixed bug : ships participating/not participating in combat
+      changes: Combat_Main 75eb:0000; Combat_Load_Armies 7eb0:18f3
+      not in our list - a new feature
+151/W459FIX  Fixes insecticide bug : Runemaster does not work if also being Famous for some spells.
+      changes: Combat_Cast_Spell 8a20:1a8e
+      written over earlier patch code (0/2 original bytes match 1.31)
+151/W460FEAT  Weapon Abilities granted by equipment show up on the unit view
+      changes: UnitView_Build_Abilities 679a:0000
+151/W461FIX  Fixes possible source of infinie gold bug in AI buying building
+      changes: AI_City_Maybe_Buy eab0:0b28
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W462FIX  AI all continent reevaluation and settling selection update
+      changes: AI_Landmass_Plan f48f:2b22
+151/W463AI  AI can use Wall Crusher
+      changes: Combat_Mark_Wall_Obstacles a76b:0064; AI_Target_Score a22c:2630
+151/W464FIX  Fixes : Overland map-view during enemy turns sometimes displays units at wrong location
+      changes: Unit_Settle_Exec 81df:01ab; AI_Execute_Unit_Orders 81df:0000
+      written over earlier patch code (6/27 original bytes match 1.31)
+151/W465FIX  Fix bug : game crashes on Call Lightning if Sound Effects is off.
+      changes: Call_Lightning_Turn b66a:03c9
+      our entries: #260
+151/W466FIX  Fixed AI bug : AI sends walking units into water
+      changes: AI_Flyers_To_Target_Landmass ebda:1d21
+      written over earlier patch code (0/16 original bytes match 1.31)
+151/W467FIX  Fixes a possible memory corruption bug
+      changes: AI_Build_Strength_Tables d208:0cd7
+151/W468FIX  Fixes bug : AI targeting with Fire/Ice Storm, Black Wind, Stasis
+      changes: AI_Target_Area_Damage e318:6284
+151/W469FIX  Fixes bug : some units fail to enter combat in towers
+      changes: Combat_Load_Armies 7eb0:18f3; Combat_Strategic 888b:00c9
+      our entries: #270
+151/W470FIX  Fixed bug : Units with Illusions Immunity cannot fire through Wall of Shadows
+      changes: Ranged_Target_Blocked 8f51:1e10
+      our entries: #263
+151/W471FIX  Fixes : AI tries to melee flying units with nonfliers if they have an unusable ranged attack
+      changes: AI_Target_Score a22c:2630
+      our entries: #313
+151/W472FIX  W472 - Fixes problem caused by W441 : AI targets non-enemy city area with volcano/corruption if o...
+      changes: AI_Target_Corruption_Volcano e318:6bd6
+      written over earlier patch code (0/21 original bytes match 1.31)
+151/W473FEAT  W473 - Increases unit limit to 2000.
+      changes: Spell_Target_Map_Select 5c50:0000; Screen_Overland_Map 4fb6:0000; SpellTarget_Build_Cursor_Map 5c50:0d0a; Unit_Create a0ec:0000
+151/W476FIX  W476 - Fixes bug : Melee Wall Crushers cannot attack walls with units behind them.
+      changes: Melee_Wall_Allowed 8f51:247d
+151/W477FIX  W477 - Fixes bug : Blood is displayed when attacking walls with a Wall Crusher
+      changes: Combat_Unit_Attack a22c:1da4
+      not in our list - cosmetic
+151/W478AI  W478 - Fixes AI overland movement bugs
+      changes: AI_Landmass_Has_Free_Node f48f:20b6; AI_Disband_Extra_Settlers d208:2886
+      written over earlier patch code (2/200 original bytes match 1.31)
+151/W479FIX  W479 - Fixes flying ship movement bugs
+      changes: GoTo_Build_Group 5315:0fc6; Stack_Build_Move_Group 5315:0bef; Stack_Needs_Transport 7b88:1993
+      our entries: #168
+151/W481AI  W481 - Fixes : Variable that tracks spell realms available to the enemy for AI decisions is not r...
+      changes: AI_Side_Attack_Profile c165:216c; AI_Combat_Assess_Threats c165:1fee
+      written over earlier patch code (10/25 original bytes match 1.31)
+151/W482AI  AI combat ranged unit rating now has same changes as melee rating
+      changes: AI_Missile_Value 888b:16a2
+151/W483FIX  Fixes crash on magic screen if found spell from the defeated enemy was the current research
+      changes: MagicScr_Draw 6080:0693
+      our entries: #264
+151/W485FIX  485 Bug : When AI prefers to target overland enemy stacks near own units, plane is not considered.
+      changes: AI_Target_Area_Damage e318:6284
+      written over earlier patch code (0/114 original bytes match 1.31)
+151/W486OPT  Optimalizes AI overland naval movement decision
+      changes: AI_Landmass_Has_Free_Node f48f:20b6
+      written over earlier patch code (13/524 original bytes match 1.31)
+151/W488AI  AI can send multiple stacks to attack a nearby target
+      changes: AI_Stack_Pick_Target ebda:2bc9; AI_Collect_Landmass_Targets ebda:2270
+      not in our list - an AI strategy change (no coding defect in 1.31 found)
+151/W490FIX  Fixes Firestorm/Ice storm AI fix breaking Stasis and Black Wind
+      changes: Black_Wind_Cast af2c:0501; Stasis_Cast acd6:12b7
+151/W491AI  Fixes : AI attacks units on unmelded node even if not having hostility to do so
+      changes: AI_Collect_Landmass_Targets ebda:2270
+      our entries: #320
+151/W492FIX  Fixes : Gaia's Blessing changes Chaos Node into hills
+      changes: Tile_Is_Volcano f319:12a1
+      our entries: #259
+151/W493FIX  Fixes : Gaia's Blessing food display bugs
+      changes: City_Food_Breakdown c751:34fc
+      our entries: #43
+151/W494AI  Improved AI stackbuilding
+      changes: AI_Send_Pool_To_Rally ebda:020d
+151/W495FIX  Not getting turn to cast spells when all units immmobilized
+      changes: Combat_Select_Next_Unit 83d2:0e5a
+      our entries: #309
+151/W496FIX  Fixes : Death Immunity does not prevent taking Create Undead type damage
+      changes: Attack_Resolve a22c:0a69
+      our entries: #258
+151/W498FIX  Units with Death and Magic Immunity now cannot be raised as undead
+      changes: Combat_End a4fa:0000
+151/W499FIX  Fixes heroes not appearing over 1k units
+      changes: Hero_Pick_Random a0ec:0839; Turn_Random_Offers c3f5:1dc7
+      not in our list - not a 1.31 bug (fixes earlier patch code)
+151/W501FIX  Fixes Flying Fortress bugs
+      changes: Combat_Mark_Wall_Obstacles a76b:0064; Melee_Wall_Allowed 8f51:247d
+      our entries: #350
+151/W502FIX  Fixes :  AI Players don't find spells when the human player is banished
+      changes: Wizard_Banish 78ba:148a
+      our entries: #265
+151/W503FIX  Graphical bug when AI casts Raise Dead, Animate Dead
+      changes: Raise_Dead b1af:1f5d; Animate_Dead b1af:2384
+      not in our list - cosmetic
+151/W504AI  AI will not consider banished wizard's ex-capital a target for attacks
+      changes: AI_Collect_Landmass_Targets ebda:2270
+      written over earlier patch code (26/72 original bytes match 1.31)
+151/W505DIPL  Diplomatic bonus for banishing another wizard's enemy or defeating them is reduced from 25/50 to...
+      changes: Wizard_Fortress_Captured 78ba:0000; Wizard_Banish 78ba:148a
+      written over earlier patch code (0/2 original bytes match 1.31)
+151/W506AI  AI can flee on turn 2
+      changes: Combat_Check_Winner 8593:0000
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W507FIX  Realm available for treasure check does not run for Arcane
+      changes: Treasure_Pick_Spell aba4:0319
+151/W508FEAT  New option : numbered autosave for each turn
+      changes: Autosave c74a:0000; data
+151/W509AI  Fixes bug in AI : wind walking buff not recognized on already seaworthy unit, drops carried army...
+      changes: AI_Landmass_Has_Free_Node f48f:20b6
+      written over earlier patch code (10/613 original bytes match 1.31)
+151/W510AI  Fixes : AI fails to target with Warp Node
+      changes: AI_Target_Warp_Node e318:56ab
+      our entries: #114
+151/W511FIX  Fixes various engineer related bugs
+      changes: Stack_Move 7b88:0000; Stack_Animate_Path 7b88:091f
+      not in our list - unclear whether 1.31 does this by design
+151/W512FEAT  IF a city reaches max pop, switch housing to trade goods when it would grow.
+      changes: City_Growth_Rate c751:1360
+151/W513AI  Improves cleaning unused units to make room by
+      changes: AI_Disband_Obsolete_Units c3f5:31a3; Outposts_Grow c751:207b
+151/W514DIPL  Offering tributes has an effect on peace interest
+      changes: Diplo_Offer_Tribute 7057:1620; Diplo_Proposal_Response 7057:058e
+151/W516FIX  Fixes : AI cannot receive items from "gift" events
+      changes: Events_Process 6ad6:0947
+      our entries: #177
+151/W517FIX  Fixes : Greeting overrides DoW message
+      changes: Diplo_Mark_Met 736d:0000; Diplo_Declare_War 7057:109c
+      our entries: #297
+151/W518FIX  Heroes and mercenaries can appear up to 1980 units
+      changes: Turn_Random_Offers c3f5:1dc7
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W519FIX  hero names of dead heroes don't disappear if saving and reloading
+      changes: Load_Game 4558:03f8
+151/W522FIX  fix : neutral city growth bugs (max size is 8 when it is meant to be higher on higher difficulty.)
+      changes: Turn_City_Growth c3f5:14ed
+151/W523FIX  Fixes : cities without city walls appear on the overland map as though they had one.
+      changes: Map_Draw_Cities_Move_Anim 5a8c:0299; Map_Draw_Cities d95b:0474
+151/W524DIPL  reduced treaty difficulty for peace treaty : -20 instead of +40
+      changes: Diplo_Propose_Treaty 6ea7:0535
+151/W525FIX  Fixes : Wraith Form prevents casting Resist Magic on a unit.
+      changes: Overland_Cast_Spell ba2c:09c4
+      our entries: #247
+151/W526FIX  fixes cities disappearing for no reason bug
+      changes: Overland_Attack 7d45:0000; City_Collateral_Damage 4a3f:1292
+      our entries: #266
+151/W527AI  AI targets tile with highest food when casting volcano/corruption
+      changes: AI_Target_Corruption_Volcano e318:6bd6; AI_Nature_Casting_Penalized e318:38a5
+151/W528FIX  fixes : Surveyor displays wild game wrong
+      changes: City_Site_Evaluate c751:2bb6
+      our entries: #123
+151/W529FIX  Fixes : wraith form grants immunity to wrack
+      changes: Wrack_Turn b66a:0106
+      our entries: #247 #325
+151/W530AI  reverses insecticide change : AI doesn't receive maintenance discount on buildings
+      changes: Turn_Pay_Upkeep c3f5:09a7; City_Recalculate 9ef8:0000
+151/W531DIPL  Difficulty modifier on generic war declaration -8 per level instead of -12
+      changes: AI_War_Check 736d:0251
+151/W532AI  AI tax rate setting :
+      changes: AI_Set_Tax d208:2593
+      written over earlier patch code (238/725 original bytes match 1.31)
+151/W533AI  When the AI wants to cast a summoning spell overland and has none available, instead of
+      changes: AI_Pick_City_Spell e318:3318; AI_Pick_Summon e318:1995
+151/W535AI  AI will not use spell charges in items if it is deemed harmful or not worth casting (priority bel...
+      changes: AI_Combat_Turn 9218:108c; AI_Target_Scan 9218:1836
+151/W536AI  AI's seaworthy nonship stacks performing land to sea, sea to land, or intercontinental attack/mov...
+      changes: AI_Landmass_Has_Free_Node f48f:20b6; AI_Find_Landing_Tile f48f:23bb
+      written over earlier patch code (372/825 original bytes match 1.31)
+151/W538FIX  fixes bug : right clicking on units does not show the correct movement type : swimming appears in...
+      changes: UnitView_Move_Icon 5e1f:1dc2
+151/W539  Shows warnings for 98A7A-98A83 which can be ignored
+      changes: Combat_Strategic 888b:00c9; Unit_Combat_Value c165:1e7f; AI_Unit_Strength a0ec:0de8; UnitType_AI_Strength a0ec:0ccf
+151/W540FIX  Fixes bug : AI players can't trade
+      changes: AI_Diplo_Turn_AI_Vs_AI 7269:0390
+      our entries: #9 #104
+151/W541FIX  Fixes : Wall of Fire, Wall of Shadows have no effect when cast on outposts,
+      changes: Combat_Draw_Battlefield dc99:001b; Battlefield_Generate df82:0000
+      our entries: #271
+151/W542FIX  fixes bug : Game doesn't allow removal of items due to hero drowning when the item being removed...
+      changes: Items_Removal_Allowed 6356:1579
+151/W543FIX  Fixes bug : W501 Flying Fortress fix does not work for players other than the one in slot 1.
+      changes: Melee_Wall_Allowed 8f51:247d
+      our entries: #350
+151/W544DIPL  When the AI trades with another AI for spells, if the value difference of the spells is greater t...
+      changes: AI_Diplo_Turn_AI_Vs_AI 7269:0390
+151/W545FIX  Fixes bug - ships don't carry units set to "Going"
+      changes: Stack_Build_Move_Group 5315:0bef
+      our entries: #167
+151/W546AI  When the AI moves on the overland map and it results in an attack, if there is no hostility, the...
+      changes: Overland_Attack 7d45:0000
+151/W548AI  AI can recognize up to 345 of their own stacks through the global stack system instead of 80.
+      changes: AI_Build_Strength_Tables d208:0cd7; AI_Landmass_Balance d208:0373; AI_Disband_For_Upkeep ebda:358e; AI_Pick_Spell_Category e318:09e5
+151/W549AI  Fixes AI problem
+      changes: AI_Build_Stacks ebda:2da6
+      our entries: #319
+151/W550FIX  Dispel bonus against spells from "runemaster" and "mastery" is applied for neutrals at random
+      changes: Spell_Dispel_Resistance ba2c:006c
+151/W551AI  Fixes combat AI bug - AI units stay idle if they have MP left to cast spells but no spell to use...
+      changes: AI_Unit_Execute 9218:0344; AI_Target_Scan 9218:1836
+      not in our list - not traced far enough to judge
+151/W552FIX  AI will not flee during the human player's turn
+      changes: AI_Should_Flee a76b:12d8
+151/W553FIX  Fixes :When Demon Lord fails to summon due to the 9 unit limit, it loses its turn as though it wa...
+      changes: Demon_Lord_Summon 8f51:22fa; Combat_Spell_Action 8cf2:004b
+      not in our list - not a 1.31 bug (fixes earlier patch code)
+151/W554DIPL  AI players will not lose peace interest towards each other when hit by hostile spells
+      changes: Diplo_Relation_Change 7057:0ae1
+      written over earlier patch code (16/60 original bytes match 1.31)
+151/W556FIX  Fixed crash/ ghost unit creation when a new combat unit is summoned that makes the total units
+      changes: Combat_Load_Armies 7eb0:18f3; Combat_Summon_Add_Unit 7eb0:1744
+      our entries: #180
+151/W557AI  Fixes bug : if the AI was spell blasted during the human player's turn, it'll not attempt to cast
+      changes: AI_Overland_Turn d208:002f
+      not in our list - not a 1.31 bug (fixes earlier patch code)
+151/W558FIX  It is not possible to summon creatures on invalid tiles in combat.
+      changes: Combat_Spell_Pick_Target_UI 8f51:0347
+151/W559FIX  Fixes : units can leave valid combat area at the bottom edge during combat
+      changes: Battlefield_Build_Move_Costs df82:29d8; data
+      our entries: #302
+151/W560FIX  Fixes bug : turn counter increases during Time Stop
+      changes: Next_Turn 9ec1:0000
+      our entries: #267
+151/W561FIX  Fixes : combat doesn't end during AI/Auto turn even if there are no remaining enemies
+      changes: Battle_Apply_Damage 8f51:1ad9
+      our entries: #303
+151/W562AI  AI will move units in order of caster -> ranged -> first strike/breath/gaze/thrown/armor piercer...
+      changes: AI_Combat_Turn 9218:108c
+151/W563FIX  Fixes scrolling bug caused by Corruption and Enchant Road
+      changes: Corruption_Cast af2c:1947; Enchant_Road_Cast af2c:1fc0
+151/W564FIX  Fixes bug : after summoning on the overland map, selected unit becomes random/invalid
+      changes: Select_Stack_Of_Unit 517e:023a
+      our entries: #205
+151/W565FEAT  Requires enabled debug mode. To enable debug, either use the tweaker during runtime, or uncomment...
+      changes: GoTo_Build_Group 5315:0fc6; Tile_Is_Water_Gen d95b:1a44; Map_Draw_Lairs d95b:0824; Screen_Overland_Map 4fb6:0000
+151/W566FEAT  When the Grand Vizier is enabled, the game will not report completed buildings
+      changes: Human_End_Turn 5297:0199
+151/W567FIX  Fixes bug - Haste does not double movement the turn it was cast
+      changes: Combat_Cast_Spell 8a20:1a8e
+      our entries: #268
+151/W568FIX  Fixes bug : When "all units retreat exhausted", not involved units count as fleeing
+      changes: Combat_End a4fa:0000
+      written over earlier patch code (0/6 original bytes match 1.31)
+151/W569FIX  Fixes bug : Wall of Fire has no effect on AI units moving though it (unless they attack a unit on...
+      changes: AI_Rally_Point 9218:0e65; AI_Sort_By_Moves 9218:0da8; AI_Move_Path 9218:226d
+      our entries: #295
+151/W570FIX  Pathfinding and noncoporeal allows moving for 1 on any terrain in combat
+      changes: Unit_Combat_Move_Type 7eb0:16b8; Battlefield_Generate_Map df82:05d8; data
+151/W571FIX  Fixes various bugs in Ai continent evaluation including a division by zero crash source
+      changes: AI_Replan_Landmass ebda:5b81; AI_Landmass_Plan f48f:2b22
+      our entries: #120
+151/W572FIX  Fixes overflow crash caused by overly powerful units (usually heroes) in AI unit evaluation
+      changes: AI_Attack_Value 888b:17aa; AI_Missile_Value 888b:16a2; Combat_Strategic 888b:00c9
+      our entries: #318
+151/W573DIPL  Changes natural relation gravitation at end of turn to use the following formula :
+      changes: Diplo_Relation_Drift 7057:008b; data
+151/W574DIPL  When AI offers wizard's pact based on military, REL+HREL>-50 is checked instead of REL>-50
+      changes: AI_Diplo_Propose_To_Human 7442:0000
+      written over earlier patch code (1/30 original bytes match 1.31)
+151/W575AI  Fixes AI engineers getting stuck when trying to build a road into a city containing 9 units.
+      changes: Stack_Move 7b88:0000
+      not in our list - not traced far enough to judge
+151/W576DIPL  Increases AI positive diplomacy frequency and power since the original did it once every 140-300...
+      changes: AI_Diplo_Turn_AI_Vs_AI 7269:0390
+151/W577FIX  Fixes :  Teleporting or merging unit comes back to life with 0 figures
+      changes: AI_Move_Path 9218:226d
+      our entries: #347
+151/W578FIX  Fixes bugs within AI movement execution
+      changes: AI_Move_Path 9218:226d; AI_Unit_Execute 9218:0344
+      our entries: #348
+151/W579FIX  Chaos Spawn correctly shows -4 on Doom and Death gaze instead of 4.
+      changes: UnitView_Build_Abilities 679a:0000
+151/W580FIX  Shows warnings for e5266-e5270 that can be ignored
+      changes: AI_Stack_Embark ebda:1ea4; Combat_End a4fa:0000; AI_Unit_Dispatch ebda:0000
+151/W581AI  When an AI settler and a stack of units try to board the same ship at the same time, it'll no lon...
+      changes: AI_Units_At_Sea_Orders ebda:0ab4; AI_Stack_Embark ebda:1ea4; AI_Nearest_Enemy_Field_Stack ebda:3225; AI_Build_Stacks ebda:2da6
+      our entries: #351
+151/W582FIX  Fixed bug : AI wizards lose all their mana crystals every turn while banished due to doing alchem...
+      changes: AI_Balance_Gold_Mana d208:20c3
+      our entries: #275
+151/W583DIPL  Fixes bug : Lawful AI will raze towns more if THEY broke a treaty with the towns owner, not the o...
+      changes: AI_Decide_Raze a76b:13bb
+      our entries: #276
+151/W585AI  Fixes bug : AI cannot use disrupt. Changes disrupt priority to type B +10.
+      changes: AI_Target_Cracks_Call 8cf2:210d; AI_Target_Disrupt 8cf2:2065; AI_Combat_Spell_Score c165:00bd
+      our entries: #278
+151/W587FIX  Fixes bug : game crashes on Army screen if an army is in a tower split between the two planes.
+      changes: ArmyList_Collect_Units 585e:1216
+151/W588FIX  Fixes : AI pays the wrong cost for moving on roads
+      changes: Road_Order_Start 81df:0a83
+      our entries: #311
+151/W589FEAT  Fixes AI engineers getting stuck
+      changes: Tile_Make_Desert_Unused cbdf:02a2; Stack_Move 7b88:0000; Path_Apply_Obstacles 7b88:1325; Road_Path_AI cbdf:18c6
+151/W590AI  AI settlers are no longer allowed to disembark on any type 3 continent, and can only do so on the...
+      changes: AI_Foreign_Unit_Near_On_Landmass ebda:5315; AI_Ship_Orders ebda:0ee6
+151/W591FIX  Fixes : city recalculation does not update amount of food produced by minimal farmers, causing AI...
+      changes: Player_Cities_Recalc 9ec1:02f6
+      not in our list - not a 1.31 bug (fixes earlier patch code)
+151/W593FIX  Fixed bug - AI stacks containing EXACTLY 9 units cannot change plane in towers or by any other me...
+      changes: Stack_Can_Plane_Shift 81df:0cb8
+      our entries: #174
+151/W594DIPL  Fixes : AI fails to remember the spell/city name when referring to one in a refusal text.
+      changes: Diplo_Relation_Change 7057:0ae1; Diplo_Show_Reply 6ea7:0aaa
+      written over earlier patch code (23/84 original bytes match 1.31)
+151/W596FIX  Fixes Disenchant Area showing the dispel of "None" if Nightshade is present.
+      changes: Disenchant_Area_Combat b1af:0000
+      not in our list - cosmetic
+151/W597FIX  Fixes another bug in minimal farmer recalculation
+      changes: Player_Cities_Recalc 9ec1:02f6
+      not in our list - not a 1.31 bug (fixes earlier patch code)
+      written over earlier patch code (8/46 original bytes match 1.31)
+151/W598FIX  Fixed bug : When a unit moved towards a sea tile, it'll set all tiles on the path already
+      changes: Path_Apply_Obstacles 7b88:1325
+      our entries: #301
+151/W599FIX  Fixes bug : When the human player shifts plane with fewer than 9 units, total units checked again...
+      changes: Planar_Travel_Dest_Check 51b2:0c54
+      our entries: #277
+151/W600AI  AI is allowed to use Phantom Warriors in sea battles
+      changes: AI_Combat_Spell_Score c165:00bd
+151/W601FIX  Fixes bug : screen does not refresh after AI turn, invisible units remain unclickable even if mov...
+      changes: Combat_Main 75eb:0000
+      not in our list - not traced far enough to judge
+151/W602FIX  Fixes bug - If a city has too many rebels to have the minimal needed farmers
+      changes: Player_Cities_Recalc 9ec1:02f6
+      written over earlier patch code (3/44 original bytes match 1.31)
+151/W603FIX  Fixes bugs - affects all spells from AI, units and the human player :
+      changes: Combat_Cast_Spell 8a20:1a8e
+      our entries: #193
+151/W604DIPL  Adds "Declare War" to the diplomacy menu
+      changes: Diplo_Threaten_Menu 6ea7:0f12; data
+151/W605FIX  Fixed bug : When a city loses population, city size is not capped at "Capital", so very large cit...
+      changes: Turn_City_Growth c3f5:14ed
+      our entries: #274
+151/W606DIPL  Fixes bug : The player sometimes cannot offer spells as tribute in diplomacy that could be offered.
+      changes: Diplo_Offer_Tribute 7057:1620
+151/W607FIX  Fixes bug : Swamps do not produce the 1/2 food they are supposed to.
+      changes: Terrain_Food f319:00a1
+      our entries: #272
+151/W608DIPL  Diplomacy improvements
+      changes: Diplo_Threaten_Menu 6ea7:0f12; Diplo_Relation_Change 7057:0ae1
+      written over earlier patch code (28/62 original bytes match 1.31)
+151/W609DIPL  Latest dipomacy fine-tuning from CoM 3.03
+      changes: Diplo_Interest_Drift 7442:0748; Diplo_Offer_Tribute 7057:1620; Diplo_Relation_Change 7057:0ae1; AI_Diplo_Propose_To_Human 7442:0000
+151/W610DIPL  The personality modifier of Chaotic wizards changes to RND(50)+1 each turn and when the game is l...
+      changes: AI_Diplo_Turn_Vs_Human 736d:006b; Game_Session_Init 45d6:0000
+151/W611FIX  Fixes division by zero in W609
+      changes: Diplo_Interest_Drift 7442:0748
+      written over earlier patch code (2/63 original bytes match 1.31)
+151/W612FIX  Raising a volcano at the corner of the map no longer creates land tiles in the adjacent ocean
+      changes: Terrain_Retile_3x3 cbdf:0422
+      our entries: #131
+151/W613FIX  Fixed bug : Historian is still scrolled during Time Stop if the edge of the graph is reached.
+      changes: Wizard_Update_Power_Stats c751:22a2
+      our entries: #96
+151/W614FIX  Fixes bug : AI Settlers fail to board ships at some types of shore tiles because the tiles are no...
+      changes: AI_Unit_Go_Overseas ebda:569d
+      our entries: #308
+151/W615FIX  Fixes screen scrolling bugs with remaining overland spells the same way as Corruption
+      changes: Map_Spell_Effect_Anim b8ad:16df
+      not in our list - cosmetic
+151/W616FIX  Fixes : Units shown on map during enemy turns is out -of synch with map location shown or not upd...
+      changes: Stack_Animate_Path 7b88:091f; Map_Draw_View 59bd:0000; Battlefield_Generate df82:0000
+      not in our list - cosmetic
+151/W617FIX  Fixes : Entangle effect is not applied the turn it was cast when the defender casts it.
+      changes: Combat_Cast_Spell 8a20:1a8e
+      our entries: #280
+151/W618FIX  When a hero is killed by Great Unsummoning, Death Wish, or other overland spells,
+      changes: Unit_Spell_Damage acd6:01b0; Death_Wish_Cast af2c:0071; Great_Unsummoning_Cast af2c:02ad; Stack_Resist_Or_Die acd6:0490
+151/W619FIX  Fixes bug : Creature Binding can be dispelled by its owner instead of not at all.
+      changes: data
+151/W621FIX  Fixed : "That unit already has that special ability" error messge doesn't show up
+      changes: Combat_Spell_Pick_Target_UI 8f51:0347
+151/W623FIX  Fixed bug : Units don't reset their gaction selectedh before picking a new one, possibly causin...
+      changes: AI_Choose_Target 9218:144d
+      written over earlier patch code (0/11 original bytes match 1.31)
+151/W624AI  AI Units will now avoid attacking from behind Wall of Fire even to nearby enemies, the same way a...
+      changes: AI_Target_Scan 9218:1836
+151/W625FIX  Fixed bug : The game stores two different types of temporal combat data for pathfinding in the sa...
+      changes: Combat_Find_Path e29d:0000
+      our entries: #200
+151/W626FIX  Fixed : AI tries to cast invalid spells
+      changes: Combat_Castable_Spell_List c165:2669
+151/W627FIX  Fixes - AI picks the same unit over and over again to move if it wasn't able to find a way to spe...
+      changes: AI_Combat_Turn 9218:108c
+      written over earlier patch code (0/57 original bytes match 1.31)
+151/W628AI  The AI will not try to make heroes cast spells below 10 MP instead of 5
+      changes: AI_Target_Scan 9218:1836
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W629FIX  Fixes crash when hero fails to cast a spell caused by previous patches
+      changes: AI_Choose_Target 9218:144d
+      written over earlier patch code (7/26 original bytes match 1.31)
+151/W631FIX  AI wizards can now do diplomacy with each other even while the human player is banished
+      changes: AI_Diplo_Turn_AI_Vs_AI 7269:0390
+      our entries: #162
+151/W632FIX  fixes a diplomacy bug that causes the AI to sometimes offer 0 gold in exchange for a treaty
+      changes: AI_Diplo_Turn_AI_Vs_AI 7269:0390
+      our entries: #166
+      written over earlier patch code (0/16 original bytes match 1.31)
+151/W634FIX  Fixes bug : barbarian spearmen and swordsmen can't appear as raiders
+      changes: AI_Neutral_City_Raiders f978:05fa
+      our entries: #283
+151/W635FIX  Fixes bug : Ships and catapults ignore weapon immunity
+      changes: Unit_Apply_Modifiers 9748:122d
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W636FIX  Fixes bug : Oracle overrides Nature's Eye
+      changes: Visibility_Rebuild 7851:0119
+151/W637FIX  Fixes bug : Weapon Immunity provides +50 defense instead of +10 against physical nonmelee attacks...
+      changes: Defender_Shields a22c:1627
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W638FIX  Fixes bug : Weakness does not reduce thrown attacks.
+      changes: Battle_Unit_Combat_Modifiers 9748:2339
+151/W639FIX  Fixes bug : Shatter does not use grey icons when reducing attack strength
+      changes: Battle_Unit_Combat_Modifiers 9748:2339
+151/W640FIX  Fix from Drake178 - fixes the AI checking the wrong realms and/or on the wrong player for
+      changes: AI_Target_Dispel 8a20:1657
+      our entries: #20 #312
+151/W641FIX  Fixes bug : Game crashes if the mouse is clicked at the exact time the game tries to display some...
+      changes: UI_Flush_Input 2666:2ee2
+      not in our list - not traced far enough to judge
+151/W642FIX  To Hit is now properly readable on the production view
+      changes: Dev_Choice_Box 1d4d:0609
+      written over earlier patch code (3/62 original bytes match 1.31)
+151/W643FIX  Fixes AI bug - Check for Holy Word having a target does not work correctly
+      changes: AI_Check_Holy_Word 8a20:2c71
+151/W644FIX  Fixed BUG : To Def is not properly set to zero on unit production view
+      changes: Battle_Unit_Init_From_Type 7504:0000
+      our entries: #250
+151/W645FIX  Fixes insecticide bug : Limit of vortexes is 4 instead of 3.
+      changes: Combat_Spell_Choice_Invalid 8cf2:1548
+      written over earlier patch code (0/1 original bytes match 1.31)
+151/W646FEAT  Game can now display stats of 31 or higher using icons, including health.
+      changes: Draw_Stat_Icons 5e1f:1971; Draw_Unit_View 5e1f:0a79
+151/W648FIX  When an outpost would be destroyed by a spell effect, it won't be destroyed.
+      changes: City_Collateral_Damage 4a3f:1292
+      our entries: #266
+151/W651FIX  Fixes AI bug : Research bonuses are calculated wrong when picking a spell to research
+      changes: AI_Choose_Research e318:0000
+      our entries: #139
+151/W652FIX  Fixes Apprentice showing wrong number of turns, provided by Drake158
+      changes: Research_Candidates_Sort aba4:0bd6; Research_Book_Draw_Page 9c9a:17e1; Spellbook_Build 9a4b:026b
+151/W654FIX  Fixes bug : spellcasting in strategic combat has incorrect effect due to incorrect code that cuts...
+      changes: Combat_Strategic 888b:00c9
+      our entries: #294
+151/W655FIX  Fixed bug : Dispel Magic can work on dead units if they died at a tile where the living target is.
+      changes: Dispel_Square b1af:0656
+      our entries: #279
+151/W656FIX  Fixed bug : Earth to Mud affects tiles outside of the battlefield, allowing units to enter there...
+      changes: Earth_To_Mud_Square df82:2f22
+      our entries: #199
+151/W657AI  AI now recongizes Magic Immunity and reverts to using melee or run away tactic as needed
+      changes: AI_Choose_Target 9218:144d
+151/W658FIX  The context-based help no longer double-loads every image it displays
+      changes: Alloc_Game_Data dc56:0000; Screen_Help_Popup f23a:0000
+151/W659FIX  Fixed bug : The number of turns needed to cast spells is inaccurate in the overland spellbook,
+      changes: Spellbook_Draw_Page_Overland 9a4b:0bc0
+151/W660DIPL  Fixed bug : When the AI wants to demand a spell to accept an offer, they might refuse instead.
+      changes: Diplo_AI_Ask_Sweetener 6ea7:0c4b
+151/W661DIPL  Fixes two bugs in previous patches for hostility reevaluation timer
+      changes: AI_Hostility_Replan f978:12ac; Diplo_Relation_Change 7057:0ae1
+151/W662DIPL  When a tribute is offered, if the AI was hostile, they'll reevaluate hostility next turn (but mig...
+      changes: Diplo_Offer_Tribute 7057:1620
+      written over earlier patch code (27/101 original bytes match 1.31)
+151/W663FIX  Fixes bug : Plane Shift crashes the game when the AI uses it on an invisible tile.
+      changes: Plane_Shift_Cast b425:104d
+      our entries: #307
+151/W664FIX  Fixes diplomacy bug
+      changes: Diplo_AI_Ask_Sweetener 6ea7:0c4b
+      not in our list - balance / AI tuning, not a bug
+151/W665FIX  Fixes bug : "you have a treaty, do you still want to attack?" message is skipped in sea battles.
+      changes: Overland_Attack 7d45:0000
+      our entries: #281
+151/W666FIX  Provided by Drake178
+      changes: City_Gold_Breakdown c751:382d
+      our entries: #43
+151/W667FIX  provided by Drake178
+      changes: City_Production_Breakdown c751:3d30
+      our entries: #43
+151/W668FIX  Provided by Drake178
+      changes: City_Power_Breakdown c751:427c
+      our entries: #43
+151/W669FIX  Provided by Drake178
+      changes: City_Food_Breakdown c751:34fc
+      our entries: #43
+151/W670FIX  Provided by Drake178
+      changes: City_Food_Breakdown c751:34fc; City_Terrain_Food_Cap c751:034e
+      our entries: #43
+151/W671FIX  Provided by Drake178
+      changes: UnitType_AI_Strength a0ec:0ccf; UnitTypes_Init_Upkeep_Sounds a0ec:0f00; AI_Unit_Strength a0ec:0de8
+      written over earlier patch code (0/25 original bytes match 1.31)
+151/W672FIX  Provided by Drake178
+      changes: AI_Magic_Allocation d208:0863
+      our entries: #324
+151/W673FIX  Fixed bug : Overland Disenchant Area doesn't skip dead units.
+      changes: Disenchant_Area_Overland ba2c:00e4
+      our entries: #279 #306
+151/W674FIX  Fixes map exploration artifacts
+      changes: Fog_Fill_Corner 5a8c:07ce; Map_Explore_Tile 5a8c:04f0
+151/W676FEAT  Changes escaping the spellbook to "Esc" from "Space"
+      changes: Screen_Spellbook_Cast b8ad:0088
+      written over earlier patch code (0/2 original bytes match 1.31)
+151/W677FIX  Trying to cast Dispel Evil with no opposing Death or
+      changes: Combat_Spell_Choice_Invalid 8cf2:1548
+151/W678FIX  Trying to cast a unit spell that only works on normal units in combat
+      changes: Combat_Spell_Choice_Invalid 8cf2:1548
+151/W679FIX  Fixes bug: healers override natural healing for units created after them
+      changes: Unit_Heal_Step c3f5:2503; Turn_Heal_Units c3f5:2622
+      our entries: #298
+151/W680FIX  Fixes bug: Lion Heart items do not grant Hits overland
+      changes: Unit_Max_Hits 9748:0a98; Unit_Apply_Modifiers 9748:122d; Battle_Unit_Max_Hits 9748:0c80
+      our entries: #273
+151/W681FIX  Fixes overland city drawing issues
+      changes: Map_Draw_Cities d95b:0474; Stack_Animate_Path 7b88:091f
+      not in our list - cosmetic
+151/W682FIX  Fixes bug: the player gains more gold and loses a different
+      changes: Combat_Results_Scroll a4fa:1a3c
+      our entries: #314
+151/W683FIX  Fixes potential crash on trade/banishing wizard if there are too many learnable spells.
+      changes: Diplo_Tradeable_Spells aba4:05e2
+      our entries: #282
+151/W684FIX  Fixes bug: the dialog shown when finding spells in a conquered wizard's
+      changes: Conquest_Loot_Spells aba4:10b6
+      our entries: #315
+151/W685FIX  Fixes bug: the combat map has (much) less trees than intended
+      changes: Battlefield_Scatter_Decor_A df82:0f5e; Battlefield_Scatter_Decor_B df82:1393
+151/W686FIX  Fixes bug: the combat map creates the wrong amount of rock figures
+      changes: Combat_Queue_Terrain_Objects_B dc99:0c3d
+      our entries: #342
+151/W687FIX  Fixes bug: Wall of Stone has no combat effect on Outposts and Fortresses still don't always show...
+      changes: Battlefield_Generate_Map df82:05d8; Battlefield_Generate df82:0000
+      our entries: #271
+151/W688FIX  Fixes bug: unit curse visuals reveal the location of invisible units
+      changes: Combat_Draw_Battle_Units 80d6:0d5b; Unit_Combat_Status_Icon 8593:0870
+      not in our list - cosmetic
+151/W689FIX  Fixes bug: The Spell action is not locked out for 40MP casters controlled by the player when they...
+      changes: Unit_Has_Combat_Ability 7eb0:00ec
+      our entries: #293
+151/W690FIX  Fixes bug: 4-way crossroads don't display properly in combat
+      changes: Combat_Draw_Battlefield dc99:001b
+      not in our list - cosmetic
+151/W691FEAT  Fixes disabled feature: rivers on the combat map
+      changes: Battlefield_Generate df82:0000; Combat_Draw_Battlefield dc99:001b; Battlefield_Lay_River df82:1e03; Battlefield_Pick_Tiles df82:2260
+151/W692FIX  Towers now show the color of their last owner
+      changes: Map_Draw_Towers d95b:06e3
+      our entries: #344
+151/W693FEAT  The mini unit window in combat now displays bonuses to hit and defend.
+      changes: Combat_Draw_Hover_Info 8593:0bd6; atexit 1000:02d6
+151/W694FIX  Fixes bug: Righteousness item power does not work against ranged attacks
+      changes: Defender_Shields a22c:1627
+      our entries: #189
+151/W695FIX  Fixes bug: destroyed City Walls still show up in battle
+      changes: Battlefield_Generate df82:0000
+151/W696FEAT  Mini unit view will show thrown and breath attack strength
+      changes: Unit_Ranged_Icon 8593:0b06; data
+151/W697FIX  By Drake178
+      changes: Wrack_Turn b66a:0106
+      our entries: #325
+151/W698FIX  Fixes bug: movement enhancements apply in different order in combat than overland
+      changes: Unit_Combat_Moves a76b:0c4d
+      our entries: #316
+151/W699FIX  Reverses Insecticide's change of Wind Mastery's overland movement effect
+      changes: Unit_Move_Points a0ec:0964
+      written over earlier patch code (0/16 original bytes match 1.31)
+151/W700FIX  Fixes bug : extra hp gained from life steal can revive irreversible dead figures instead of apply...
+      changes: Battle_Unit_Heal 888b:139a
+      our entries: #184
+151/W701FIX  Fixes bug: combat summons are not affected by battlefield effects on the first turn
+      changes: Battle_Slot_Init 7eb0:17c9
+      our entries: #291
+151/W703FIX  Fixes bug: spellbook page titles sometimes disappear with Spell Book Ordering off
+      changes: Spellbook_Page_Turn_Anim 9a4b:1928
+      not in our list - cosmetic
+151/W704FIX  Fixes bug: Word of Recall can be cast in battle at the Summoning Circle
+      changes: Combat_Spell_Choice_Invalid 8cf2:1548
+      our entries: #288
+151/W705FIX  Fixes bug: selecting the spell action strips a unit of short range attacks
+      changes: Combat_Spell_Action 8cf2:004b
+      our entries: #292
+151/W706FIX  Fixes bug : AI can't target units that have Illusions Immunity using Psiomic Blast (even though i...
+      changes: AI_Combat_Spell_Target 8a20:0000
+      not in our list - balance / AI tuning, not a bug
+151/W711FIX  Fixes bug: figures can move around in some units during
+      changes: Figure_Formation_Offset dc99:268b
+      not in our list - cosmetic
+151/W712FIX  Fixes bug: Oracles don't reveal terrain when conquered rather than built
+      changes: City_Change_Owner 4a3f:1099
+      our entries: #128
+151/W714AI  Earth To Mud targeting AI improvements by Drake178
+      changes: AI_Target_Earth_To_Mud 8cf2:1e01; AI_Combat_Spell_Score c165:00bd
+151/W715FIX  Fixed bug : The Ai can't cast Resist Magic on units that have Wraith Form on them, instead of Mag...
+      changes: AI_Combat_Spell_Target 8a20:0000
+      our entries: #247
+151/W716AI  Fixes bug: AI can cast Righteousness in combat when it won't protect from anything
+      changes: AI_Combat_Spell_Score c165:00bd
+      not in our list - balance / AI tuning, not a bug
+151/W717FIX  Fixes bug: AI can cast Recall Hero at its Summoning Circle location
+      changes: AI_Target_Recall_Hero 8cf2:2486
+      our entries: #288
+151/W719FIX  Fixes bug: the combat spellcast message shows the wrong name for control changed heroes
+      changes: Combat_Cast_Banner 8f51:28c4
+      our entries: #289
+151/W720FIX  Provided by Drake158
+      changes: Combat_Spell_Action 8cf2:004b; Combat_Castable_Spell_List c165:2669; Combat_Spellbook_Build 9a4b:060d; Spellbook_Draw_Page_Combat 9a4b:1096
+151/W721FIX  Fixes bug: control changed heroes can't use their item charges
+      changes: Combat_Spell_Action 8cf2:004b; Spellbook_Draw_Page_Combat 9a4b:1096; Screen_Combat_Spellbook 8cf2:0d92; Combat_Spellbook_Build 9a4b:060d
+      our entries: #289
+151/W722FIX  Fixes bug: control changed heroes get the wrong -spell save modifiers
+      changes: Combat_Cast_Spell 8a20:1a8e
+      our entries: #289
+151/W723FIX  Fixes bug: the combat counter message shows the wrong name for control changed heroes
+      changes: Spell_Fizzle_Message b66a:071a
+      our entries: #289
+151/W724FIX  Fixes bug: control changed heroes check the wrong items for +moves/endurance
+      changes: Unit_Combat_Moves a76b:0c4d
+      our entries: #289
+151/W725FIX  Fixes bug: control changed heroes use the wrong Leadership/Prayermaster skills
+      changes: Combat_Start_Auras a22c:194b
+      our entries: #289
+151/W728FIX  Fixes bug: control changed heroes check the wrong records for hero spells for the human player (b...
+      changes: Combat_Spellbook_Build 9a4b:060d
+      our entries: #289
+151/W729FIX  By Drake178
+      changes: Combat_Spell_Target_Cursor 8f51:0000; Combat_Spell_Pick_Target_UI 8f51:0347; data
+      not in our list - a new feature
+151/W730FIX  Magic vortex can enter the central structure tile (to make consistent with the summoning.)
+      changes: Vortex_Human_Move b66a:189f; Vortices_Turn b66a:1a11
+151/W731FIX  Fixes bug: the human player use Raise Dead on recalled units
+      changes: Raise_Dead b1af:1f5d
+      our entries: #231
+151/W732FIX  Fixes graphical bug: rocks are drawn over single figure units in battle
+      changes: Battlefield_Scatter_Decor_B df82:1393; Combat_Queue_Terrain_Objects_B dc99:0c3d
+      not in our list - cosmetic
+151/W733FIX  Removes insecticide random seed manipulation when summoning heroes or finding treasure
+      changes: Treasure_Roll 6d36:0cd2; Summon_Hero_Cast b425:0000; Next_Turn 9ec1:0000
+      written over earlier patch code (19/81 original bytes match 1.31)
+151/W736REV  Reverses patches W592 and W287 to prepare for Call Chaos path
+      changes: Combat_Spell_Animate b1af:1d21; Mass_Spell_Animate b1af:15ed; Call_Chaos_Cast b66a:1e31
+      written over earlier patch code (3/139 original bytes match 1.31)
+151/W737FIX  Call Chaos no longer crashes the game when cast by the AI outside of
+      changes: Call_Chaos_Cast b66a:1e31; Call_Chaos_Apply b66a:229c
+      our entries: #13
+151/W738FIX  Fixes bug: overland-only unit enchantments have 5 times the
+      changes: Dispel_Square b1af:0656
+      our entries: #306
+151/W739FIX  New RNG generator provided by Drake178
+      changes: Random 1d4d:00d8; Game_Init_State 45d6:01d2
+151/W740FIX  Fixes bug: Disenchants make an extra dispel attempt against
+      changes: Dispel_Square b1af:0656; Disenchant_Area_Combat b1af:0000; Combat_Cast_Spell 8a20:1a8e
+      our entries: #300
+151/W741FIX  Fixes bug: combat enchantments cast by neutrals can't be dispelled
+      changes: Disenchant_Area_Combat b1af:0000
+      our entries: #290
+151/W742FIX  Fixes bug: combat-cast Wall spells can't be dispelled
+      changes: Disenchant_Area_Combat b1af:0000
+      our entries: #299
+151/W744FIX  Fixes bug: Ranged Magical Attacks are not always doubled by Haste
+      changes: Combat_Exchange a22c:0332
+      our entries: #185
+151/W746FIX  Fixes bug: First Strike figures slain by Doom Gaze sometimes still participate in melee
+      changes: Combat_Exchange a22c:0332
+      our entries: #192
+151/W747FIX  Fixes bug: Ranged Attacks don't use up all movement
+      changes: Combat_Unit_Attack a22c:1da4
+      our entries: #284
+151/W749FIX  Fixes bug: ranged magical attack units don't always show their ammo in the USW
+      changes: UnitView_Build_Abilities 679a:0000
+151/W750FIX  Fixes bug : The WAIT button cannot select units on the next plane.
+      changes: Find_Next_Unit 5315:08dd
+      our entries: #285
+151/W752AI  Fixes AI bug : AI casts Phantom Warrior against Wall of Fire
+      changes: AI_Combat_Spell_Score c165:00bd
+      not in our list - balance / AI tuning, not a bug
+151/W754FIX  Fixed bug : Lycanthropy animation is displayed while Enemy Spells is turned off.
+      changes: Subversion_Apply af2c:2741; Lycanthropy_Cast b425:1e4c; Change_Terrain_Cast af2c:09e8; Raise_Volcano_Cast af2c:0f37
+151/W755FEAT  The combat information window now lists all global effects that can influence the battle,
+      changes: Combat_Info_Draw 83d2:02ab; Screen_Combat_Info 83d2:0000; Combat_Info_Build_Field_Rows 83d2:075c; Combat_Info_Build_Rows 83d2:05cb
+152/W759REV  Reverts IW049 : Ai players are allowed to flee on turn 1 again, now available as optional patch i...
+      changes: Combat_Check_Winner 8593:0000
+152/W760REV  Reverts W045
+      changes: Combat_Turn_Start 7719:0047
+      written over earlier patch code (0/35 original bytes match 1.31)
+152/W762REV  Reverts IW076, now available as optional patch
+      changes: Unit_Mana_Upkeep 9ef8:0b78
+      written over earlier patch code (0/1 original bytes match 1.31)
+152/W764REV  reverts W145
+      changes: Unit_Enchant_Bonus 9748:1740
+      written over earlier patch code (0/1 original bytes match 1.31)
+152/W765AI  AI will no longer consider various situational abilities when calculating unit strength for decis...
+      changes: Unit_Combat_Value c165:1e7f
+      written over earlier patch code (0/7 original bytes match 1.31)
+152/W767REV  Reverses W283 which causes memory corruption. A more complex solution will be necessary to implem...
+      changes: Monsters_Take_City a4fa:23a7
+      written over earlier patch code (0/1 original bytes match 1.31)
+152/W769REV  Reverts IW002
+      changes: data
+      written over earlier patch code (0/10 original bytes match 1.31)
+152/W770REV  Reverses 1.31 change, lower unrest penalty from Armageddon and Great Wasting.
+      changes: City_Rebels c751:272c
+      written over earlier patch code (0/4 original bytes match 1.31)
+152/W771REV  Reverses W105, is now optional
+      changes: Wizard_Banish 78ba:148a
+      written over earlier patch code (0/2 original bytes match 1.31)
+152/W772AI  Modifies 772 : AI will no longer exclude fortress battles from this tactic : Fortress Lighting is...
+      changes: AI_Combat_Stance 9218:0000
+      written over earlier patch code (0/1 original bytes match 1.31)
+152/W773  Disables "swamps in combat" feature, is now optional
+      changes: Battlefield_Generate df82:0000
+      written over earlier patch code (0/1 original bytes match 1.31)
+152/W775FIX  Reverts W162 but fixes the division by zero bug
+      changes: City_Plunder_Gold a4fa:22b8
+      written over earlier patch code (37/77 original bytes match 1.31)
+152/W782AI  The AI will not target sleeping shattered or confused units with healing.
+      changes: AI_Target_Healing 8a20:1093
+152/W783AI  The AI is now able to recognize up to 200 targets per continent instead of 25 for land based atta...
+      changes: AI_Stack_Pick_Target ebda:2bc9; AI_Add_Landmass_Target ebda:2b85
+152/W784FIX  Fixes bug: Web can be weakened by missiles instead of magic
+      changes: Combat_Turn_Start 7719:0047
+      our entries: #286
+152/W793FIX  Fixed bug : the AI always sees invisible units on the gate tile, even if the battle isn't in a city.
+      changes: AI_Target_Scan 9218:1836
+      our entries: #296
+152/W796FIX  Fixes bug : when moving units with the keyboard, the check for planar movement is skipped.
+      changes: Stack_Key_Move_Dir 4fb6:1aa0
+      our entries: #204
+152/W805FIX  Fixes sound glitch when casting Lycantrophy
+      changes: Lycanthropy_Cast b425:1e4c
+      not in our list - cosmetic
+152/W808AI  The AI is now allowed to send units into and use towers that have no garrison but were last used...
+      changes: AI_Collect_Landmass_Targets ebda:2270
+152/W810FIX  Fixes bug: random events can not occur in the first five turns after launching the game
+      changes: Event_Roll 6ad6:0000
+      our entries: #287
+152/W811FIX  Fixes bug : Node Auras have no effect, introduced in W755FEAT.TXT
+      changes: Combat_Find_Node 83d2:0abb
+      written over earlier patch code (0/3 original bytes match 1.31)
+152/W812FIX  AI Raise Dead and Animate Dead targeting : changed preferred AOE for defending side so it can no...
+      changes: Raise_Dead b1af:1f5d; Animate_Dead b1af:2384
+152/W816OPT  Overland pathfinding now uses Djikstra's shortest path algorithm
+      changes: Path_Relax d511:0004; Path_Find d592:00ae; Road_Path_AI cbdf:18c6; Path_Line_Costs d592:000a
+152/W817FIX  Fixes bug : AI casting transmute causes crashes or memory corruptions
+      changes: AI_Target_Transmute e318:39ad
+      written over earlier patch code (0/1 original bytes match 1.31)
+152/W818FIX  Razing a city now correctly reverts the movement costs of the tile it stood on.
+      changes: Tile_Make_Desert_Unused cbdf:02a2; Road_Remove c751:33d7; Tile_Make_Volcano cbdf:0000; Tile_Make_Grassland cbdf:018a
+Optional/IW076  Conjurer rounds upkeep the other way
+      changes: Unit_Mana_Upkeep 9ef8:0b78
+Optional/W037FIX  Game does not overwrite maintenance cost field in unit tables on loading with (cost/50)
+      changes: UnitTypes_Set_Upkeep_Early 45fc:00f0; UnitTypes_Init_Upkeep_Sounds a0ec:0f00
+Optional/W039FEAT  Towns can display up to 16 available buildings for production instead of 10.
+      changes: City_Build_Options 4e5c:0c04; Screen_City_Production 4e5c:0000; CityProd_Alloc_Buffers 4e5c:049c
+Optional/W105FEAT  Banishing a wizard will not give you half their mana crystals
+      changes: Wizard_Banish 78ba:148a
+Optional/W157FEAT  Ranged attacks cost all movement instead of 10
+      changes: Combat_Unit_Attack a22c:1da4
+Optional/W277FEAT  Feature : Can raise volcanoes on Hills and Mountains
+      changes: Raise_Volcano_Cast af2c:0f37; AI_Target_Corruption_Volcano e318:6bd6
+Optional/W427FEAT  Production list can display more than 10 units
+      changes: City_Build_Options 4e5c:0c04; CityProd_Alloc_Buffers 4e5c:049c
+Optional/W436FEAT  Ships and catapults have no food upkeep.
+      changes: Units_Food_Upkeep_All 9ef8:0858; Wizard_Food_Upkeep 9ef8:07e0; Draw_Unit_Upkeep 5e1f:1869
+Optional/W650FEAT  Improves the readability of the selected spell on the F3 screen
+      changes: Research_Book_Draw_Page 9c9a:17e1
+Optional/W708FEAT  Reverses the rule changes of W398:
+      changes: Stack_Movement_Modes 5d70:00b8
+      written over earlier patch code (2/9 original bytes match 1.31)
+Optional/W709FEAT  The combat unit display shows both Ammo and Mana if a unit has both
+      changes: Combat_Draw_Hover_Info 8593:0bd6
+Optional/W713FEAT  Demons, Fire-, and Earth Elementals summon from a more appropriate place
+      changes: Combat_Summon_Anim b66a:1360; Combat_Build_Unit_Figures_Pic 83d2:0b5e; Combat_Draw_Battlefield dc99:001b; Cracks_Call_Anim b66a:0ab6
+Optional/W718FEAT  The Additional Power slider is split more proportionately during combat
+      changes: CastUI_Power_Redraw bcc7:06cc
+Optional/W743AI  AI ignores Confusion's temporary control change effect
+      changes: AI_Target_Scan 9218:1836
+Optional/W745FEAT  Hasted units no longer perform a second ranged attack when the first
+      changes: Combat_Exchange a22c:0332
+      written over earlier patch code (0/1 original bytes match 1.31)
+Optional/W763  AI players are not allowed to flee on turn 1 of the battle
+      changes: Combat_Check_Winner 8593:0000
+      written over earlier patch code (0/1 original bytes match 1.31)
+Optional/W774FEAT  Swamps in combat have water tiles (rivers)
+      changes: Battlefield_Generate df82:0000
+      written over earlier patch code (0/1 original bytes match 1.31)
+Optional/W785FEAT  Adds: Immolation will now damage Web cast on the unit
+      changes: Combat_Turn_Start 7719:0047

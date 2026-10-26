@@ -1,0 +1,316 @@
+MASTER OF MAGIC v1.31 - GAME MECHANICS, AS THE CODE COMPUTES THEM
+================================================================
+What the game actually does, topic by topic, read from the recovered source (src/), which compiles back into the
+shipped v1.31 executables byte for byte - so every rule below is what 1.31 runs, not what the manual says. Each rule
+names the function it comes from (FILE.C in src/wizards/ unless said otherwise): read the function for the details,
+the edge cases and the bug notes. Written 2026-10-26.
+
+How sure:
+- The city calculations of section 2 (food, production, gold, building upkeep, research, power, rebels) were
+  re-implemented and match the stored values of EVERY city in several real saves (28 / 28 and 30 / 30 cities).
+- Everything else is read from the code (and the code is exact); the open question is only whether our reading
+  of a variable's meaning is right. Many rules are also exercised by the regression cases of BUGS_AND_QUIRKS.txt.
+- Where 1.31 does something wrong, the bug number is given (#n = BUGS_AND_QUIRKS.txt). Fixes by the community patch:
+  COMMUNITY_PATCH_CROSSCHECK.txt.
+
+Conventions: Random(n) is 1..n (not 0-based). Integer arithmetic truncates unless "rounded up" is said. "x" multiplies.
+"Built" means standing OR replaced by its upgrade: a replaced building still gives its bonus (BLDSTATE_REPLACED). The
+human is player 0, the neutral player 5. Difficulty 0..4 = Intro, Easy, Normal, Hard, Impossible.
+
+
+1. THE MAP
+----------
+- Two planes (Arcanus, Myrror) of 60 x 40 squares; columns wrap east-west, rows do not. A square's terrain is a word;
+  the type is the word modulo 762 (TERRAIN.C header); the single squares are 0xa2..0xb8, the rest blended variants.
+- City area: the 5 x 5 square around the city without its four corners = 21 squares; corrupted squares (terrain flag
+  0x20) are left out (City_Area_Tiles, CITYCALC.C). A square inside two or more city areas is SHARED and gives each
+  city half of its food, production bonus and minerals (Tile_Is_Shared; the Terrain_* and Tile_* functions).
+- Food per square, in half-food (Terrain_Food, TERRAIN.C): grassland 3, forest / hills 1, river 4, sorcery node 4,
+  nature node 5, ocean 0, swamp 0 (#272; the manual says 1/2). A city's terrain food cap = the sum over its area / 2
+  (the code sums quarter units and divides by 4), x 1.5 with Gaia's Blessing (City_Terrain_Food_Cap).
+- Production bonus per square (Terrain_Production_Pct): mountains and the chaos node 5 %, hills and blended deserts
+  3 % (the plain desert square 0 %: #490), forest and the nature node 3 % (6 % with Gaia's Blessing).
+- Minerals (TERRAIN.C): gold - silver 2, gold ore 3, gems 5; power - mithril 1, adamantium 2, quork 3, crysx 5;
+  unit cost - iron ore 5 %, coal 10 %. Dwarven cities double them; a Miners' Guild gives x 1.5 for gold, and doubles
+  the unit-cost cut (#353: meant as +50 %). Mithril / adamantium in the area give the city's new units weapon grade
+  2 / 3, an Alchemists' Guild grade 1 (City_Weapon_Grade). Wild game: +2 food per square (+1 if shared).
+- Roads (Road_Build, CITYCALC.C): movement cost 1 for walking units; enchanted roads (all of Myrror's) cost 0.
+  Turns to build (Road_Build_Turns): grassland 3, desert 4, river 5, forest / tundra / hills 6, swamp / mountain /
+  volcano 8, nodes 4 / 5 / 8; divided among the engineers working (Stack_Move, MOVESTK.C).
+- Terrain changes (Change Terrain, Raise Volcano, Gaia's Blessing, a cooling volcano) do not update the movement-cost
+  maps, which only the world generator builds: the square keeps the old terrain's movement costs (#484, TERRCHG.C).
+- Volcanoes: each owned volcano counts for its owner (power); each turn a volcano becomes a mountain with 2 %
+  (Turn_Volcano_Decay, TURNUPD.C).
+- A city cannot be founded on water, a tower, a node, an intact lair, or within distance 3 of a city
+  (Tile_Settle_Blocker, OUTPOST.C). Continents never reach the map seam (MAPGEN_SURVEY.txt).
+
+
+2. CITIES (CITYCALC.C; recomputed by City_Recalculate, ECONOMY.C)
+-----------------------------------------------------------------
+Citizens are farmers, workers and rebels; workers = population - farmers - rebels.
+
+FOOD (City_Calc_Food)
+  farmers x 2 (x 3 for Halflings or with an Animists' Guild), +2 Foresters' Guild; halved by Famine;
+  above the terrain food cap only half the excess counts: food = cap + (food - cap) / 2;
+  then +2 Granary, +3 Farmers' Market, + wild game. Each citizen eats 1; each normal (not fantastic, not undead)
+  non-hero unit costs 1 food upkeep (Wizard_Food_Upkeep, ECONOMY.C).
+MAXIMUM POPULATION (City_Max_Population)
+  the terrain food cap (halved by Famine) +2 Granary +3 Farmers' Market + wild game. At most 25 citizens.
+GROWTH (City_Growth_Rate) - in growth points; 100 points = one more citizen (Turn_City_Growth, TURNUPD.C)
+  starving (food below the population): (food - population) x 5 (negative); a maximum of 0: -population;
+  otherwise (max - population + 1) / 2 + the race's growth (below) + Granary 2 + Farmers' Market 3; no growth at 25
+  citizens; doubled by Stream of Life or a Population Boom; then x (100 + P) / 100 with P = -25 under Dark Rituals and,
+  while producing Housing, +50 for a 1-citizen city or the worker percentage, + Sawmill 10, + Builders' Hall 15.
+  Neutral cities grow at half the rate (none from 2 x (difficulty + 1) citizens); AI cities x the difficulty's growth %.
+  Only an EXACT match with the maximum stops growth: a city above its maximum keeps growing (#103).
+  Race growth (race_table, WIZARDS.C): Lizardmen +1, Barbarians +2, Beastmen 0, Halflings 0, High Men 0, Orcs 0,
+  Draconians / Gnolls / Klackons / Nomads -1, Dark Elves / Dwarves / High Elves / Trolls -2.
+PRODUCTION (City_Calc_Production)
+  base = (workers x 2 (3 for Dwarves and Klackons) + farmers / 2, rounded up);
+  x (100 + the area's terrain bonuses + Foresters' Guild 25 + Sawmill 25 + Miners' Guild 50 + Mechanicians' Guild 50
+  + Inspirations 100) / 100; halved (rounded up) by Cursed Lands.
+GOLD (City_Calc_Gold)
+  taxed = (population - rebels) x tax rate / 2 (tax rate 0..6 = 0, 0.5 .. 3.0 gold per citizen; a neutral city 1
+  each); doubled for Dwarves; + the area's mineral gold;
+  x (100 + bonus %) / 100, bonus % = trade (min of: square 20 on a river, 10 beside water, 30 both + road trade
+  (City_Road_Trade_Pct: the population of every road-connected city, half for the same race) + 50 for Nomads,
+  3 x population) + Marketplace 50 + Bank 50 + Merchants' Guild 100 + Prosperity 100;
+  + half the production when producing Trade Goods; at most 255. Odd populations lose the half gold.
+BUILDING UPKEEP (City_Calc_Building_Upkeep, ECONOMY.C)
+  the gold upkeep of every standing building (BUILDDAT.LBX).
+RESEARCH (City_Calc_Research)
+  Library 2, Sages' Guild 3, University 5, Wizards' Guild 8; none in neutral cities.
+POWER (City_Calc_Power)
+  religious = Shrine 1 + Temple 2 + Parthenon 3 + Cathedral 4, x 1.5 with Divine / Infernal Power, x 2 with Dark
+  Rituals; + Alchemists' Guild 3, - Wizards' Guild 3; + population for Dark Elves, + population / 2 for High Elves,
+  Beastmen, Draconians; + the wizard's spellbooks in the fortress city (+5 more on Myrror); + the area's mineral
+  power. The moons: Good Moon adds the religious power for Life wizards and takes half for Death wizards, Bad Moon
+  the reverse (floor 0 before the additions). 0 during the Mana Short event and in neutral cities.
+UNREST (City_Rebels)
+  unrest % = tax unrest (tax rate 0..6: 0, 10, 20, 30, 45, 60, 75) + the race table (TERRSTAT.LBX entry 1: the ruling
+  wizard's home race against the city's race) x 10, + 25 under Famine;
+  rebels = population x unrest % / 100, less the calming: Shrine / Temple / Parthenon / Cathedral 1 each (x 1.5 with
+  Divine / Infernal Power; none under Evil Presence unless the owner has Death books), Oracle 2, Animists' Guild 1 -
+  all REPLACED by -1 under another wizard's Great Wasting or -2 under Armageddon - then -1 Dark Rituals, -2 Pestilence,
+  -1 Cursed Lands, +1 Just Cause, +2 Gaia's Blessing; when that is not enough, half the normal units in the city
+  (martial law); 0 with Stream of Life; at most the population.
+AI CHEATS (City_Recalculate + difficulty_table, WIZARDS.C) - an AI wizard's cities, in percent:
+               growth  outpost  production  gold  power  research  food  building upkeep
+  Intro         100     100      100        100    100    100      100    100
+  Easy          100     100      125        125    125    100      125     90
+  Normal        150     150      150        150    150    100      150     75
+  Hard          200     200      200        200    200    110      200     60
+  Impossible    400     400      400        400    400    150      400     30
+  AI unit gold upkeep: 3 / 4 on Hard, 1 / 2 on Impossible (Unit_Gold_Upkeep, ECONOMY.C); an AI's unit food upkeep is
+  scaled by the building-upkeep column (Wizard_Income_Summary). The power factor also scales an AI's node power
+  (Wizard_Power_Base).
+BUYING (City_Buy_Price, CITY.C): the remaining cost x 4 with no progress yet, x 3 below half the remaining cost
+  (the actual threshold: progress < remaining / 2), x 2 from there. Selling a building returns cost / 3
+  (City Walls / 6), once per turn per city (Building_Sell_Price).
+UNIT COST: a unit's cost is cut by the area's iron / coal (at most 50 %; not for transports and some special units:
+  City_Production_Cost).
+OUTPOSTS (Outposts_Grow): a city of population 0 gains Random(3) tens of people when Random(100) <= the terrain
+  food cap + the race's outpost growth + Gaia's Blessing 20 + Stream of Life 10 + minerals (#5: read at the wrong
+  square), x the difficulty's outpost % (applied to the human too: #121); it shrinks by Random(2) on a 5 % chance
+  (+5 Evil Presence, +10 each Pestilence / Famine / Chaos Rift); at 10 tens it becomes a hamlet, at 0 it is deserted.
+CAPTURE / RAZE (City_Captured, COMBUTIL.C; Combat_End, COMBEND.C): the old owner loses fame equal to the city size;
+  kept: the winner gains fame size - 2 and the plunder (City_Plunder_Gold: neutral city Random(10) per citizen,
+  else the owner's gold x the city's share of the owner's population); razed: the winner loses fame (the size) and gets the
+  plunder + a tenth of the cost of every building.
+
+
+3. A WIZARD'S ECONOMY EACH TURN (ECONOMY.C, TURNUPD.C)
+------------------------------------------------------
+POWER BASE (Wizard_Power_Base): the owned nodes (a warped node -5; else its power x (magic setting + 1) / 2, halved /
+  doubled by the Conjunctions, doubled by the realm's Mastery retort and again by Node Mastery) - for an AI scaled by
+  the difficulty - + the cities' power + volcanoes. Nothing during Mana Short; 0 while casting Spell of Return.
+SPLIT (Wizard_Magic_Split): the power base by the wizard's mana / skill / research percentages (research takes the
+  rounding rest); Mana Focusing +25 % mana; research + the cities' research + Sage heroes (3 x (level + 1), Super Sage
+  4.5 x); then + the research bonus % for the spell being researched (Research_Bonus_Pct): Sage Master 25, Conjurer
+  25 for summons, the realm's Mastery 15 (Chaos, Nature, Sorcery), 10 per book of the realm above 7, Runemaster 25
+  for Arcane.
+INCOME (Turn_Apply_Magic_Income, Turn_Gold_Income): research points go to the spell, mana to the reserve, skill
+  points to the casting skill (x 1.5 for Archmage); gold = the cities' gold - building upkeep + 10 per Noble hero +
+  half the food surplus over the food upkeep. Gold and mana are capped at 30000 at the end of the turn.
+CASTING SKILL (Wizard_Casting_Skill, WIZSTATS.C): the n where 2 + 4 + .. + 2n = n (n + 1) first reaches the skill
+  points; Archmage +10. Heroes in the fortress city add half their spell skill (Fortress_Hero_Skill_Bonus).
+UPKEEP: gold - each normal unit its type's upkeep (none for fantastic and undead units, Noble heroes, or a Famous
+  wizard's heroes), less the effective fame (Wizard_Gold_Upkeep); unit types' upkeep = (cost - 1) / 50 + 1, the
+  first spearmen of each race free (UnitTypes_Init_Upkeep_Sounds). Mana - fantastic units (x 1.5 when undead), 3 / 4
+  for a Conjurer, + every unit enchantment, city enchantment and global enchantment the wizard maintains; halved for
+  a Channeler (Wizard_Mana_Upkeep). Food - see section 2.
+SHORTFALLS (Turn_Pay_Upkeep): a food shortage disbands normal units from the newest down; a gold shortage disbands
+  units with gold upkeep (heroes too); a mana shortage removes, in up to four random-order rounds, unit enchantments,
+  city enchantments, global enchantments and summoned units (Upkeep_Shortfall_*).
+FAME (Wizard_Effective_Fame): fame + Legendary heroes + Just Cause; it lowers gold upkeep and drives merchants,
+  heroes, mercenaries and the score.
+
+
+4. THE ORDER OF A TURN (Next_Turn, NEXTTURN.C)
+----------------------------------------------
+The cities recomputed; the AI's obsolete units disbanded; the AI turn (AI_Overland_Turn, AITURN.C); then, unless a
+Time Stop runs: gold, power, magic income and research; the random events; upkeep; outpost and city growth (with
+production); the Grand Vizier's picks; the offers (merchants, mercenaries, heroes); Nightshade; diplomacy; volcanoes.
+Under Time Stop its caster pays 200 mana a turn (it ends at 0). Then the overland casting, the unit table,
+experience, healing, the power statistics and the music mood; the turn counter, the caps, the autosave (every 4th
+turn) and the random seed.
+
+
+5. MAGIC
+--------
+RESEARCH (TREASURE.C): 8 research candidates, refilled from the pool of researchable spells - per realm those of
+  the lowest rarity tier that still has any, plus Arcane - and the Spell of Mastery once the pool is empty; sorted
+  by research turns (Research_Candidates_Refill, Research_Pool_Build). Learning a spell lowers the Spell of
+  Mastery's cost by half the spell's research cost (Wizard_Learn_Spell, TURNUPD.C). A new spellbook makes random
+  unknown spells of its realm researchable (Wizard_Gain_Spellbook; #238 above 10 books).
+CASTING COST (Spell_Casting_Cost, WIZSTATS.C): the base cost, x 1.5 for Nature and Life spells while anyone has Evil
+  Omens, x 5 for a combat spell cast overland, less the reduction % (Spell_Cost_Reduction_Pct): 10 per book of the
+  realm above 7, the realm's Mastery 15, Artificer 50 for item creation, Conjurer 25 for summons, Runemaster 25 for
+  Arcane.
+OVERLAND CASTING (Turn_Overland_Casting, TURNUPD.C): each turn the spell in progress gets min(mana, the skill left,
+  the cost left); if the rest then fits in min(mana, skill) it is finished at once, borrowing from next turn's skill.
+COMBAT CASTING (COMBSPL.C): the cost x the range multiplier (Combat_Range_Multiplier, by the distance from the
+  wizard's fortress): x 0.5 at the fortress, x 1.0 up to 5 squares, then +0.5 beyond 5, 10, 15 and 20 squares (x 3.0;
+  also on the other plane); a Channeler pays x 1.0 everywhere (x 0.5 at the fortress). Paid from the casting skill
+  left this turn and mana. Counter Magic and node auras may make a spell fizzle (Combat_Spell_Action).
+DISPELLING (Dispel_Roll, SPELLFX.C; Disenchant_Area_Overland, OVERCAST.C): a dispel of strength S removes a spell of
+  resistance R when Random(250) <= 250 x S / (S + R); R = the spell's cost (x 5 for unit enchantments), x 2 with the
+  caster's realm-mastery retort, x 3 with Archmage too (Spell_Dispel_Resistance). Suppress Magic, Tranquility (chaos
+  spells) and Life Force (death spells) counter a spell when Random(250) <= 125000 / (R + 500) (Overland_Cast_Spell).
+  Nightshade dispels foreign city enchantments: Random(250) <= 25000 n / (R + 100 n), n = Nightshade squares.
+CITY PROTECTION (City_Spell_Protection_Check, OVERSPL2.C): Consecration blocks Chaos and Death spells on the city, a
+  realm Ward its realm, Nightshade may dispel. Wards also stop that realm's creatures from entering (City_Ward_Check).
+SPELL EFFECTS: each spell's function is named after it - OVERCAST.C (dispatch by effect type), OVERSPEL.C,
+  OVERSPL2.C, OVERSPL3.C (overland), COMBDISP.C, SPELLFX.C, COMBSPL.C (combat). A few worth knowing:
+  Drain Power drains ten Random(20) (10..200) mana; Cruel Unminding cuts the skill by Random(10) % (at least 1);
+  Great Wasting / Armageddon corrupt / raise 4..6 squares a turn, 3+ squares from the caster's cities; Meteor Storm hits
+  every unit outside a city with Call Chaos' damage (not its own) and city buildings at 1 %; Call the Void / Earthquake
+  / Nature's Wrath destroy buildings at 50 / 15 / 5 %.
+
+
+6. UNITS AND HEROES
+-------------------
+EXPERIENCE (Unit_Calc_Level, ECONOMY.C; exp_level_thresholds, WIZARDS.C): levels at 0, 20, 60, 120 experience
+  (normal units stop at level 3 = 120), heroes on at 200, 300, 450, 600, 1000 (level 8). Every normal living unit
+  gains 1 experience a turn (Turn_Unit_Experience). Heroism = level 3 at least; Warlord +1 level; Crusade +1 level.
+  Armsmaster heroes add 2 x (level + 1) experience a turn to the non-heroes of their stack (Super: 3 x).
+HIT POINTS (Unit_Max_Hits, UNITSTAT.C): the type's per figure, Black Channels +1, Lionheart +3; a hero +1 at levels
+  1, 2 and 4 and its Constitution; every unit +1 at levels 3, 5, 6, 7 and 8; Charm of Life +25 %.
+STATISTICS (Battle_Unit_Init, Unit_Apply_Modifiers, Battle_Unit_Combat_Modifiers, UNITSTAT.C): the type's values,
+  then experience, hero abilities and items, weapon grade, enchantments, global and combat enchantments, node auras
+  and curses - each function lists its modifiers.
+MOVES (Unit_Move_Points, WIZSTATS.C): the type's moves, at least 3 (6 half-moves) with flight, +1 with Endurance, +
+  item bonuses; a ship x 1.5 under its owner's Wind Mastery, x 0.5 against more enemy Wind Masteries. A stack moves at
+  its slowest unit unless a transport or Wind Walker carries it (Stack_Moves_Available, MOVECHK.C). Movement modes
+  (UNITMOVE.C): a mode counts for the stack when every unit has it or one unit carries the others (Pathfinding,
+  Wind Walking, ships).
+STACKS: at most 9 units on a square; a tenth makes the cheapest leave (Stack_Limit_Enforce).
+HEALING (Turn_Heal_Units, TURNUPD.C): damage heals by total hits / divisor a turn, the divisor 20 in the field, 10 in
+  a city, 6 with an Animists' Guild; a Healer heals its stack by a fifth. Not undead or race 20 units.
+HIRING (HIRE.C, TURNUPD.C): a hero costs its price + a quarter per level (half for Charismatic); a rejected hero for
+  hire returns one level higher. Offers each turn (Turn_Random_Offers): a merchant (human only) with fame / 25 + 2 %
+  (x 2 Famous, at most 10 %) at 3 x the item's cost; mercenaries fame / 20 + 1 %; a hero fame / 25 + 3 % (divided by
+  the heroes already hired). #3: the AI wizards' chances use the HUMAN's fame.
+
+
+7. COMBAT
+---------
+ROLLS (COMBRES.C): each point of attack hits on Random(10) >= 8 - to-hit bonus, always on a 10 (Roll_To_Hit) - 30 %
+  base; each shield (defense point) blocks on Random(10) >= 8 - block bonus (Roll_Blocks) - 30 % base; a resistance
+  roll fails by Random(10) - (resistance + bonus + modifier) when the roll is higher (Roll_Resist).
+AN ATTACK (Attack_Resolve, Combat_Exchange): ranged - one shot (Haste: two); melee - the attacker's thrown / breath /
+  gaze attack first, a defender's gaze, Wall of Fire, then First Strike strikes before the counter-attack, otherwise
+  blow and counter are simultaneous. Figure by figure: special touches (Stoning, Death, Life Steal, Destruction,
+  Dispel Evil), the to-hit roll, Blur, the blocks per defending figure (Invulnerability -2 damage). To-hit penalties:
+  missiles -1 per 3 squares of distance (Long Range: at most -1), -1 against an invisible target; a counter-attack
+  loses times-attacked / 2. Damage comes in three kinds: normal, drain (Life Steal, Create Undead) and irrecoverable.
+SHIELDS (Defender_Shields): Large Shield +2 against ranged; immunities make 50 shields (Weapon Immunity at least 10);
+  Bless +3 and Righteousness 50 against Chaos / Death; Elemental Armor +10 or Resist Elements +3 against Nature /
+  Chaos ranged attacks; armour piercing halves them.
+RESISTANCE (Resist_Bonus): Charmed hero +30, Magic Immunity +30, Righteousness +30 (chaos, death), Elemental Armor
+  +10 / Resist Elements +3 (nature, chaos), Bless +3 (chaos, death), Resist Magic +5.
+ACTIONS (Combat_Unit_Attack): a shot ends the unit's movement (20 half moves) and costs 1 ammunition, or 3 spell
+  points for heroes and casters with magic shots; a melee attack costs half the unit's moves. Adjacent units shoot only when their ranged strength is above half
+  their melee. Wall Crusher breaches a wall square on 25 % at range, 50 % adjacent.
+EACH COMBAT TURN (Combat_Turn_Start, COMBMOVE.C): Terror, Entangle (-2 moves), Web, Black Sleep, Confusion
+  (Random(4): no move, a random move, or changing sides), Regeneration; Call Lightning, Wrack, Mana Leak and the
+  vortices act.
+RETREAT (Combat_Retreat_Resolve, COMBTURN.C): a losing side's fled units die 1 in 2 (heroes 1 in 4; none of the
+  current player's at Intro / Easy); held, confused or webbed ones always.
+STRATEGIC (auto) COMBAT (Combat_Strategic, COMBAUTO.C): per side totals of toughness (hits x 3, scaled by defense),
+  missile and attack values (AI_*_Value), x 1.5 for non-neutral sides when no human fights; the wizards' magic adds
+  to them; up to 3 missile rounds, then melee rounds, each doing (total + magic) x Random(10) / 100 against the
+  other side's toughness. The attacker wins if its attack is over 10, else the defender if its is. The losers all die;
+  the winner loses the share of its hits that its toughness lost. Mixing of realm effects: #182.
+AFTER A BATTLE (Combat_End, COMBEND.C): dead heroes' items go to the winner (HEROITEM.C: the human picks, an AI
+  re-equips and sells the rest for half their cost in mana); Create Undead / Zombie Mastery raise the dead; fame and
+  relations change; a city taken may be razed.
+
+
+8. DIPLOMACY (DIPLOACT.C, DIPLOTRN.C, AIDIPLO.C, DIPLOMSG.C)
+------------------------------------------------------------
+- Each wizard has toward each other a relation (-100..100), a base relation it drifts back to, and treaty / trade
+  / peace interests that regrow by 10 a turn below 100 (Diplo_Interest_Regrow) and drift (Diplo_Interest_Drift).
+- Drift each turn (Diplo_Relation_Drift): treaty bonuses; army envy (-10 on a 1 in 20 while the human's army is
+  below twice the other's); the human's city count above (land size + 1) x 3 angers everyone; the pull toward the
+  base relation.
+- Peace (Diplo_Make_Peace): relation +40, a peace timer of 8..13 turns, mutual city curses removed.
+- Breaking a treaty or declaring war costs relation with the third parties (Diplo_Break_Treaty, Diplo_Declare_War).
+- AI war decisions (AI_War_Check): never before turn 100 against the human; a Chaotic AI on Random(300) <= difficulty;
+  otherwise relation + an army term + personality + bias <= -150, rolled 1 in 20. Units parked within 2 squares of an
+  ally's city cost the treaty on the third consecutive check (AI_Border_Tension).
+- Proposals (AI_Diplo_Propose_To_Human): a pact when the relation is above 15 and a roll succeeds, an alliance above
+  50, else a spell exchange. AI-to-AI diplomacy (AI_Diplo_Turn_AI_Vs_AI) rolls alliances, trades and peace each turn.
+- Overland actions change relations: hostile city spells -5..-50 (Hostile_Spell_Relations), global enchantments
+  anger the other wizards each turn (Global_Enchant_Relations), attacks set hostility (Diplo_After_Attack).
+
+
+9. THE AI (AITURN.C, AIPROD.C, AINEUTRL.C, AIUNITS.C, AISPELL.C)
+-----------------------------------------------------------------
+- It plans with the whole map: the AI's own modules never read the exploration map (only the human has one; the
+  save holds no AI fog) and do not test invisibility themselves.
+- Tax (AI_Set_Tax): up while the gold income is below 75 per 50 turns played, down above 200, at most 2.0 gold.
+- Gold and mana (AI_Balance_Gold_Mana): moves gold to mana and back by fixed ratios; with Alchemy re-splits them
+  90 / 10 before turn 150, then 30 / 70.
+- Power split (AI_Magic_Allocation): re-chosen every 16..25 turns from a 10 / 30 / 10 base plus five +10 picks by
+  its objective; before turn 30 35 / 40 / 25 (research / mana / skill); casting the Spell of Mastery 0 / 90 / 10.
+- Strategy (AI_Choose_Strategy) and hostility (AI_Hostility_Replan) re-planned every 16..25 turns; personalities
+  (Maniacal, Ruthless, Aggressive, Chaotic, Lawful, Peaceful) and objectives weight the choices.
+- City production (AI_Wizard_Choose_Production): a garrison checklist (Barracks, Builders' Hall, Shrine, Smithy,
+  Granary), a Trade Goods roll, then a weighted pick: buildings by category and objective, units by (cost / 10)^2,
+  settlers / engineers / transports by rules. It buys when the buy price x a random factor is below its gold
+  (AI_City_Maybe_Buy). Mercenaries: never before turn 50, then at most half its gold (AI_Accept_Mercenary_Offer).
+- The neutral player (AINEUTRL.C): lairs release roaming monsters and neutral cities send raiders on timers that grow
+  with difficulty (from turn 50); neutral stacks attack the nearest weak wizard city or are disbanded.
+- From turn 100 the AI disbands units worth less than half its average unit cost (AI_Disband_Obsolete_Units).
+
+
+10. RANDOM EVENTS (EVENTGEN.C, EVENTS.C)
+----------------------------------------
+- Chance each turn (Event_Roll): the turns since the last event (none for 5 turns after one), x 1/2, 2/3, 3/4, 4/5
+  by difficulty; an event fires when Random(512) <= chance. Up to 5 tries of a random event; the victim is weighted by
+  power + research + army (good events favour the weak: Event_Pick_Wizard). Many conditions reject an event (Pirates
+  under 100 gold, Meteor / Marriage before turn 150, Rebellion in the fortress city ...).
+- Events: Meteor, Gift, Disjunction, Marriage, Earthquake, Pirates (30..50 % of the gold), Plague, Rebellion,
+  Donation (100 + 5 x Random(100) gold), Depletion / New Minerals (never fire: #1), Population Boom, and the six
+  global ones (Good / Bad Moon, the three Conjunctions, Mana Short). Lasting events end on Random(20) <= turns - 2 after
+  4 turns (Events_Process).
+
+
+11. LAIRS AND TREASURE (LAIR.C)
+-------------------------------
+- Guardians are fought as a normal battle (Lair_Attack, ATTACK.C). The treasure (Treasure_Roll): gold, mana, prefab
+  items (by the lair's item values), a spell of a rarity, spellbooks or retorts (3 in 4 a book of the lair's realm:
+  Lair_Book_Realm), a prisoner hero when a hero slot is free.
+
+
+12. THE END OF THE GAME (ENDGAME.C, MASTERY.C, FINSCORE.C)
+----------------------------------------------------------
+- A captured fortress (Wizard_Fortress_Captured): a wizard with 2+ cities is banished and starts casting the Spell of
+  Return (Wizard_Banish; an AI with skill under 40 or no mana is eliminated instead); otherwise eliminated - its
+  cities go neutral, its units die or go neutral, the winner takes half its gold and mana and gains 5 fame.
+- The game is won when no rival has a fortress or a city (All_Rivals_Defeated), or by completing the Spell of Mastery
+  (Spell_Of_Mastery_Complete): the game ends at once for everyone.
+- SCORE (FINSCORE.C): known spells + population / 2 (in thousands) + 50 per banished wizard + 2 x effective fame +
+  (2000 - 2 x turn, if the fortress stands and nobody else cast Mastery) + 250 for the Spell of Mastery, x 1/2, 3/4,
+  1, 2, 3 by difficulty. The turn bonus has no floor (#109).

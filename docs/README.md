@@ -4,10 +4,15 @@ Working notes from the decompilation, cleaned up for readers. The source (`src/`
 explain it, record how it was recovered, and collect facts that are spread over many functions. Each file says when it
 was written and how sure it is.
 
+Start with [`HOW_IT_WAS_DONE.md`](HOW_IT_WAS_DONE.md): how the source was recovered, in a few pages.
+
 ## How the game works
 
 | File | What |
 |---|---|
+| [`GAME_MECHANICS.txt`](GAME_MECHANICS.txt) | The rules as the code computes them: the map, cities (food, growth, production, gold, power, unrest, the AI's difficulty bonuses), a wizard's turn economy, the turn order, magic (research, casting costs, dispelling), units and heroes, combat rolls and strategic combat, diplomacy, the AI, random events, lairs, the end of the game and the score - each rule with the function it comes from. The city calculations are checked against every city of several real saves. |
+| [`COMMUNITY_PATCH_CROSSCHECK.txt`](COMMUNITY_PATCH_CROSSCHECK.txt) | Our numbered bugs against the community patch's files for `WIZARDS.EXE`: which of our bugs a patch file fixes, and every patch file with the functions it changes, the bugs that cite it, and our verdict on the bug fixes we did not list (with the reason where we disagree). |
+| [`MAPGEN_SURVEY.txt`](MAPGEN_SURVEY.txt) | How close land comes to the map's east-west seam, measured on 30 worlds made by the real world generator (and 9 other saves) - it decides the reach of the seam bugs. |
 | [`GRAPHICS_ENGINE.txt`](GRAPHICS_ENGINE.txt) | The graphics engine of `WIZARDS.EXE`: Mode X pages, latch copies, the two picture formats (LBX RLE and run-time bitmaps), translucency through remap tables, palette fades and colour cycling, screen transitions (which ones are used, which are dead code), fonts and text layout, the mouse pointer. Read in the code and checked in the assembly; the dead-code claims were also checked with debugger breakpoints. |
 | [`SAVE_LAYOUT.txt`](SAVE_LAYOUT.txt) | The `SAVEn.GAM` file, block by block: offset, record size, count, and the structure in `STRUCTS.H` (123,300 bytes, no header). From `Save_Game` / `Load_Game`; the total checked against real saves. |
 | [`AUDIO_LABELS.txt`](AUDIO_LABELS.txt) | The developers' own labels for every entry of `MUSIC.LBX` and `SOUNDFX.LBX`, read from the files' name tables. |
