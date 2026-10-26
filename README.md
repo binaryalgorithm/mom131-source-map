@@ -26,7 +26,18 @@ executable (the link order is in `build/`). `src/NAMING.TXT` explains how things
 ## Building the identical executables
 
 The steps below rebuild `WIZARDS.EXE` and `MAGIC.EXE` byte for byte. They are written so that a person - or an AI
-assistant working for one - can follow them; nothing is automated yet beyond two small helper scripts.
+assistant working for one - can follow them by hand; `build/` also has scripts that do all of it.
+
+**Quick build** (Python 3, 7-Zip on the PATH, DOSBox-X; tested on Windows):
+
+```
+python build/install_bc31.py "path/to/Borland CPP 3.1 and Application Frameworks (1992) (3.5-1.44mb)" tools
+python build/build.py --bc tools --game "path/to/your/Master of Magic" --dosbox path/to/dosbox-x
+```
+
+The first installs the needed parts of Borland C++ 3.1 into `tools/BORLANDC` and checks them; the second makes the
+sound-library stand-ins from your game, compiles all 203 modules in silent DOSBox-X sessions (about a minute),
+links, and prints both executables' SHA-256 against the originals. The steps it performs:
 
 ### What you need
 
@@ -35,15 +46,18 @@ assistant working for one - can follow them; nothing is automated yet beyond two
 | **Master of Magic v1.31** - your own copy | GOG ("Master of Magic Classic"); the GOG files are the ones verified | `WIZARDS.EXE` SHA-256 `83e273105b49ebb758b041c965298e45d491513e448e84ede2c6152232ad4e3d`, `MAGIC.EXE` `e9b96da031097fee92d8f00213f7406d5d22003c63e486b7f6394eaa078c3ebb` |
 | **Borland C++ 3.1** | WinWorld (winworldpc.com): "Borland C++ 3.1 and Application Frameworks (1992)", the 3.5" 1.44 MB disk set - `Borland CPP 3.1 and Application Frameworks (1992) (3.5-1.44mb).7z` | archive SHA-256 `76e155a7fb7eb0590930ecd513644c977497a020466a272943776fbf683d0f27` |
 | **DOSBox-X** (Borland C++ is a 16-bit DOS program) | dosbox-x.com / github.com/joncampbell123/dosbox-x - verified with 2026.10.01 | |
-| **Python 3** | python.org - only for the two helper scripts in `build/` | |
+| **Python 3** | python.org - for the scripts in `build/` | |
+| **7-Zip** | 7-zip.org (or `p7zip` / Info-ZIP `unzip` elsewhere) - opens the floppy images and the 1992 PKZIP 1.x archives, which Python's own `zipfile` cannot read | |
 
 Borland C++ 3.1 is not freeware (the rights are Embarcadero's); WinWorld hosts it as abandonware. It is not
 included here - get it yourself, and judge for yourself. Only 3.1 gives identical code (3.0 does not).
 
 ### 1. Install the compiler (only the parts the build uses)
 
-Unpack the WinWorld archive: it holds the original install disks (`Disk01` ...). Make a folder `BORLANDC` with
-`BIN`, `INCLUDE` and `LIB` in it:
+(`build/install_bc31.py` does this step.) Unpack the WinWorld archive: it holds the original install disks as
+floppy images, `Disk01.img` .. `Disk15.img`. Open each image with 7-Zip into a folder of its own (`Disk01/` ...).
+Make a folder `BORLANDC` with `BIN`, `INCLUDE` and `LIB` in it (unzip everything with 7-Zip: the archives are
+PKZIP 1.x):
 
 - `BIN`: the command-line compiler and linker are in the multi-disk archive `CMDLINE` (`Disk03/CMDLINE.CA1` +
   `Disk13/CMDLINE.CA2`), the assembler in `TASM` (`Disk07/TASM.CA1` + `Disk09/TASM.CA2`). Each `.CA` part is a
@@ -101,6 +115,12 @@ program and resident in the other - that is why each program has its own folder.
 Borland C++ 3.1 reads leftovers of the previous run from memory: compiled one after another in one session, a few
 large modules (`WIZARDS.C`, `MAGIC.C`, `HEAP.C`) come out with different register choices and the executables no
 longer match. Sessions can run in parallel; a full build takes about a minute.
+
+**Running DOSBox-X headless:** start each session as
+`dosbox-x -silent -fastlaunch -nogui -conf SESSION.CONF`, with the compile in the config's `[autoexec]` section
+followed by `exit`. `-silent` runs without a window and exits when the autoexec is done, so a script can start 200
+sessions without anything appearing on screen and simply wait for each process to end. `build/build.py` does exactly
+this - read it as the worked example (the config it writes, the batch per module, the parallel runner).
 
 After assembling the WIZARDS stand-in, put its relocation where the original link had it:
 
