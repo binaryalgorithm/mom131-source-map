@@ -1,0 +1,35 @@
+{
+ "prog": "magic",
+ "name": "m08_wizard_name",
+ "note": "route: c:200,34 w:2",
+ "time": "2026-10-21 18:44:44",
+ "current_screen": null,
+ "control_count": 1,
+ "controls": [
+  {
+   "id": 1,
+   "type": "text_input",
+   "x1": 195,
+   "y1": 36,
+   "x2": 275,
+   "y2": 45,
+   "w": 81,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "text": "Merlin",
+   "max_len": 10
+  }
+ ],
+ "help": [],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

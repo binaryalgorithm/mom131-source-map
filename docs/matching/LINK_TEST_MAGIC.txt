@@ -1,0 +1,53 @@
+[Published 2026-10-26 from the project's working notes, otherwise as written while matching (2026-10-18 .. 10-21).
+ The compiler rules are general Borland C++ 3.1 facts; the workflow names the project's own tools (tools/, work/,
+ re/ paths, scratch scripts), which are not published - read those parts as a description of the method. Function
+ and variable names are the ones current at the time; some were renamed later (the published source and the map
+ have the final names, and the addresses identify a function either way). Bracketed numbers [n] / batch numbers
+ point into the project's process log, which is not published.]
+
+MAGIC.EXE LINK TEST (batch 36, 2026-10-19) - RESULT: the rebuild is BYTE-IDENTICAL to original/magic.exe
+====================================================================================================
+SHA-256 of both: e9b96da031097fee92d8f00213f7406d5d22003c63e486b7f6394eaa078c3ebb (303,264 bytes).
+Rerun: MSYS_NO_PATHCONV=1 python -P tools/link_magic.py --opts "/c /s"   (overlays get -Y by default) then
+       python -I work/link/exe_cmp.py   (header, relocation table, resident image by segment, overlay data)
+What is rebuilt from source: all 49 Simtex modules (src/magic/MODULES.TSV), compiled by Borland C++ 3.1 / TASM 3.1.
+What is NOT rebuilt from source: the Miles AIL 2.14 library segment (6,404 bytes) - a stand-in OBJ assembled from the
+game's own bytes (work/link/make_ail.py -> AIL.ASM: db bytes, 105 publics at the game offsets, its one relocation).
+The Borland runtime (C0M.OBJ, CM.LIB) and OVERLAY.LIB come unmodified from the BC++ 3.1 tree.
+
+HOW THE ORIGINAL WAS BUILT (recovered from the binary; each item proved by the byte comparison)
+- Compiler BCC 3.1 -c -mm -a -d; the 14 OVERLAID modules ALSO with -Y (overlay code generation: the code bytes do not
+  change, but a far pointer to an own function then goes through the overlay stub's thunk - without -Y, 60 bytes of
+  overlay code pointed at the functions directly). Assembly modules: TASM 3.1 /ml.
+- TLINK 5.1 (BC++ 3.1) with /c, the overlays between /o and /o-. Object order: C0M, MAGIC, then the 14 overlays
+  (SAVELOAD SETTINGS NEWGAME WORLDGEN AUTOSAVE NOTIFY PATHWIN REGIONS GAMESTRT GAMEDATA INTRO HELPSCR CREDITS
+  HALLFAME), then the resident modules in segment order (TIMER .. UI, AIL, SOUND). Libraries CM.LIB then OVERLAY.LIB.
+  (The overlays' place in the list is visible only in DGROUP: their data lies between MAGIC.C's and HEAP's.)
+- Linked on 3 MARCH 1995: VROOMM's _EXEINFO_ stores the link date (day 3, month 3, year 1995).
+- _ovrbuffer = 4096 paragraphs (64 KB), defined by MAGIC.C (DS:206e), so OVERLAY.LIB's OVRBUFF default is not linked.
+- Overlay stub thunk order = the order each module first DECLARES its functions (its prototypes): WORLDGEN.C declared
+  City_Pick_Default_Name first (a shared header?), then all in definition order; SETTINGS / NEWGAME / GAMESTRT / INTRO
+  declared some functions early; NOTIFY / PATHWIN / HELPSCR plain definition order. work/link/proto_order.py writes
+  one prototype block per overlay module in that order.
+
+DGROUP (43,594 bytes) - every variable placed, 386 / 386 known addresses equal (work/link/dscheck.py)
+- Initialised data: every module's block in link order (work/link/dgroup_map.py). Added where they open a module's
+  block in BOTH programs (work/link/wiz_neighbours.py): SETTINGS.C mouse_region_menu / menu_return_mode, HEAP.C
+  near_alloc_top (+2 unread words), PALETTE.C palette_cycle_state, HALLFAME.C race_plural_names[14] + strings,
+  AUTOSAVE.C / REGIONS.C one unread word each, ANIMEMS.ASM / PICRLE.ASM an unread word before plane_bits.
+- BSS: Borland lays a module's _BSS out in REVERSE declaration order (word-aligned except char); each module's block in
+  link order. Owners from the address census (work/link/bss_refs.py, bss_plan.py): MAGIC.C holds DS:52b2..89fb - a
+  reshuffled copy of WIZARDS' main-module globals (runs with one address offset to WIZARDS); then SETTINGS, NEWGAME,
+  WORLDGEN, AUTOSAVE, NOTIFY, PATHWIN, GAMEDATA, HELPSCR, CREDITS, HEAP, LBX, DOSFILE, EMSLBX, GRAPHICS, TEXT,
+  PARAGRPH, PALETTE, PIC, UI, SOUND. Definitions written by work/link/bss_gen.py + bss_apply.py (comments name the
+  evidence). Gap variables named from WIZARDS (same place in a shared run); at a run boundary or a moved block the name
+  is marked PROVISIONAL; slots no code in either program reads are '<left neighbour>_spare' (PROVISIONAL).
+- GameStart's two stores to DS:8130 / 843c are wizards[5].garrison_average_strength / defeated_wizards[0] (the
+  neutral player's record), not separate globals; Wizard.defeated_wizards is a 2-byte bit array.
+- MAGIC.C's bit_masks / mouse_region_busy are static (UTIL.C / WORLDGEN.C own the public ones).
+
+OPEN / NEXT
+- AIL from its source (ref/AIL2_dl, AIL 2.14) instead of the byte stand-in - optional; the stand-in proves the place.
+- WIZARDS: the same census (DGROUP owners, link order, overlay list, -Y, link date) before list D, so each WIZARDS
+  source defines what it owns; it will also settle MAGIC.C's PROVISIONAL names (WIZARDS' main-module globals).
+- Re-export structs to Ghidra (Wizard.defeated_wizards u8[2], Unit.level i8, UnitType.upkeep i8 etc.).

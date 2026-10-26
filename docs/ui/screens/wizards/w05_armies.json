@@ -1,0 +1,198 @@
+{
+ "prog": "wizards",
+ "name": "w05_armies",
+ "note": "route: k:esc w:2 k:a w:3",
+ "time": "2026-10-21 18:48:25",
+ "current_screen": 2,
+ "control_count": 6,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 78,
+   "y1": 25,
+   "x2": 96,
+   "y2": 40,
+   "w": 19,
+   "h": 16,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 96,
+   "y1": 25,
+   "x2": 114,
+   "y2": 40,
+   "w": 19,
+   "h": 16,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 78,
+   "y1": 25,
+   "x2": 240,
+   "y2": 40,
+   "w": 163,
+   "h": 16,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 4,
+   "type": "button",
+   "x1": 273,
+   "y1": 163,
+   "x2": 313,
+   "y2": 177,
+   "w": 41,
+   "h": 15,
+   "hotkey": 73,
+   "help": -1,
+   "key": "I",
+   "label": "",
+   "help_title": "ITEMS"
+  },
+  {
+   "id": 5,
+   "type": "button",
+   "x1": 273,
+   "y1": 182,
+   "x2": 313,
+   "y2": 196,
+   "w": 41,
+   "h": 15,
+   "hotkey": 79,
+   "help": -1,
+   "key": "O",
+   "label": "",
+   "help_title": "OK"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "Esc",
+   "offscreen": true
+  }
+ ],
+ "help": [
+  {
+   "help": 237,
+   "title": "REDUCED MAP",
+   "x1": 86,
+   "y1": 163,
+   "x2": 134,
+   "y2": 196
+  },
+  {
+   "help": 238,
+   "title": "UNIT NAME",
+   "x1": 141,
+   "y1": 160,
+   "x2": 236,
+   "y2": 167
+  },
+  {
+   "help": 239,
+   "title": "UNIT ENCHANTMENTS",
+   "x1": 143,
+   "y1": 171,
+   "x2": 235,
+   "y2": 195
+  },
+  {
+   "help": 240,
+   "title": "ITEMS",
+   "x1": 274,
+   "y1": 164,
+   "x2": 312,
+   "y2": 176
+  },
+  {
+   "help": 241,
+   "title": "OK",
+   "x1": 274,
+   "y1": 183,
+   "x2": 312,
+   "y2": 195
+  },
+  {
+   "help": 242,
+   "title": "UPKEEP",
+   "x1": 0,
+   "y1": 160,
+   "x2": 51,
+   "y2": 199
+  },
+  {
+   "help": 243,
+   "title": "EMPTY HERO SLOT",
+   "x1": 12,
+   "y1": 5,
+   "x2": 43,
+   "y2": 36
+  },
+  {
+   "help": 243,
+   "title": "EMPTY HERO SLOT",
+   "x1": 277,
+   "y1": 5,
+   "x2": 308,
+   "y2": 36
+  },
+  {
+   "help": 243,
+   "title": "EMPTY HERO SLOT",
+   "x1": 12,
+   "y1": 56,
+   "x2": 43,
+   "y2": 87
+  },
+  {
+   "help": 243,
+   "title": "EMPTY HERO SLOT",
+   "x1": 277,
+   "y1": 56,
+   "x2": 308,
+   "y2": 87
+  },
+  {
+   "help": 243,
+   "title": "EMPTY HERO SLOT",
+   "x1": 12,
+   "y1": 107,
+   "x2": 43,
+   "y2": 138
+  },
+  {
+   "help": 243,
+   "title": "EMPTY HERO SLOT",
+   "x1": 277,
+   "y1": 107,
+   "x2": 308,
+   "y2": 138
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

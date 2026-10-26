@@ -1,0 +1,468 @@
+{
+ "prog": "magic",
+ "name": "m10_spell_picks",
+ "note": "route: c:160,100 w:1 c:266,188 w:2",
+ "time": "2026-10-21 18:45:37",
+ "current_screen": null,
+ "control_count": 22,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "0x1b",
+   "offscreen": true
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 251,
+   "y1": 181,
+   "x2": 282,
+   "y2": 196,
+   "w": 32,
+   "h": 16,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 170,
+   "y1": 39,
+   "x2": 240,
+   "y2": 44,
+   "w": 71,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "TRUE SIGHT"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 170,
+   "y1": 46,
+   "x2": 240,
+   "y2": 51,
+   "w": 71,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "PLANE SHIFT"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 170,
+   "y1": 53,
+   "x2": 240,
+   "y2": 58,
+   "w": 71,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "RESURRECTION"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 170,
+   "y1": 60,
+   "x2": 240,
+   "y2": 65,
+   "w": 71,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "DISPEL EVIL"
+  },
+  {
+   "id": 7,
+   "type": "region",
+   "x1": 170,
+   "y1": 67,
+   "x2": 240,
+   "y2": 72,
+   "w": 71,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "PLANAR SEAL"
+  },
+  {
+   "id": 8,
+   "type": "region",
+   "x1": 244,
+   "y1": 39,
+   "x2": 318,
+   "y2": 44,
+   "w": 75,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "UNICORNS"
+  },
+  {
+   "id": 9,
+   "type": "region",
+   "x1": 244,
+   "y1": 46,
+   "x2": 318,
+   "y2": 51,
+   "w": 75,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "RAISE DEAD"
+  },
+  {
+   "id": 10,
+   "type": "region",
+   "x1": 244,
+   "y1": 53,
+   "x2": 318,
+   "y2": 58,
+   "w": 75,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "PLANAR TRAVEL"
+  },
+  {
+   "id": 11,
+   "type": "region",
+   "x1": 244,
+   "y1": 60,
+   "x2": 318,
+   "y2": 65,
+   "w": 75,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "HEAVENLY LIGHT"
+  },
+  {
+   "id": 12,
+   "type": "region",
+   "x1": 244,
+   "y1": 67,
+   "x2": 318,
+   "y2": 72,
+   "w": 75,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "PRAYER"
+  },
+  {
+   "id": 13,
+   "type": "region",
+   "x1": 170,
+   "y1": 90,
+   "x2": 240,
+   "y2": 95,
+   "w": 71,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "LION HEART"
+  },
+  {
+   "id": 14,
+   "type": "region",
+   "x1": 170,
+   "y1": 97,
+   "x2": 240,
+   "y2": 102,
+   "w": 71,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "INCARNATION"
+  },
+  {
+   "id": 15,
+   "type": "region",
+   "x1": 170,
+   "y1": 104,
+   "x2": 240,
+   "y2": 109,
+   "w": 71,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "INVULNERABILITY"
+  },
+  {
+   "id": 16,
+   "type": "region",
+   "x1": 170,
+   "y1": 111,
+   "x2": 240,
+   "y2": 116,
+   "w": 71,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "RIGHTEOUSNESS"
+  },
+  {
+   "id": 17,
+   "type": "region",
+   "x1": 170,
+   "y1": 118,
+   "x2": 240,
+   "y2": 123,
+   "w": 71,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "PROSPERITY"
+  },
+  {
+   "id": 18,
+   "type": "region",
+   "x1": 244,
+   "y1": 90,
+   "x2": 318,
+   "y2": 95,
+   "w": 75,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "ALTAR OF BATTLE"
+  },
+  {
+   "id": 19,
+   "type": "region",
+   "x1": 244,
+   "y1": 97,
+   "x2": 318,
+   "y2": 102,
+   "w": 75,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "ANGEL"
+  },
+  {
+   "id": 20,
+   "type": "region",
+   "x1": 244,
+   "y1": 104,
+   "x2": 318,
+   "y2": 109,
+   "w": 75,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "STREAM OF LIFE"
+  },
+  {
+   "id": 21,
+   "type": "region",
+   "x1": 244,
+   "y1": 111,
+   "x2": 318,
+   "y2": 116,
+   "w": 75,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "MASS HEALING"
+  },
+  {
+   "id": 22,
+   "type": "region",
+   "x1": 244,
+   "y1": 118,
+   "x2": 318,
+   "y2": 123,
+   "w": 75,
+   "h": 6,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "HOLY WORD"
+  }
+ ],
+ "help": [
+  {
+   "help": 131,
+   "title": "TRUE SIGHT",
+   "x1": 168,
+   "y1": 38,
+   "x2": 240,
+   "y2": 44
+  },
+  {
+   "help": 132,
+   "title": "PLANE SHIFT",
+   "x1": 168,
+   "y1": 45,
+   "x2": 240,
+   "y2": 51
+  },
+  {
+   "help": 133,
+   "title": "RESURRECTION",
+   "x1": 168,
+   "y1": 52,
+   "x2": 240,
+   "y2": 58
+  },
+  {
+   "help": 134,
+   "title": "DISPEL EVIL",
+   "x1": 168,
+   "y1": 59,
+   "x2": 240,
+   "y2": 65
+  },
+  {
+   "help": 135,
+   "title": "PLANAR SEAL",
+   "x1": 168,
+   "y1": 66,
+   "x2": 240,
+   "y2": 72
+  },
+  {
+   "help": 136,
+   "title": "UNICORNS",
+   "x1": 241,
+   "y1": 38,
+   "x2": 315,
+   "y2": 44
+  },
+  {
+   "help": 137,
+   "title": "RAISE DEAD",
+   "x1": 241,
+   "y1": 45,
+   "x2": 315,
+   "y2": 51
+  },
+  {
+   "help": 138,
+   "title": "PLANAR TRAVEL",
+   "x1": 241,
+   "y1": 52,
+   "x2": 315,
+   "y2": 58
+  },
+  {
+   "help": 139,
+   "title": "HEAVENLY LIGHT",
+   "x1": 241,
+   "y1": 59,
+   "x2": 315,
+   "y2": 65
+  },
+  {
+   "help": 140,
+   "title": "PRAYER",
+   "x1": 241,
+   "y1": 66,
+   "x2": 315,
+   "y2": 72
+  },
+  {
+   "help": 141,
+   "title": "LION HEART",
+   "x1": 168,
+   "y1": 89,
+   "x2": 240,
+   "y2": 95
+  },
+  {
+   "help": 142,
+   "title": "INCARNATION",
+   "x1": 168,
+   "y1": 96,
+   "x2": 240,
+   "y2": 102
+  },
+  {
+   "help": 143,
+   "title": "INVULNERABILITY",
+   "x1": 168,
+   "y1": 103,
+   "x2": 240,
+   "y2": 109
+  },
+  {
+   "help": 144,
+   "title": "RIGHTEOUSNESS",
+   "x1": 168,
+   "y1": 110,
+   "x2": 240,
+   "y2": 116
+  },
+  {
+   "help": 145,
+   "title": "PROSPERITY",
+   "x1": 168,
+   "y1": 117,
+   "x2": 240,
+   "y2": 123
+  },
+  {
+   "help": 146,
+   "title": "ALTAR OF BATTLE",
+   "x1": 241,
+   "y1": 89,
+   "x2": 315,
+   "y2": 95
+  },
+  {
+   "help": 147,
+   "title": "ANGEL",
+   "x1": 241,
+   "y1": 96,
+   "x2": 315,
+   "y2": 102
+  },
+  {
+   "help": 148,
+   "title": "STREAM OF LIFE",
+   "x1": 241,
+   "y1": 103,
+   "x2": 315,
+   "y2": 109
+  },
+  {
+   "help": 149,
+   "title": "MASS HEALING",
+   "x1": 241,
+   "y1": 110,
+   "x2": 315,
+   "y2": 116
+  },
+  {
+   "help": 150,
+   "title": "HOLY WORD",
+   "x1": 241,
+   "y1": 117,
+   "x2": 315,
+   "y2": 123
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

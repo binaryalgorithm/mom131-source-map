@@ -1,0 +1,330 @@
+{
+ "prog": "magic",
+ "name": "m06_select_wizard",
+ "note": "route: c:283,186 w:2",
+ "time": "2026-10-21 18:44:02",
+ "current_screen": null,
+ "control_count": 15,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 168,
+   "y1": 26,
+   "x2": 237,
+   "y2": 42,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "MERLIN"
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 168,
+   "y1": 48,
+   "x2": 237,
+   "y2": 64,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "RAVEN"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 168,
+   "y1": 70,
+   "x2": 237,
+   "y2": 86,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SHAREE"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 168,
+   "y1": 92,
+   "x2": 237,
+   "y2": 108,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "LO PAN"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 168,
+   "y1": 114,
+   "x2": 237,
+   "y2": 130,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "JAFAR"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 168,
+   "y1": 136,
+   "x2": 237,
+   "y2": 152,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "OBERIC"
+  },
+  {
+   "id": 7,
+   "type": "region",
+   "x1": 168,
+   "y1": 158,
+   "x2": 237,
+   "y2": 174,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "RJAK"
+  },
+  {
+   "id": 8,
+   "type": "region",
+   "x1": 244,
+   "y1": 26,
+   "x2": 313,
+   "y2": 42,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SSS'RA"
+  },
+  {
+   "id": 9,
+   "type": "region",
+   "x1": 244,
+   "y1": 48,
+   "x2": 313,
+   "y2": 64,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "TAURON"
+  },
+  {
+   "id": 10,
+   "type": "region",
+   "x1": 244,
+   "y1": 70,
+   "x2": 313,
+   "y2": 86,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "FREYA"
+  },
+  {
+   "id": 11,
+   "type": "region",
+   "x1": 244,
+   "y1": 92,
+   "x2": 313,
+   "y2": 108,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "HORUS"
+  },
+  {
+   "id": 12,
+   "type": "region",
+   "x1": 244,
+   "y1": 114,
+   "x2": 313,
+   "y2": 130,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "ARIEL"
+  },
+  {
+   "id": 13,
+   "type": "region",
+   "x1": 244,
+   "y1": 136,
+   "x2": 313,
+   "y2": 152,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "TLALOC"
+  },
+  {
+   "id": 14,
+   "type": "region",
+   "x1": 244,
+   "y1": 158,
+   "x2": 313,
+   "y2": 174,
+   "w": 70,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "KALI"
+  },
+  {
+   "id": 15,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "0x1b",
+   "offscreen": true
+  }
+ ],
+ "help": [
+  {
+   "help": 659,
+   "title": "MERLIN",
+   "x1": 168,
+   "y1": 26,
+   "x2": 237,
+   "y2": 42
+  },
+  {
+   "help": 660,
+   "title": "RAVEN",
+   "x1": 168,
+   "y1": 48,
+   "x2": 237,
+   "y2": 64
+  },
+  {
+   "help": 661,
+   "title": "SHAREE",
+   "x1": 168,
+   "y1": 70,
+   "x2": 237,
+   "y2": 86
+  },
+  {
+   "help": 662,
+   "title": "LO PAN",
+   "x1": 168,
+   "y1": 92,
+   "x2": 237,
+   "y2": 108
+  },
+  {
+   "help": 663,
+   "title": "JAFAR",
+   "x1": 168,
+   "y1": 114,
+   "x2": 237,
+   "y2": 130
+  },
+  {
+   "help": 664,
+   "title": "OBERIC",
+   "x1": 168,
+   "y1": 136,
+   "x2": 237,
+   "y2": 152
+  },
+  {
+   "help": 667,
+   "title": "RJAK",
+   "x1": 168,
+   "y1": 158,
+   "x2": 237,
+   "y2": 174
+  },
+  {
+   "help": 666,
+   "title": "SSS'RA",
+   "x1": 244,
+   "y1": 26,
+   "x2": 313,
+   "y2": 42
+  },
+  {
+   "help": 665,
+   "title": "TAURON",
+   "x1": 244,
+   "y1": 48,
+   "x2": 313,
+   "y2": 64
+  },
+  {
+   "help": 668,
+   "title": "FREYA",
+   "x1": 244,
+   "y1": 70,
+   "x2": 313,
+   "y2": 86
+  },
+  {
+   "help": 669,
+   "title": "HORUS",
+   "x1": 244,
+   "y1": 92,
+   "x2": 313,
+   "y2": 108
+  },
+  {
+   "help": 670,
+   "title": "ARIEL",
+   "x1": 244,
+   "y1": 114,
+   "x2": 313,
+   "y2": 130
+  },
+  {
+   "help": 671,
+   "title": "TLALOC",
+   "x1": 244,
+   "y1": 136,
+   "x2": 313,
+   "y2": 152
+  },
+  {
+   "help": 672,
+   "title": "KALI",
+   "x1": 244,
+   "y1": 158,
+   "x2": 313,
+   "y2": 174
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

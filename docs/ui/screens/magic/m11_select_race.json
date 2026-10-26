@@ -1,0 +1,330 @@
+{
+ "prog": "magic",
+ "name": "m11_select_race",
+ "note": "route: c:266,188 w:2",
+ "time": "2026-10-21 18:46:17",
+ "current_screen": null,
+ "control_count": 15,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 211,
+   "y1": 38,
+   "x2": 270,
+   "y2": 45,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BARBARIAN TOWNSFOLK"
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 211,
+   "y1": 48,
+   "x2": 270,
+   "y2": 55,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "GNOLL TOWNSFOLK"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 211,
+   "y1": 58,
+   "x2": 270,
+   "y2": 65,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "HALFLING TOWNSFOLK"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 211,
+   "y1": 68,
+   "x2": 270,
+   "y2": 75,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "HIGH ELF TOWNSFOLK"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 211,
+   "y1": 78,
+   "x2": 270,
+   "y2": 85,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "HIGH MEN TOWNSFOLK"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 211,
+   "y1": 88,
+   "x2": 270,
+   "y2": 95,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "KLACKON TOWNSFOLK"
+  },
+  {
+   "id": 7,
+   "type": "region",
+   "x1": 211,
+   "y1": 98,
+   "x2": 270,
+   "y2": 105,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "LIZARDMEN TOWNSFOLK"
+  },
+  {
+   "id": 8,
+   "type": "region",
+   "x1": 211,
+   "y1": 108,
+   "x2": 270,
+   "y2": 115,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "NOMAD TOWNSFOLK"
+  },
+  {
+   "id": 9,
+   "type": "region",
+   "x1": 211,
+   "y1": 118,
+   "x2": 270,
+   "y2": 125,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "ORC TOWNSFOLK"
+  },
+  {
+   "id": 10,
+   "type": "region",
+   "x1": 211,
+   "y1": 147,
+   "x2": 270,
+   "y2": 154,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BEASTMEN TOWNSFOLK"
+  },
+  {
+   "id": 11,
+   "type": "region",
+   "x1": 211,
+   "y1": 157,
+   "x2": 270,
+   "y2": 164,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "DARK ELF TOWNSFOLK"
+  },
+  {
+   "id": 12,
+   "type": "region",
+   "x1": 211,
+   "y1": 167,
+   "x2": 270,
+   "y2": 174,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "DRACONIAN TOWNSFOLK"
+  },
+  {
+   "id": 13,
+   "type": "region",
+   "x1": 211,
+   "y1": 177,
+   "x2": 270,
+   "y2": 184,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "DWARF TOWNSFOLK"
+  },
+  {
+   "id": 14,
+   "type": "region",
+   "x1": 211,
+   "y1": 187,
+   "x2": 270,
+   "y2": 194,
+   "w": 60,
+   "h": 8,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "TROLL TOWNSFOLK"
+  },
+  {
+   "id": 15,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "0x1b",
+   "offscreen": true
+  }
+ ],
+ "help": [
+  {
+   "help": 279,
+   "title": "BARBARIAN TOWNSFOLK",
+   "x1": 210,
+   "y1": 37,
+   "x2": 270,
+   "y2": 46
+  },
+  {
+   "help": 284,
+   "title": "GNOLL TOWNSFOLK",
+   "x1": 210,
+   "y1": 47,
+   "x2": 270,
+   "y2": 56
+  },
+  {
+   "help": 285,
+   "title": "HALFLING TOWNSFOLK",
+   "x1": 210,
+   "y1": 57,
+   "x2": 270,
+   "y2": 66
+  },
+  {
+   "help": 286,
+   "title": "HIGH ELF TOWNSFOLK",
+   "x1": 210,
+   "y1": 67,
+   "x2": 270,
+   "y2": 76
+  },
+  {
+   "help": 287,
+   "title": "HIGH MEN TOWNSFOLK",
+   "x1": 210,
+   "y1": 77,
+   "x2": 270,
+   "y2": 86
+  },
+  {
+   "help": 288,
+   "title": "KLACKON TOWNSFOLK",
+   "x1": 210,
+   "y1": 87,
+   "x2": 270,
+   "y2": 96
+  },
+  {
+   "help": 289,
+   "title": "LIZARDMEN TOWNSFOLK",
+   "x1": 210,
+   "y1": 97,
+   "x2": 270,
+   "y2": 106
+  },
+  {
+   "help": 290,
+   "title": "NOMAD TOWNSFOLK",
+   "x1": 210,
+   "y1": 107,
+   "x2": 270,
+   "y2": 116
+  },
+  {
+   "help": 291,
+   "title": "ORC TOWNSFOLK",
+   "x1": 210,
+   "y1": 117,
+   "x2": 270,
+   "y2": 126
+  },
+  {
+   "help": 280,
+   "title": "BEASTMEN TOWNSFOLK",
+   "x1": 210,
+   "y1": 146,
+   "x2": 270,
+   "y2": 155
+  },
+  {
+   "help": 281,
+   "title": "DARK ELF TOWNSFOLK",
+   "x1": 210,
+   "y1": 156,
+   "x2": 270,
+   "y2": 165
+  },
+  {
+   "help": 282,
+   "title": "DRACONIAN TOWNSFOLK",
+   "x1": 210,
+   "y1": 166,
+   "x2": 270,
+   "y2": 175
+  },
+  {
+   "help": 283,
+   "title": "DWARF TOWNSFOLK",
+   "x1": 210,
+   "y1": 176,
+   "x2": 270,
+   "y2": 185
+  },
+  {
+   "help": 292,
+   "title": "TROLL TOWNSFOLK",
+   "x1": 210,
+   "y1": 186,
+   "x2": 270,
+   "y2": 195
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

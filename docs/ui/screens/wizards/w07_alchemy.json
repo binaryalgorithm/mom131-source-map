@@ -1,0 +1,170 @@
+{
+ "prog": "wizards",
+ "name": "w07_alchemy",
+ "note": "route: k:a (from Items)",
+ "time": "2026-10-21 18:48:53",
+ "current_screen": 9,
+ "control_count": 7,
+ "controls": [
+  {
+   "id": 1,
+   "type": "slider",
+   "x1": 130,
+   "y1": 85,
+   "x2": 185,
+   "y2": 92,
+   "w": 56,
+   "h": 8,
+   "hotkey": 65,
+   "help": -1,
+   "key": "A",
+   "min": 3,
+   "max": 53,
+   "vertical": 0,
+   "help_title": "ALCHEMY RATIO"
+  },
+  {
+   "id": 2,
+   "type": "button",
+   "x1": 93,
+   "y1": 99,
+   "x2": 141,
+   "y2": 114,
+   "w": 49,
+   "h": 16,
+   "hotkey": 67,
+   "help": -1,
+   "key": "C",
+   "label": "",
+   "help_title": "CANCEL"
+  },
+  {
+   "id": 3,
+   "type": "button",
+   "x1": 176,
+   "y1": 99,
+   "x2": 224,
+   "y2": 114,
+   "w": 49,
+   "h": 16,
+   "hotkey": 79,
+   "help": -1,
+   "key": "O",
+   "label": "",
+   "help_title": "OK"
+  },
+  {
+   "id": 4,
+   "type": "button",
+   "x1": 146,
+   "y1": 99,
+   "x2": 171,
+   "y2": 114,
+   "w": 26,
+   "h": 16,
+   "hotkey": 32,
+   "help": -1,
+   "key": "Space",
+   "label": "",
+   "help_title": "ALCHEMY TOGGLE"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 80,
+   "y1": 60,
+   "x2": 237,
+   "y2": 125,
+   "w": 158,
+   "h": 66,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199,
+   "w": 320,
+   "h": 200,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 7,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "Esc",
+   "offscreen": true
+  }
+ ],
+ "help": [
+  {
+   "help": 368,
+   "title": "ALCHEMY GOLD",
+   "x1": 93,
+   "y1": 85,
+   "x2": 121,
+   "y2": 91
+  },
+  {
+   "help": 369,
+   "title": "ALCHEMY RATIO",
+   "x1": 130,
+   "y1": 85,
+   "x2": 186,
+   "y2": 91
+  },
+  {
+   "help": 370,
+   "title": "ALCHEMY POWER",
+   "x1": 196,
+   "y1": 85,
+   "x2": 223,
+   "y2": 91
+  },
+  {
+   "help": 371,
+   "title": "CANCEL",
+   "x1": 93,
+   "y1": 99,
+   "x2": 141,
+   "y2": 114
+  },
+  {
+   "help": 372,
+   "title": "ALCHEMY TOGGLE",
+   "x1": 146,
+   "y1": 99,
+   "x2": 171,
+   "y2": 114
+  },
+  {
+   "help": 373,
+   "title": "OK",
+   "x1": 176,
+   "y1": 99,
+   "x2": 224,
+   "y2": 114
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

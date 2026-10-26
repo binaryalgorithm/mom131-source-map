@@ -1,0 +1,135 @@
+{
+ "prog": "magic",
+ "name": "m02_load_game",
+ "note": "main menu L",
+ "time": "2026-10-21 18:42:27",
+ "current_screen": null,
+ "control_count": 6,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "0x1b",
+   "offscreen": true
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 43,
+   "y1": 171,
+   "x2": 82,
+   "y2": 184,
+   "w": 40,
+   "h": 14,
+   "hotkey": 27,
+   "help": -1,
+   "key": "0x1b",
+   "help_title": "QUIT BUTTON"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 83,
+   "y1": 171,
+   "x2": 121,
+   "y2": 184,
+   "w": 39,
+   "h": 14,
+   "hotkey": 76,
+   "help": -1,
+   "key": "L",
+   "help_title": "LOAD BUTTON"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 43,
+   "y1": 47,
+   "x2": 263,
+   "y2": 56,
+   "w": 221,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SAVED GAMES"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 43,
+   "y1": 62,
+   "x2": 263,
+   "y2": 71,
+   "w": 221,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SAVED GAMES"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 172,
+   "y1": 171,
+   "x2": 229,
+   "y2": 184,
+   "w": 58,
+   "h": 14,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SETTINGS BUTTON"
+  }
+ ],
+ "help": [
+  {
+   "help": 633,
+   "title": "LOAD BUTTON",
+   "x1": 83,
+   "y1": 171,
+   "x2": 120,
+   "y2": 183
+  },
+  {
+   "help": 634,
+   "title": "QUIT BUTTON",
+   "x1": 43,
+   "y1": 171,
+   "x2": 81,
+   "y2": 183
+  },
+  {
+   "help": 635,
+   "title": "SETTINGS BUTTON",
+   "x1": 172,
+   "y1": 171,
+   "x2": 229,
+   "y2": 183
+  },
+  {
+   "help": 638,
+   "title": "SAVED GAMES",
+   "x1": 42,
+   "y1": 43,
+   "x2": 272,
+   "y2": 161
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

@@ -1,0 +1,277 @@
+{
+ "prog": "wizards",
+ "name": "w04_spellbook",
+ "note": "route: c:285,182 w:2 k:esc w:2 k:s w:3",
+ "time": "2026-10-21 18:48:12",
+ "current_screen": 12,
+ "control_count": 15,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 32,
+   "y1": 29,
+   "x2": 153,
+   "y2": 46,
+   "w": 122,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "GUARDIAN SPIRIT"
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 32,
+   "y1": 51,
+   "x2": 153,
+   "y2": 68,
+   "w": 122,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "UNICORNS"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 32,
+   "y1": 73,
+   "x2": 153,
+   "y2": 90,
+   "w": 122,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "ANGEL"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 32,
+   "y1": 95,
+   "x2": 153,
+   "y2": 112,
+   "w": 122,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "MAGIC SPIRIT"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 32,
+   "y1": 117,
+   "x2": 153,
+   "y2": 134,
+   "w": 122,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 32,
+   "y1": 139,
+   "x2": 153,
+   "y2": 156,
+   "w": 122,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 7,
+   "type": "region",
+   "x1": 164,
+   "y1": 29,
+   "x2": 284,
+   "y2": 46,
+   "w": 121,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "JUST CAUSE"
+  },
+  {
+   "id": 8,
+   "type": "region",
+   "x1": 164,
+   "y1": 51,
+   "x2": 284,
+   "y2": 68,
+   "w": 121,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 9,
+   "type": "region",
+   "x1": 164,
+   "y1": 73,
+   "x2": 284,
+   "y2": 90,
+   "w": 121,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 10,
+   "type": "region",
+   "x1": 164,
+   "y1": 95,
+   "x2": 284,
+   "y2": 112,
+   "w": 121,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 11,
+   "type": "region",
+   "x1": 164,
+   "y1": 117,
+   "x2": 284,
+   "y2": 134,
+   "w": 121,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 12,
+   "type": "region",
+   "x1": 164,
+   "y1": 139,
+   "x2": 284,
+   "y2": 156,
+   "w": 121,
+   "h": 18,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 13,
+   "type": "region",
+   "x1": 175,
+   "y1": 166,
+   "x2": 193,
+   "y2": 195,
+   "w": 19,
+   "h": 30,
+   "hotkey": 27,
+   "help": -1,
+   "key": "Esc",
+   "help_title": "EXIT SPELL BOOK"
+  },
+  {
+   "id": 14,
+   "type": "region",
+   "x1": 275,
+   "y1": 14,
+   "x2": 288,
+   "y2": 27,
+   "w": 14,
+   "h": 14,
+   "hotkey": 70,
+   "help": -1,
+   "key": "F",
+   "help_title": "PAGE FORWARD"
+  },
+  {
+   "id": 15,
+   "type": "region",
+   "x1": 29,
+   "y1": 14,
+   "x2": 42,
+   "y2": 26,
+   "w": 14,
+   "h": 13,
+   "hotkey": 66,
+   "help": -1,
+   "key": "B",
+   "help_title": "PAGE BACK"
+  }
+ ],
+ "help": [
+  {
+   "help": 214,
+   "title": "PAGE BACK",
+   "x1": 29,
+   "y1": 14,
+   "x2": 42,
+   "y2": 27
+  },
+  {
+   "help": 215,
+   "title": "PAGE FORWARD",
+   "x1": 273,
+   "y1": 14,
+   "x2": 288,
+   "y2": 27
+  },
+  {
+   "help": 0,
+   "title": "EXIT SPELL BOOK",
+   "x1": 175,
+   "y1": 166,
+   "x2": 193,
+   "y2": 195
+  },
+  {
+   "help": 129,
+   "title": "GUARDIAN SPIRIT",
+   "x1": 32,
+   "y1": 29,
+   "x2": 153,
+   "y2": 46
+  },
+  {
+   "help": 136,
+   "title": "UNICORNS",
+   "x1": 32,
+   "y1": 51,
+   "x2": 153,
+   "y2": 68
+  },
+  {
+   "help": 147,
+   "title": "ANGEL",
+   "x1": 32,
+   "y1": 73,
+   "x2": 153,
+   "y2": 90
+  },
+  {
+   "help": 201,
+   "title": "MAGIC SPIRIT",
+   "x1": 32,
+   "y1": 95,
+   "x2": 153,
+   "y2": 112
+  },
+  {
+   "help": 127,
+   "title": "JUST CAUSE",
+   "x1": 164,
+   "y1": 29,
+   "x2": 284,
+   "y2": 46
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

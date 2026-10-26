@@ -1,0 +1,93 @@
+HARNESS UI NOTES - Master of Magic 1.31 as driven by the project's test harness (2026-10-17 .. 10-23)
+How a script can play the game in DOSBox-X: keys, clicks, which screen is up, where the state is. Only what was USED and
+SEEN to work is listed. The bracketed tags name the harness check or test that verified a line; the harness itself is
+not published. Coordinates are DOS pixels (320x200); the harness took screenshots at 2x (640x400). The complete
+per-screen control tables are in UI_INPUT_MAP.txt beside this file.
+
+HOW INPUT REACHES THE GAME
+  keys    PostMessage WM_KEYDOWN / WM_KEYUP to the DOSBox-X window (works even when the window is on a hidden
+          desktop).
+          Grey arrows / Home / End / PgUp / PgDn are sent extended (E0); 'kp1'..'kp9' are the keypad keys with NumLock
+          off (no E0). The game tells them apart: Key_Read_Translated (2579:03fb) maps E0 Home/End/PgUp/PgDn to codes
+          5-8 and the keypad ones to 0x1a / 0x1c / 0x19 / 0x1d; arrows (either kind) to 1-4.  [check_203: grey Home /
+          End did nothing on the map, kp7 / kp1 moved the stack]
+  mouse   write the game's own mouse latch through DOSBox-X's Game Link shared memory (posted mouse moves do not
+          work on a hidden desktop). WIZARDS.EXE latch DS 0x78c2.. ; MAGIC.EXE latch DS 0x4394.. (same library code, found by byte
+          match).  [every click below]
+  RAM     read through Game Link as well; DGROUP is found by the 'Run INSTALL' string + a second
+          program-specific string (both EXEs carry the first one).
+
+MAGIC.EXE                                                                      [mapgen_survey.py, 30 runs, 0 failures]
+  intro            Esc skips to the main menu (wait ~10 s after start, ~4 s after Esc)
+  main menu        Continue / Load Game / New Game / Hall Of Fame / Quit To DOS;  N = New Game
+  Game Options     buttons cycle on click: Land Size (278,100) and OK (283,186) CLICKED; Difficulty (278,46),
+                   Opponents (278,73), Magic (278,126), Cancel (196,186) read off the screenshot only. Enter and O do NOT press OK. The last choices are stored in
+                   MAGIC.SET (land size = word at file offset 0x2c: 0 small 1 medium 2 large) and shown as defaults.
+  Select Wizard    Merlin (203,34) CLICKED. From the screenshot only: left column x 203 - Raven 56, Sharee 78,
+                   Lo Pan 100, Jafar 121, Oberic 143, Rjak 165; right column x 278 - Sss'ra, Tauron, Freya, Horus,
+                   Ariel, Tlaloc, Kali on the same rows. (Custom wizard not tried.)
+  Wizard's Name    Enter accepts the default name
+  Select Race      Barbarian (240,41) CLICKED; Draconian (240,163) clicked -> refused without the Myrran retort
+                   (message box, a click closes it). Other rows ~10 px apart (screenshot only).
+  Select Banner    green (240,38) CLICKED; four more banners below it (screenshot only)
+  -> the world is generated in a few seconds and written as SAVE9.GAM; WIZARDS.EXE starts (turn 0, 'Name Starting
+     City' box over the map).
+
+WIZARDS.EXE (started on SAVE9.GAM)
+  main map screen  current_screen (DS 0x9990) = 5. Top bar: Game Spells Armies Cities Magic Info Plane;
+                   Plane button (290,9) switches map_view_plane (DS 0xbd86).                     [check_204]
+                   Right panel: stack units, Moves:, DONE PATROL WAIT BUILD buttons (not clicked - hotkeys used).
+  top bar          buttons at y 4 (Overland_Add_TopBar_Buttons 4fb6:17ba): Game x 7 (G), Spells x 47 (S),
+                   Armies x 89 (A), Cities x 140 (no hotkey: click (150,9)), Magic x 184 (M), Info x 226 (I), Plane
+                   x 270 (P). F1-F4 open Screen_Info_Menu 0-3 directly. Esc closes spellbook / armies / cities / magic /
+                   info screens back to the map.            [deadcode_bp.py, unk_probe.py: all opened, shots dc_*.png]
+  unit hotkeys     D = Done, W = Wait (next stack), N = Next Turn (when no unit is left: no_units_to_move DS 0x9444
+                   = 1), arrows / keypad = move the selected stack one tile.                     [check_203, run_turns]
+  selection        stack_unit_count DS 0x999c, stack_units DS 0x999e (word, stride 4); the game selects the
+                   first unit needing orders after loading; W cycles.
+  moves            Stack_Move_Click refuses target rows 0 and 39 (a unit placed on row 39 cannot move at all).
+  end of turn      current_screen 10 while the turn changes; game_turn DS 0xbd90 increments near the END of
+                   Next_Turn (after upkeep, growth, diplomacy, casting; NEXTTURN.C) - not early (corrected 10/23). In this game copy the turn ENDS BY ITSELF when no human unit is left to move (seen in
+                   check_204 run 1 and check_224): keep one unit ready when a test must stay inside a turn.
+                   Unit indices are compacted at the turn end - find units by type / position afterwards.
+  Research book    'Choose a new spell to research' after a spell is learned: first entry (60,33).   [check_204_drown]
+  messages         Esc / Enter / click (255,185) OK spot / (202,132) Yes of a Confirm_Dialog.          [run_turns]
+  over-map boxes   drawn over the map with current_screen still 5, but without the top-bar controls (no G control):
+                   a test must not take 'screen 5' for 'on the map'.
+                   Lair / tower notice ('You have found a tower', the treasure text): ONE whole-screen control,
+                   hotkey Esc - Esc closes it, Y / Enter do not. 'Do you wish to completely destroy this city?':
+                   Raze (R) / No (N). 'You have a treaty with X. Do you still wish to attack?': Y.
+                   [walkin_diag / city_diag 10/23, shots 9074_*, 9127_*; #72 #74 #127 #159]
+  diplomacy        Magic screen (M, current_screen 6): wizard gems at x i * 77 + 29, y 10..42 (gem i = wizard i + 1;
+                   left click = audience, right click = wizard info). Audience = screen 15: a whole-screen click
+                   region passes the greeting; then the list menu, rows of 9 px at x 38..283: title 141, Propose
+                   Treaty 150, Threaten/Break Treaty 159, Offer Tribute 168, Exchange Spells 177, Good Bye 186.
+                   Submenus use the same list (rows from 150): Threaten = Break Wizard Pact / Break Alliance /
+                   Threaten To Attack / Forget It; Propose = Wizard Pact / Alliance / Peace Treaty / Declaration of
+                   War on Another Wizard / Break Alliance With Another Wizard / Forget It.
+                   Pick rows by layout: disabled rows may not be controls.
+                   [diplo_explore 10/23, shots 9500_*; #52]
+  items award      after a lair: the Items screen (hero rows, vault, Alchemy, Ok): a held item goes into a
+                   vault slot by a click, then O.                                  [9074_t10.png, 10/23]
+  autosave         every turn with game_turn % 4 == 0 the game overwrites SAVE9.GAM: a test that ends turns must
+                   restore its starting save afterwards.
+
+GAME STATE (DGROUP offsets, live)
+  game_turn 0xbd90   num_units 0xbd92   p_units far 0x9ec2 (0x20 per unit)   p_cities far 0x9cbc (0x72 per city)
+  p_terrain_maps far 0x9cdc (2 x 0x12c0)   map_view x / y / plane 0xbd8a / 0xbd88 / 0xbd86   wizards 0x9eca (0x4c8)
+
+GAME KEY CODES (from the asm of Key_Read_Translated 2579:03fb - what each BIOS key becomes inside the game)
+  Esc 0x1B | Backspace 0x0B | Enter / keypad Enter 0x0C | Tab 0x0D | F1-F10 0x0E-0x17 | F11 0x91 | F12 0x92
+  grey (E0) arrows: Left 1, Right 2, Up 3, Down 4; PgUp 5, PgDn 6, Home 7, End 8, Ins 9, Del 0x0A
+  keypad (no E0): 4 -> 1, 6 -> 2, 8 -> 3, 2 -> 4, 7 -> 0x1A, 9 -> 0x19, 1 -> 0x1C, 3 -> 0x1D, 5 -> 0x1E, + -> '+', - -> '-'
+  Ctrl+Right 0x80, Ctrl+Left 0x81, Ctrl+Up 0x82, Ctrl+Down 0x83, Ctrl+Home 0x84, Ctrl+PgUp 0x85, Ctrl+End 0x86,
+  Ctrl+PgDn 0x87, Ctrl+S 0x90; Alt+A..Alt+Z 0xA0..0xB9 (Alt hotkeys = letter + 0x5F); Shift+8 ('*') is swallowed (0)
+  everything else: the BIOS ASCII byte. Dev keys (inert in release): F11 memory report, F12 SCRDMPnn.FLI screenshot,
+  backquote / tilde toggle DS:828a / 828c.
+MOUSE: driver range x 0..638 (halved -> 0..319), y 0..199; event handler 2579:02bc draws the cursor itself (saves /
+  restores the VGA registers) and feeds the click latch read by the UI loop (the latch the harness writes).
+
+PER-SCREEN CONTROL TABLES (2026-10-21): the harness dumped the live control table of each waiting screen (boxes, keys,
+  help titles) - screens/<program>/<name>.json beside this file; the 'route' note is the input that led there from the
+  previous screen (k:KEY, a:LETTER = Alt+letter, c:X,Y = click, r:X,Y = right click, w:SECONDS = wait, map: = Esc until
+  the overland map). Full map: UI_INPUT_MAP.txt (static + live, cross-checked). Esc from Items returns to Armies.

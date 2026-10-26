@@ -1,0 +1,74 @@
+[Published 2026-10-26 from the project's working notes, otherwise as written while matching (2026-10-18 .. 10-21).
+ The compiler rules are general Borland C++ 3.1 facts; the workflow names the project's own tools (tools/, work/,
+ re/ paths, scratch scripts), which are not published - read those parts as a description of the method. Function
+ and variable names are the ones current at the time; some were renamed later (the published source and the map
+ have the final names, and the addresses identify a function either way). Bracketed numbers [n] / batch numbers
+ point into the project's process log, which is not published.]
+
+LINK METHOD - how MAGIC.EXE was rebuilt byte-identical (batch 36, 2026-10-19), written to be repeated for WIZARDS
+=================================================================================================================
+Result and facts: LINK_TEST_MAGIC.txt (beside this file). This file = the procedure, the tools, the pitfalls.
+
+0. PRECONDITION: every module's code matched (match_build / match_all) - the link work then only adds DEFINITIONS and
+   ORDER; it never changes a code byte. Re-run both regressions after every source edit (modules are shared).
+
+1. STRUCTURE OF THE TARGET EXE (python -I tools/vroomm.py info original/X.EXE)
+   - VROOMM overlays: FBOV data after the load image; stub segments (CD 3F + thunk table); the segment table inside
+     _EXEINFO_ (8-byte records: segment, size, type 1 code / 3 stub / 0,4 data...) = the RESIDENT ORDER of segments.
+   - _EXEINFO_ ends with "<name>.exe\0" + the LINK DATE (day, month, word year). MAGIC and WIZARDS: 03 03 cb 07 =
+     3 March 1995.
+   - Header: TLINK signature 01 00 fb 50 'jr' at 0x1c (TLINK 5.1); SS:SP = the 128-byte C0 stack after DGROUP.
+
+2. FIRST LINK (tools/link_magic.py; copy it to link_wizards.py with the WIZARDS lists)
+   - Object order: C0M first; the resident OBJs in segment-table order; the overlay OBJs between "/o" and "/o-".
+     WHERE the overlays sit in the list is invisible in the code - only DGROUP shows it (step 3).
+   - Libraries: CM.LIB then OVERLAY.LIB (the runtime's data comes before the overlay manager's).
+   - Stand-ins for code we do not rebuild: an OBJ assembled from the game's bytes (work/link/make_ail.py: db bytes,
+     PUBLIC labels at the game offsets from functions.tsv, MZ relocations as 'dw SEG'). A stand-in at its true place
+     proves the layout around it.
+   - TLINK /c /s gives the detailed map (per-module contributions); publics may carry the marker 'idle'.
+   - Undefined symbols = globals no source DEFINES (module matching only needed externs) + library entry points.
+
+3. DGROUP INITIALISED DATA (work/link/dgroup_map.py, wiz_neighbours.py)
+   - Locate every module's _DATA block (OBJ bytes, fixup bytes masked) in the game's DGROUP, in link order; a gap
+     between two blocks = data the original sources had and ours do not.
+   - The data order fixed the object order (MAGIC: the 14 overlays come right after MAGIC.OBJ).
+   - Unreferenced initialised words: the owner is the module whose block they open IN BOTH PROGRAMS (wiz_neighbours.py
+     prints the bytes before / after each block in WIZARDS and MAGIC). C rule: a module's globals come BEFORE its
+     literals, so nothing can follow a C module's literal pool.
+   - Library defaults: a program may define a library variable itself (MAGIC.C: _ovrbuffer) - then the library
+     module (OVRBUFF) is not linked; find it from the library code's DS reference (diff the overlay manager).
+
+4. DGROUP BSS (work/link/bss_refs.py -> bss_plan.py -> bss_gen.py -> bss_apply.py)
+   - Borland: uninitialised globals = public _BSS definitions, laid out in REVERSE declaration order (int aligned,
+     char not). Each module's _BSS block in link order.
+   - bss_refs.py: every external data symbol -> the DS address the game's code uses (match_fixups.py DUMP_REFS=1).
+   - bss_plan.py: owner = the module whose BSS block holds the address (block starts from the address / user census;
+     shared runs have ONE address offset to the other program). Sizes from declarations; gaps listed.
+   - bss_gen.py: gaps named from the other program's variables at the same place of a shared run. Two phases: inside
+     one run (both neighbours agree) = solid; at a run boundary the split must not let a run cross a variable pinned
+     elsewhere (RUN INTEGRITY); names are unique; other-program INITIALISED addresses (< 0x8860 in WIZARDS) are never
+     BSS. Run-boundary / moved-block names are marked PROVISIONAL; unread holes become '<left neighbour>_spare'.
+   - bss_apply.py: writes one definition block per owner in DESCENDING address order; NOT idempotent - restore the
+     owner files (git checkout) before re-applying. A declaration smaller than its slot gets a '_spare' filler.
+   - Check: work/link/dscheck.py (every DGROUP public vs the game address).
+
+5. OVERLAYS
+   - Compile the overlaid modules with -Y (same code bytes; own-function far pointers then use the stub thunks).
+   - Stub thunk order = the module's first-declaration order of its functions: work/link/stub_order.py compares,
+     proto_order.py writes one prototype block in the original order.
+   - Link date: DOSBox-X needs 'DATE /F' then 'DATE 03/03/1995' before TLINK.
+
+6. COMPARE: work/link/exe_cmp.py (header fields, relocation table, resident image by segment, FBOV) and cmp / sha256.
+
+PITFALLS MET (do not repeat)
+- Git Bash converts '/c /s' arguments into paths: run with MSYS_NO_PATHCONV=1.
+- Never run two DOSBox jobs at once (match_all and link_magic share work/bcc/bcc.conf and batch files).
+- Bash heredoc + Python: '\b' and other escapes get mangled (a regex lost its \b as a backspace byte) - write patch
+  scripts with the Write tool.
+- Git Bash 'sed -i' rewrites CRLF files as LF (NEWGAME.C, batch 37): rename with a Python script that keeps the
+  file's line endings, and check 'git diff --stat' before committing (a 1-word rename must not touch every line).
+- The undefined-symbol list must come from a link WITHOUT the new definitions: snapshot work/link/undefined_before_bss.txt.
+- Unsized arrays '[]' need their length from the layout; multi-dimensional: divide by the whole row size.
+- Wrong compiler-setting hunts (BCC -B, TASM /m5, BC++ 3.0) were dead ends: one setting built everything; a 1-byte
+  difference with identical code is a SOURCE-FORM fact (MATCH_PLAYBOOK [35]).

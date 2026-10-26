@@ -1,0 +1,34 @@
+{
+ "prog": "magic",
+ "name": "m04_hall_of_fame",
+ "note": "route: k:esc w:2 k:esc w:2 k:h w:2",
+ "time": "2026-10-21 18:43:43",
+ "current_screen": null,
+ "control_count": 1,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199,
+   "w": 320,
+   "h": 200,
+   "hotkey": 27,
+   "help": -1,
+   "key": "0x1b"
+  }
+ ],
+ "help": [],
+ "pointer_regions": [
+  {
+   "image": 0,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

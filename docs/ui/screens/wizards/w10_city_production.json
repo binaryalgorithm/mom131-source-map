@@ -1,0 +1,408 @@
+{
+ "prog": "wizards",
+ "name": "w10_city_production",
+ "note": "route: k:c w:3",
+ "time": "2026-10-21 18:49:45",
+ "current_screen": 0,
+ "control_count": 17,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 240,
+   "y1": 4,
+   "x2": 313,
+   "y2": 14,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "UNIT OPTIONS"
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 240,
+   "y1": 18,
+   "x2": 313,
+   "y2": 28,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "UNIT OPTIONS"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 240,
+   "y1": 32,
+   "x2": 313,
+   "y2": 42,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "UNIT OPTIONS"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 0,
+   "y1": 4,
+   "x2": 73,
+   "y2": 14,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 0,
+   "y1": 18,
+   "x2": 73,
+   "y2": 28,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 0,
+   "y1": 32,
+   "x2": 73,
+   "y2": 42,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 7,
+   "type": "region",
+   "x1": 0,
+   "y1": 46,
+   "x2": 73,
+   "y2": 56,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 8,
+   "type": "region",
+   "x1": 0,
+   "y1": 60,
+   "x2": 73,
+   "y2": 70,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 9,
+   "type": "region",
+   "x1": 0,
+   "y1": 74,
+   "x2": 73,
+   "y2": 84,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 10,
+   "type": "region",
+   "x1": 0,
+   "y1": 88,
+   "x2": 73,
+   "y2": 98,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 11,
+   "type": "region",
+   "x1": 0,
+   "y1": 102,
+   "x2": 73,
+   "y2": 112,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 12,
+   "type": "region",
+   "x1": 0,
+   "y1": 116,
+   "x2": 73,
+   "y2": 126,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 13,
+   "type": "region",
+   "x1": 0,
+   "y1": 130,
+   "x2": 73,
+   "y2": 140,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 14,
+   "type": "region",
+   "x1": 0,
+   "y1": 144,
+   "x2": 73,
+   "y2": 154,
+   "w": 74,
+   "h": 11,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BUILDING OPTIONS"
+  },
+  {
+   "id": 15,
+   "type": "button",
+   "x1": 99,
+   "y1": 181,
+   "x2": 147,
+   "y2": 192,
+   "w": 49,
+   "h": 12,
+   "hotkey": 67,
+   "help": -1,
+   "key": "C",
+   "label": "Cancel",
+   "help_title": "CANCEL"
+  },
+  {
+   "id": 16,
+   "type": "button",
+   "x1": 172,
+   "y1": 181,
+   "x2": 220,
+   "y2": 192,
+   "w": 49,
+   "h": 12,
+   "hotkey": 79,
+   "help": -1,
+   "key": "O",
+   "label": "Ok",
+   "help_title": "OK"
+  },
+  {
+   "id": 17,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "Esc",
+   "offscreen": true
+  }
+ ],
+ "help": [
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 4,
+   "x2": 75,
+   "y2": 16
+  },
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 18,
+   "x2": 75,
+   "y2": 30
+  },
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 32,
+   "x2": 75,
+   "y2": 44
+  },
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 46,
+   "x2": 75,
+   "y2": 58
+  },
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 60,
+   "x2": 75,
+   "y2": 72
+  },
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 74,
+   "x2": 75,
+   "y2": 86
+  },
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 88,
+   "x2": 75,
+   "y2": 100
+  },
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 102,
+   "x2": 75,
+   "y2": 114
+  },
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 116,
+   "x2": 75,
+   "y2": 128
+  },
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 130,
+   "x2": 75,
+   "y2": 142
+  },
+  {
+   "help": 374,
+   "title": "BUILDING OPTIONS",
+   "x1": 0,
+   "y1": 144,
+   "x2": 75,
+   "y2": 156
+  },
+  {
+   "help": 375,
+   "title": "UNIT OPTIONS",
+   "x1": 242,
+   "y1": 4,
+   "x2": 319,
+   "y2": 16
+  },
+  {
+   "help": 375,
+   "title": "UNIT OPTIONS",
+   "x1": 242,
+   "y1": 18,
+   "x2": 319,
+   "y2": 30
+  },
+  {
+   "help": 375,
+   "title": "UNIT OPTIONS",
+   "x1": 242,
+   "y1": 32,
+   "x2": 319,
+   "y2": 44
+  },
+  {
+   "help": 376,
+   "title": "CANCEL",
+   "x1": 99,
+   "y1": 181,
+   "x2": 147,
+   "y2": 192
+  },
+  {
+   "help": 377,
+   "title": "OK",
+   "x1": 172,
+   "y1": 181,
+   "x2": 220,
+   "y2": 192
+  },
+  {
+   "help": 378,
+   "title": "BUILDING DESCRIPTION",
+   "x1": 80,
+   "y1": 103,
+   "x2": 238,
+   "y2": 174
+  },
+  {
+   "help": 379,
+   "title": "ALLOWS",
+   "x1": 85,
+   "y1": 57,
+   "x2": 237,
+   "y2": 97
+  },
+  {
+   "help": 380,
+   "title": "MAINTENANCE",
+   "x1": 85,
+   "y1": 46,
+   "x2": 162,
+   "y2": 56
+  },
+  {
+   "help": 381,
+   "title": "COST",
+   "x1": 128,
+   "y1": 33,
+   "x2": 228,
+   "y2": 39
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

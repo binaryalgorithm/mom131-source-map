@@ -1,0 +1,465 @@
+{
+ "prog": "wizards",
+ "name": "w03b_settings",
+ "note": "route: c:200,177 w:2",
+ "time": "2026-10-21 18:48:00",
+ "current_screen": 1,
+ "control_count": 21,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "Esc",
+   "offscreen": true
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 265,
+   "y1": 175,
+   "x2": 306,
+   "y2": 189,
+   "w": 42,
+   "h": 15,
+   "hotkey": 79,
+   "help": -1,
+   "key": "O",
+   "help_title": "LOAD BUTTON"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 31,
+   "y1": 53,
+   "x2": 175,
+   "y2": 62,
+   "w": 145,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SOUND EFFECTS"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 31,
+   "y1": 64,
+   "x2": 175,
+   "y2": 73,
+   "w": 145,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "BACKGROUND MUSIC"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 31,
+   "y1": 75,
+   "x2": 175,
+   "y2": 84,
+   "w": 145,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "EVENT MUSIC"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 31,
+   "y1": 102,
+   "x2": 175,
+   "y2": 111,
+   "w": 145,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "CITY SPELL EVENTS"
+  },
+  {
+   "id": 7,
+   "type": "region",
+   "x1": 31,
+   "y1": 113,
+   "x2": 175,
+   "y2": 122,
+   "w": 145,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "OVERLAND SPELL EVENTS"
+  },
+  {
+   "id": 8,
+   "type": "region",
+   "x1": 31,
+   "y1": 124,
+   "x2": 175,
+   "y2": 133,
+   "w": 145,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SUMMONING EVENTS"
+  },
+  {
+   "id": 9,
+   "type": "region",
+   "x1": 31,
+   "y1": 135,
+   "x2": 175,
+   "y2": 144,
+   "w": 145,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "END OF TURN SUMMARY"
+  },
+  {
+   "id": 10,
+   "type": "region",
+   "x1": 31,
+   "y1": 146,
+   "x2": 175,
+   "y2": 155,
+   "w": 145,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "RAZE CITY"
+  },
+  {
+   "id": 11,
+   "type": "region",
+   "x1": 31,
+   "y1": 163,
+   "x2": 175,
+   "y2": 172,
+   "w": 145,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "RANDOM EVENTS"
+  },
+  {
+   "id": 12,
+   "type": "region",
+   "x1": 31,
+   "y1": 174,
+   "x2": 175,
+   "y2": 183,
+   "w": 145,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "END OF TURN WAIT"
+  },
+  {
+   "id": 13,
+   "type": "region",
+   "x1": 192,
+   "y1": 53,
+   "x2": 310,
+   "y2": 62,
+   "w": 119,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "STRATEGIC COMBAT ONLY"
+  },
+  {
+   "id": 14,
+   "type": "region",
+   "x1": 192,
+   "y1": 64,
+   "x2": 310,
+   "y2": 73,
+   "w": 119,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "AUTO UNIT INFORMATION"
+  },
+  {
+   "id": 15,
+   "type": "region",
+   "x1": 192,
+   "y1": 102,
+   "x2": 310,
+   "y2": 111,
+   "w": 119,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "ENEMY MOVES"
+  },
+  {
+   "id": 16,
+   "type": "region",
+   "x1": 192,
+   "y1": 113,
+   "x2": 310,
+   "y2": 122,
+   "w": 119,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "ENEMY SPELLS"
+  },
+  {
+   "id": 17,
+   "type": "region",
+   "x1": 192,
+   "y1": 124,
+   "x2": 310,
+   "y2": 133,
+   "w": 119,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SPELL BOOK ORDERING"
+  },
+  {
+   "id": 18,
+   "type": "region",
+   "x1": 192,
+   "y1": 135,
+   "x2": 310,
+   "y2": 144,
+   "w": 119,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SPELL ANIMATIONS"
+  },
+  {
+   "id": 19,
+   "type": "region",
+   "x1": 192,
+   "y1": 146,
+   "x2": 310,
+   "y2": 155,
+   "w": 119,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SHOW NODE OWNERS"
+  },
+  {
+   "id": 20,
+   "type": "region",
+   "x1": 192,
+   "y1": 157,
+   "x2": 310,
+   "y2": 166,
+   "w": 119,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "EXPANDING HELP"
+  },
+  {
+   "id": 21,
+   "type": "region",
+   "x1": 192,
+   "y1": 74,
+   "x2": 310,
+   "y2": 83,
+   "w": 119,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "MOVEMENT ANIMATIONS"
+  }
+ ],
+ "help": [
+  {
+   "help": 675,
+   "title": "SOUND EFFECTS",
+   "x1": 32,
+   "y1": 53,
+   "x2": 145,
+   "y2": 61
+  },
+  {
+   "help": 676,
+   "title": "BACKGROUND MUSIC",
+   "x1": 32,
+   "y1": 64,
+   "x2": 145,
+   "y2": 72
+  },
+  {
+   "help": 677,
+   "title": "EVENT MUSIC",
+   "x1": 32,
+   "y1": 75,
+   "x2": 145,
+   "y2": 83
+  },
+  {
+   "help": 678,
+   "title": "CITY SPELL EVENTS",
+   "x1": 32,
+   "y1": 102,
+   "x2": 145,
+   "y2": 110
+  },
+  {
+   "help": 679,
+   "title": "OVERLAND SPELL EVENTS",
+   "x1": 32,
+   "y1": 113,
+   "x2": 145,
+   "y2": 121
+  },
+  {
+   "help": 680,
+   "title": "SUMMONING EVENTS",
+   "x1": 32,
+   "y1": 124,
+   "x2": 145,
+   "y2": 132
+  },
+  {
+   "help": 681,
+   "title": "END OF TURN SUMMARY",
+   "x1": 32,
+   "y1": 135,
+   "x2": 145,
+   "y2": 143
+  },
+  {
+   "help": 806,
+   "title": "RAZE CITY",
+   "x1": 32,
+   "y1": 146,
+   "x2": 145,
+   "y2": 154
+  },
+  {
+   "help": 683,
+   "title": "RANDOM EVENTS",
+   "x1": 32,
+   "y1": 164,
+   "x2": 145,
+   "y2": 172
+  },
+  {
+   "help": 684,
+   "title": "END OF TURN WAIT",
+   "x1": 32,
+   "y1": 175,
+   "x2": 145,
+   "y2": 183
+  },
+  {
+   "help": 685,
+   "title": "STRATEGIC COMBAT ONLY",
+   "x1": 193,
+   "y1": 53,
+   "x2": 310,
+   "y2": 61
+  },
+  {
+   "help": 686,
+   "title": "AUTO UNIT INFORMATION",
+   "x1": 193,
+   "y1": 64,
+   "x2": 310,
+   "y2": 72
+  },
+  {
+   "help": 687,
+   "title": "ENEMY MOVES",
+   "x1": 193,
+   "y1": 102,
+   "x2": 310,
+   "y2": 110
+  },
+  {
+   "help": 688,
+   "title": "ENEMY SPELLS",
+   "x1": 193,
+   "y1": 113,
+   "x2": 310,
+   "y2": 121
+  },
+  {
+   "help": 689,
+   "title": "SPELL BOOK ORDERING",
+   "x1": 193,
+   "y1": 124,
+   "x2": 310,
+   "y2": 132
+  },
+  {
+   "help": 690,
+   "title": "SPELL ANIMATIONS",
+   "x1": 193,
+   "y1": 135,
+   "x2": 310,
+   "y2": 143
+  },
+  {
+   "help": 691,
+   "title": "SHOW NODE OWNERS",
+   "x1": 193,
+   "y1": 146,
+   "x2": 310,
+   "y2": 154
+  },
+  {
+   "help": 692,
+   "title": "EXPANDING HELP",
+   "x1": 193,
+   "y1": 157,
+   "x2": 310,
+   "y2": 165
+  },
+  {
+   "help": 633,
+   "title": "LOAD BUTTON",
+   "x1": 265,
+   "y1": 175,
+   "x2": 306,
+   "y2": 189
+  },
+  {
+   "help": 796,
+   "title": "MOVEMENT ANIMATIONS",
+   "x1": 193,
+   "y1": 75,
+   "x2": 310,
+   "y2": 83
+  },
+  {
+   "help": 806,
+   "title": "RAZE CITY",
+   "x1": 32,
+   "y1": 146,
+   "x2": 145,
+   "y2": 154
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

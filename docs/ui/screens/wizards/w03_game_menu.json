@@ -1,0 +1,341 @@
+{
+ "prog": "wizards",
+ "name": "w03_game_menu",
+ "note": "route: k:g w:2",
+ "time": "2026-10-21 18:47:51",
+ "current_screen": 1,
+ "control_count": 14,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "Esc",
+   "offscreen": true
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 43,
+   "y1": 171,
+   "x2": 82,
+   "y2": 184,
+   "w": 40,
+   "h": 14,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "QUIT BUTTON"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 83,
+   "y1": 171,
+   "x2": 121,
+   "y2": 184,
+   "w": 39,
+   "h": 14,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "LOAD BUTTON"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 122,
+   "y1": 171,
+   "x2": 159,
+   "y2": 184,
+   "w": 38,
+   "h": 14,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SAVE BUTTON"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 231,
+   "y1": 171,
+   "x2": 270,
+   "y2": 184,
+   "w": 40,
+   "h": 14,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "OK BUTTON"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 172,
+   "y1": 171,
+   "x2": 229,
+   "y2": 184,
+   "w": 58,
+   "h": 14,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SETTINGS BUTTON"
+  },
+  {
+   "id": 7,
+   "type": "text_line",
+   "x1": 43,
+   "y1": 47,
+   "x2": 303,
+   "y2": 56,
+   "w": 261,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "text": "2",
+   "max_len": 19,
+   "help_title": "SAVED GAMES"
+  },
+  {
+   "id": 8,
+   "type": "text_line",
+   "x1": 43,
+   "y1": 62,
+   "x2": 303,
+   "y2": 71,
+   "w": 261,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "text": "Adam Fight",
+   "max_len": 19,
+   "help_title": "SAVED GAMES"
+  },
+  {
+   "id": 9,
+   "type": "text_line",
+   "x1": 43,
+   "y1": 77,
+   "x2": 303,
+   "y2": 86,
+   "w": 261,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "text": "",
+   "max_len": 19,
+   "help_title": "SAVED GAMES"
+  },
+  {
+   "id": 10,
+   "type": "text_line",
+   "x1": 43,
+   "y1": 92,
+   "x2": 303,
+   "y2": 101,
+   "w": 261,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "text": "",
+   "max_len": 19,
+   "help_title": "SAVED GAMES"
+  },
+  {
+   "id": 11,
+   "type": "text_line",
+   "x1": 43,
+   "y1": 107,
+   "x2": 303,
+   "y2": 116,
+   "w": 261,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "text": "",
+   "max_len": 19,
+   "help_title": "SAVED GAMES"
+  },
+  {
+   "id": 12,
+   "type": "text_line",
+   "x1": 43,
+   "y1": 122,
+   "x2": 303,
+   "y2": 131,
+   "w": 261,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "text": "",
+   "max_len": 19,
+   "help_title": "SAVED GAMES"
+  },
+  {
+   "id": 13,
+   "type": "text_line",
+   "x1": 43,
+   "y1": 137,
+   "x2": 303,
+   "y2": 146,
+   "w": 261,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "text": "",
+   "max_len": 19,
+   "help_title": "SAVED GAMES"
+  },
+  {
+   "id": 14,
+   "type": "text_line",
+   "x1": 43,
+   "y1": 152,
+   "x2": 303,
+   "y2": 161,
+   "w": 261,
+   "h": 10,
+   "hotkey": 0,
+   "help": -1,
+   "text": "",
+   "max_len": 19,
+   "help_title": "SAVED GAMES"
+  }
+ ],
+ "help": [
+  {
+   "help": 633,
+   "title": "LOAD BUTTON",
+   "x1": 83,
+   "y1": 171,
+   "x2": 120,
+   "y2": 183
+  },
+  {
+   "help": 634,
+   "title": "QUIT BUTTON",
+   "x1": 43,
+   "y1": 171,
+   "x2": 81,
+   "y2": 183
+  },
+  {
+   "help": 635,
+   "title": "SETTINGS BUTTON",
+   "x1": 172,
+   "y1": 171,
+   "x2": 229,
+   "y2": 183
+  },
+  {
+   "help": 636,
+   "title": "SAVE BUTTON",
+   "x1": 122,
+   "y1": 171,
+   "x2": 159,
+   "y2": 183
+  },
+  {
+   "help": 637,
+   "title": "OK BUTTON",
+   "x1": 231,
+   "y1": 171,
+   "x2": 270,
+   "y2": 183
+  },
+  {
+   "help": 639,
+   "title": "SAVED GAMES",
+   "x1": 42,
+   "y1": 43,
+   "x2": 272,
+   "y2": 161
+  },
+  {
+   "help": 222,
+   "title": "PLANE",
+   "x1": 270,
+   "y1": 4,
+   "x2": 312,
+   "y2": 15
+  },
+  {
+   "help": 223,
+   "title": "DONE",
+   "x1": 245,
+   "y1": 175,
+   "x2": 278,
+   "y2": 184
+  },
+  {
+   "help": 224,
+   "title": "PATROL",
+   "x1": 279,
+   "y1": 175,
+   "x2": 313,
+   "y2": 184
+  },
+  {
+   "help": 225,
+   "title": "WAIT",
+   "x1": 245,
+   "y1": 185,
+   "x2": 278,
+   "y2": 195
+  },
+  {
+   "help": 231,
+   "title": "TOTAL GOLD",
+   "x1": 245,
+   "y1": 55,
+   "x2": 277,
+   "y2": 74
+  },
+  {
+   "help": 232,
+   "title": "TOTAL MANA",
+   "x1": 282,
+   "y1": 55,
+   "x2": 314,
+   "y2": 74
+  },
+  {
+   "help": 236,
+   "title": "MOVES",
+   "x1": 245,
+   "y1": 167,
+   "x2": 313,
+   "y2": 172
+  },
+  {
+   "help": 0,
+   "title": "EXIT SPELL BOOK",
+   "x1": 0,
+   "y1": 0,
+   "x2": 0,
+   "y2": 0
+  },
+  {
+   "help": 0,
+   "title": "EXIT SPELL BOOK",
+   "x1": 0,
+   "y1": 0,
+   "x2": 0,
+   "y2": 0
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

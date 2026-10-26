@@ -1,0 +1,1084 @@
+MASTER OF MAGIC v1.31 - UI INPUT MAP (per screen: every control, its box, its key)
+Built 2026-10-26 from the byte-identical source rebuild (WIZARDS.EXE / MAGIC.EXE recompile to the GOG 1.31 bytes) and from
+live control tables read out of the running game. Coordinates are VGA mode-13h pixels, 320 x 200.
+
+HOW THE GAME READS INPUT (UI library, src/wizards/UI.C - one library in both programs)
+  * Each screen fills one control table and then waits in a loop. Entry 0 is a null control.
+  * A click returns the LOWEST-numbered control whose box holds the mouse position (+ the pointer's hotspot offset,
+    0 in every pointer region captured). Box bounds are INCLUSIVE on all four sides: x1 <= x <= x2, y1 <= y <= y2.
+  * Overlapping boxes are normal (a full-screen 'click anywhere' region after the buttons; a dialog area region
+    after its buttons): order decides.
+  * Key-only controls sit off screen at (500,500). Keys are matched to a control's hotkey (letters upper-cased).
+    Game key codes: arrows (grey or keypad) Left/Right/Up/Down; keypad 7/9/1/3 are separate keys (diagonal moves);
+    F1-F10; Enter, Esc, Tab, Backspace, PgUp/PgDn/Home/End/Ins/Del. 'Alt+R+V+L' = hold Alt and type R, V, L.
+  * Control types: button / toggle / latch = picture buttons (box = picture size); picture = picture hotspot;
+    region = plain rectangle (or key-only); value_region = rectangle that returns a value; grid = cols x rows cells
+    (the hit cell = (x - x1) / cell_w, (y - y1) / cell_h); slider (value from the mouse position along the box);
+    text_button = list line (a disabled one does nothing); text_input / text_line = editable text (Enter accepts).
+  * Right-click help is a separate list of (help id, box); help titles below are the game's own (HELP.LBX), shown
+    only as a label for the control they cover. The control's own 'help' word is never read by the game.
+
+PART A - STATIC: every UI_Add_* call of both programs (365 call sites in 97 functions; 274 resolve to an exact box or
+  are key-only, 2 need the font height, 89 are computed at run time and show their formula). Rows are in source
+  order = the order the controls are added (= index order) when every call runs. 'if' = added only on some paths,
+  'loop' = added once per iteration (expanded when the bounds are constant: one row per index).
+  Name = the source variable that keeps the control id (the screen code compares the returned id with it).
+PART B - LIVE: 26 screens captured from the running game (index, type, box, key, help title, static name).
+  Cross-check: TOTAL: 287 live on-screen controls, 155 (54%) reproduced exactly by the static reading
+
+======================================================================================================================
+PART A - STATIC (by program, source file, function)
+======================================================================================================================
+
+Intro_Play  [MAGIC, src/magic/INTRO.C:60]
+  60    region       (  0,  0)-(319,199) 320x200                    click_control                      
+  61    region       key only                             Esc       esc_control                        
+
+Screen_Main_Menu  [MAGIC, src/magic/MAGIC.C:1173]
+  1173  region       (108,150)-(211,161) 104x12                     ctl_load                           if
+  1184  region       computed: (108, row * 12 + 138)-(211, row * 12 + 149)           ctl_continue                       if
+  1193  region       (108,162)-(211,173) 104x12                     ctl_new_game                       
+  1199  region       (108,174)-(211,185) 104x12                     ctl_hall_of_fame                   
+  1205  region       (108,186)-(211,199) 104x14                     ctl_cancel                         
+  1212  region       key only                             C         hk_continue                        if
+  1216  region       key only                             L         hk_load                            if
+  1219  region       key only                             N         hk_new                             
+  1220  region       key only                             H         hk_hall_of_fame                    
+  1221  region       key only                             Q         hk_quit                            
+  1222  region       key only                             Esc       hk_esc                             
+
+Screen_Load_Game  [MAGIC, src/magic/NEWGAME.C:348]
+  348   region       key only                             Esc       hk_esc                             
+  349   region       ( 43,171)-( 82,184)  40x14           Esc       ctl_cancel                         
+  350   region       ( 83,171)-(121,184)  39x14           L         ctl_load                           
+  367   region       computed: (x1, save_slot_list[i] * 15 + 47)-(x1 + 220, save_slot_list[i] * 15 + 56)           slot_controls[save_slot_list[i]]   loop
+  369   region       (172,171)-(229,184)  58x14                     ctl_settings                       
+
+Screen_NewGame_Options  [MAGIC, src/magic/NEWGAME.C:517]
+  517   button       (252,179)-(315,194)  64x16                     ctl_ok                               pic NEWGAME 2
+  518   button       (171,179)-(234,194)  64x16           Esc       ctl_cancel                           pic NEWGAME 3
+  519   region       (250, 38)-(315, 54)  66x17                     ctl_difficulty                     
+  520   region       (250, 65)-(315, 81)  66x17                     ctl_opponents                      
+  521   region       (250, 92)-(315,108)  66x17                     ctl_land_size                      
+  522   region       (250,119)-(315,135)  66x17                     ctl_magic_power                    
+
+Screen_Select_Wizard  [MAGIC, src/magic/NEWGAME.C:708]
+  708   region       (168, 26)-(237, 42)  70x17                     ng_controls[i]                     loop i=0
+  708   region       (168, 48)-(237, 64)  70x17                     ng_controls[i]                     loop i=1
+  708   region       (168, 70)-(237, 86)  70x17                     ng_controls[i]                     loop i=2
+  708   region       (168, 92)-(237,108)  70x17                     ng_controls[i]                     loop i=3
+  708   region       (168,114)-(237,130)  70x17                     ng_controls[i]                     loop i=4
+  708   region       (168,136)-(237,152)  70x17                     ng_controls[i]                     loop i=5
+  708   region       (168,158)-(237,174)  70x17                     ng_controls[i]                     loop i=6
+  710   region       computed: (244, i * 22 + 26)-(313, i * 22 + 42)           ng_controls[i + 7]                 loop
+  711   region       key only                             Esc       hotkey                             
+
+Screen_Select_Portrait  [MAGIC, src/magic/NEWGAME.C:858]
+  858   region       (168, 26)-(237, 42)  70x17                     ng_controls[i]                     loop i=0
+  858   region       (168, 48)-(237, 64)  70x17                     ng_controls[i]                     loop i=1
+  858   region       (168, 70)-(237, 86)  70x17                     ng_controls[i]                     loop i=2
+  858   region       (168, 92)-(237,108)  70x17                     ng_controls[i]                     loop i=3
+  858   region       (168,114)-(237,130)  70x17                     ng_controls[i]                     loop i=4
+  858   region       (168,136)-(237,152)  70x17                     ng_controls[i]                     loop i=5
+  858   region       (168,158)-(237,174)  70x17                     ng_controls[i]                     loop i=6
+  860   region       (244, 26)-(313, 42)  70x17                     ng_controls[i + 7]                 loop i=0
+  860   region       (244, 48)-(313, 64)  70x17                     ng_controls[i + 7]                 loop i=1
+  860   region       (244, 70)-(313, 86)  70x17                     ng_controls[i + 7]                 loop i=2
+  860   region       (244, 92)-(313,108)  70x17                     ng_controls[i + 7]                 loop i=3
+  860   region       (244,114)-(313,130)  70x17                     ng_controls[i + 7]                 loop i=4
+  860   region       (244,136)-(313,152)  70x17                     ng_controls[i + 7]                 loop i=5
+  860   region       (244,158)-(313,174)  70x17                     ng_controls[i + 7]                 loop i=6
+  861   region       key only                             Esc       hotkey                             
+
+Screen_Select_Banner  [MAGIC, src/magic/NEWGAME.C:964]
+  964   region       (175, 21)-(313, 55) 139x35                     ng_controls[0]                     
+  965   region       (175, 56)-(313, 93) 139x38                     ng_controls[1]                     
+  966   region       (175, 94)-(313,128) 139x35                     ng_controls[2]                     
+  967   region       (175,129)-(313,162) 139x34                     ng_controls[3]                     
+  968   region       (175,163)-(313,199) 139x37                     ng_controls[4]                     
+  969   region       key only                             Esc       hotkey                             
+
+Screen_Select_Race  [MAGIC, src/magic/NEWGAME.C:1091]
+  1091  region       (211, 38)-(270, 45)  60x8                      ng_controls[i]                     loop i=0
+  1091  region       (211, 48)-(270, 55)  60x8                      ng_controls[i]                     loop i=1
+  1091  region       (211, 58)-(270, 65)  60x8                      ng_controls[i]                     loop i=2
+  1091  region       (211, 68)-(270, 75)  60x8                      ng_controls[i]                     loop i=3
+  1091  region       (211, 78)-(270, 85)  60x8                      ng_controls[i]                     loop i=4
+  1091  region       (211, 88)-(270, 95)  60x8                      ng_controls[i]                     loop i=5
+  1091  region       (211, 98)-(270,105)  60x8                      ng_controls[i]                     loop i=6
+  1091  region       (211,108)-(270,115)  60x8                      ng_controls[i]                     loop i=7
+  1091  region       (211,118)-(270,125)  60x8                      ng_controls[i]                     loop i=8
+  1093  region       (211,147)-(270,154)  60x8                      ng_controls[i + 9]                 loop i=0
+  1093  region       (211,157)-(270,164)  60x8                      ng_controls[i + 9]                 loop i=1
+  1093  region       (211,167)-(270,174)  60x8                      ng_controls[i + 9]                 loop i=2
+  1093  region       (211,177)-(270,184)  60x8                      ng_controls[i + 9]                 loop i=3
+  1093  region       (211,187)-(270,194)  60x8                      ng_controls[i + 9]                 loop i=4
+  1094  region       key only                             Esc       hotkey                             
+
+Screen_Custom_Picks  [MAGIC, src/magic/NEWGAME.C:1384]
+  1384  region       (251,181)-(282,196)  32x16                     ctl_ok                             
+  1395  slider       (190, 47)-(286, 69)  97x23                     ng_controls[0]                       range 0..95
+  1396  slider       (190, 73)-(286, 95)  97x23                     ng_controls[1]                       range 0..95
+  1397  slider       (190, 99)-(286,121)  97x23                     ng_controls[2]                       range 0..95
+  1398  slider       (190,125)-(286,147)  97x23                     ng_controls[3]                       range 0..95
+  1399  slider       (190,151)-(286,173)  97x23                     ng_controls[4]                       range 0..95
+  1401  region       (164,  5)-(202, 10)  39x6                      ctl_retorts[i]                     loop i=0
+  1401  region       (164, 12)-(202, 17)  39x6                      ctl_retorts[i]                     loop i=1
+  1401  region       (164, 19)-(202, 24)  39x6                      ctl_retorts[i]                     loop i=2
+  1401  region       (164, 26)-(202, 31)  39x6                      ctl_retorts[i]                     loop i=3
+  1401  region       (164, 33)-(202, 38)  39x6                      ctl_retorts[i]                     loop i=4
+  1401  region       (164, 40)-(202, 45)  39x6                      ctl_retorts[i]                     loop i=5
+  1402  region       (203,  5)-(252, 10)  50x6                      ctl_retorts[i + 6]                 loop i=0
+  1402  region       (203, 12)-(252, 17)  50x6                      ctl_retorts[i + 6]                 loop i=1
+  1402  region       (203, 19)-(252, 24)  50x6                      ctl_retorts[i + 6]                 loop i=2
+  1402  region       (203, 26)-(252, 31)  50x6                      ctl_retorts[i + 6]                 loop i=3
+  1402  region       (203, 33)-(252, 38)  50x6                      ctl_retorts[i + 6]                 loop i=4
+  1402  region       (203, 40)-(252, 45)  50x6                      ctl_retorts[i + 6]                 loop i=5
+  1403  region       (253,  5)-(319, 10)  67x6                      ctl_retorts[i + 12]                loop i=0
+  1403  region       (253, 12)-(319, 17)  67x6                      ctl_retorts[i + 12]                loop i=1
+  1403  region       (253, 19)-(319, 24)  67x6                      ctl_retorts[i + 12]                loop i=2
+  1403  region       (253, 26)-(319, 31)  67x6                      ctl_retorts[i + 12]                loop i=3
+  1403  region       (253, 33)-(319, 38)  67x6                      ctl_retorts[i + 12]                loop i=4
+  1403  region       (253, 40)-(319, 45)  67x6                      ctl_retorts[i + 12]                loop i=5
+  1405  region       key only                             Esc       hotkey                             
+
+Screen_Select_Spells  [MAGIC, src/magic/NEWGAME.C:1886]
+  1886  region       key only                             Esc       ctl_cancel                         loop
+  1887  region       (251,181)-(282,196)  32x16                     ctl_ok                             loop
+
+SelectSpells_Add_Controls  [MAGIC, src/magic/NEWGAME.C:2088]
+  2088  region       computed: (i * 74 + 170, top + j * 7)-(i * 78 + 240, top + j * 7 + 5)           ng_controls[count]                 if loop
+  2100  region       computed: (i * 74 + 170, top + j * 7)-(i * 78 + 240, top + j * 7 + 5)           ng_controls[count]                 if loop
+  2112  region       computed: (i * 74 + 170, top + j * 7)-(i * 78 + 240, top + j * 7 + 5)           ng_controls[count]                 if loop
+
+Screen_Historian  [WIZARDS, src/wizards/ADVISORS.C:283]
+  283   region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+Screen_Astrologer  [WIZARDS, src/wizards/ADVISORS.C:488]
+  488   region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+Screen_Cartographer  [WIZARDS, src/wizards/ADVISORS.C:602]
+  602   region       (285,180)-(314,199)  30x20           N         plane_control                      loop
+  603   region       (265,143)-(299,169)  35x27           C         close_control                      loop
+  604   region       key only                             Esc       hotkey                             loop
+  605   grid         ( 16, 27)-(255,186) 240x160                    grid_control                       loop  grid 60x40 of 4x4
+
+Screen_Armies  [WIZARDS, src/wizards/ARMYLIST.C:179]
+  179   button       (273,163)-(313,177)  41x15           I         items_button                       loop  pic ARMYLIST 3
+  180   button       (273,182)-(313,196)  41x15           O         ok_button                          loop  pic ARMYLIST 4
+  181   region       key only                             Esc       key_esc                            loop
+  187   region       key only                             U         key_u                              if loop
+  188   button       (250, 26)-(258, 35)   9x10                     up_right                           if loop  pic ARMYLIST 1
+  189   button       ( 60, 26)-( 68, 35)   9x10                     up_left                            if loop  pic ARMYLIST 1
+  196   region       key only                             D         key_d                              if loop
+  197   button       (250,139)-(258,148)   9x10                     down_right                         if loop  pic ARMYLIST 2
+  198   button       ( 60,139)-( 68,148)   9x10                     down_left                          if loop  pic ARMYLIST 2
+
+ArmyList_Add_Controls  [WIZARDS, src/wizards/ARMYLIST.C:518]
+  518   region       computed: (x1, y1)-(x2, y2)                    p_armylist_unit_ctls[armylist_unit loop
+  528   region       computed: (x1, y1)-(x2, y2)                    p_armylist_row_ctls[armylist_row_c loop
+  536   region       computed: (x1, y1)-(x2, y2)                    p_armylist_hero_ctls[i]            if loop
+
+Summon_Complete_Anim  [WIZARDS, src/wizards/CASTANIM.C:253]
+  253   region       (  0,  0)-(319,199) 320x200                    control                            
+
+CitySpell_View_Loop  [WIZARDS, src/wizards/CASTANIM.C:476]
+  476   region       computed: (x1, y1)-(x2, y2)                    city_hotspot_controls[cityscape_ho loop
+  479   region       (  0,  0)-(319,199) 320x200                    control                            
+
+GlobalEnch_Complete_Anim  [WIZARDS, src/wizards/CASTANIM.C:628]
+  628   region       (  0,  0)-(319,199) 320x200                    control                            
+
+Screen_Wizard_Target  [WIZARDS, src/wizards/CASTANIM.C:811]
+  811   region       computed: (box_x + i % 2 * 77 + 17, box_y + i / 2 * 61 + 27)-(box_x + i % 2 * 77 + 62, box_y + i / 2 * 61 + 72)           magic_gem_wizard[i]                loop
+  814   button       ( 90,165)-(163,181)  74x17           Esc       ok_button                          if  pic SPELLSCR 71
+  820   button       (128,165)-(201,181)  74x17           Esc       ok_button                          if  pic SPELLSCR 71
+  861   region       computed: (box_x + i % 2 * 77 + 17, box_y + i / 2 * 61 + 27)-(box_x + i % 2 * 77 + 62, box_y + i / 2 * 61 + 72)           magic_gem_wizard[i]                if loop
+  864   button       ( 90,165)-(163,181)  74x17           Esc       ok_button                          if loop  pic SPELLSCR 71
+  870   button       (128,165)-(201,181)  74x17           Esc       ok_button                          if loop  pic SPELLSCR 71
+  898   region       (  0,  0)-(319,199) 320x200                    ok_button                          if
+
+Screen_City_View  [WIZARDS, src/wizards/CITY.C:220]
+  220   region       computed: (ux, uy)-(ux + 0x13, uy + 0x12)           cityview_unit_ctls[k]              loop
+  222   region       (  0,  0)-(319,199) 320x200          Esc       close                              loop
+  223   region       key only                             X         hotkey                             loop
+
+CityScr_Add_Resource_Controls  [WIZARDS, src/wizards/CITY.C:903]
+  903   region       computed: (x, y + k * 8)-(x2, y + k * 8 + 7)           city_breakdown_ctls[BREAKDOWN_FOOD if loop
+  909   region       computed: (x1, y + k * 8)-(0x84, y + k * 8 + 7)           city_breakdown_ctls[BREAKDOWN_FOOD if loop
+  918   region       computed: (x, y + k * 8)-(x2, y + k * 8 + 7)           city_breakdown_ctls[BREAKDOWN_UPKE if loop
+  926   region       computed: (x1, y + k * 8)-(0x84, y + k * 8 + 7)           city_breakdown_ctls[BREAKDOWN_GOLD if loop
+  942   region       computed: (x, y + k * 8)-(0x84, y + k * 8 + 7)           city_breakdown_ctls[x1]            if loop
+
+CityScr_Add_Enchant_Controls  [WIZARDS, src/wizards/CITY.C:1200]
+  1200  button       computed: (x + 0x3e, y - 1) + size of city_ench_up_arrow_pic           city_ench_up_button                if  pic BACKGRND 15
+  1201  button       computed: (x + 0x3e, y + 0x22) + size of city_ench_down_arrow_pic           city_ench_down_button              if  pic BACKGRND 16
+  1214  region       computed: (x, y + k * 7)-(x + 0x3c, k * 7 + y + 6)           p_city_ench_ctls[k]                loop
+
+CityScr_Add_Citizen_Controls  [WIZARDS, src/wizards/CITY.C:1308]
+  1308  region       computed: (x1, y1)-(x2, y2)                    p_city_citizen_ctls[k]             loop
+
+Screen_City_Breakdown  [WIZARDS, src/wizards/CITY.C:1544]
+  1544  region       (217,166)-(240,175)  24x10           M         more_ctl                           if loop
+  1545  region       (  0,  0)-(319,199) 320x200          Esc       close                              loop
+
+Screen_Cities  [WIZARDS, src/wizards/CITYLIST.C:129]
+  129   button       (239,182)-(279,196)  41x15           O         ok                                 loop  pic RELOAD 22
+  130   region       key only                             Esc       key_esc                            loop
+  140   region       key only                             U         key_up                             if loop
+  141   button       ( 11, 26)-( 19, 35)   9x10                     up_left                            if loop  pic ARMYLIST 1
+  142   button       (299, 26)-(307, 35)   9x10                     up_right                           if loop  pic ARMYLIST 1
+  153   region       key only                             D         key_down                           if loop
+  154   button       ( 11,139)-( 19,148)   9x10                     down_left                          if loop  pic ARMYLIST 2
+  155   button       (299,139)-(307,148)   9x10                     down_right                         if loop  pic ARMYLIST 2
+
+CityList_Add_Controls  [WIZARDS, src/wizards/CITYLIST.C:462]
+  462   region       computed: (x1, y1)-(x2, y2)                    citylist_row_ctls[citylist_row_ctl loop
+
+Screen_City_Production  [WIZARDS, src/wizards/CITYPROD.C:208]
+  208   region       key only                             Esc       hotkey                             loop
+
+CityProd_Add_Controls  [WIZARDS, src/wizards/CITYPROD.C:336]
+  336   region       computed: (x1, y1)-(x2, y2)                    p_cityprod_option_ctls[i]          loop
+  351   button       computed: (cityprod_panel_x + 99, cityprod_panel_y + 181) + size of ok_button_pic C         cityprod_cancel_button               "Cancel"
+  354   button       computed: (cityprod_panel_x + 172, cityprod_panel_y + 181) + size of ok_button_pic O         cityprod_ok_button                   "Ok"
+
+Screen_City  [WIZARDS, src/wizards/CITYSCR.C:315]
+  315   region       key only                             X         hotkey_x                           loop
+
+CityScr_Add_Controls  [WIZARDS, src/wizards/CITYSCR.C:865]
+  865   region       computed: (x1 + 1, y1 + 1)-(x2 + 1, y2 + 1)           ui_unit_slot_controls[i]           loop
+
+CityScr_Add_Cityscape_Hotspots  [WIZARDS, src/wizards/CITYSCR.C:889]
+  889   region       computed: (x1, y1)-(x2, y2)                    city_hotspot_controls[cityscape_ho loop
+
+CityScr_Add_Buttons  [WIZARDS, src/wizards/CITYSCR.C:899]
+  899   button       (214,188)-(243,197)  30x10           B         city_buy_button                    if  pic BACKGRND 7
+  900   button       (247,188)-(282,197)  36x10           C         city_change_button                   pic BACKGRND 8
+  901   button       (286,188)-(315,197)  30x10           O         city_ok_button                       pic BACKGRND 9
+  902   region       key only                             Esc       city_esc_hotkey                    
+
+Combat_Main  [WIZARDS, src/wizards/COMBAT.C:326]
+  326   region       (  0,  0)-(319,199) 320x200          Esc       auto_control                       if loop
+  350   button       (144,168)-(169,177)  26x10           S         spell_button                       if loop  pic COMPIX 1
+  353   button       (170,168)-(195,177)  26x10           W         wait_button                        loop  pic COMPIX 2
+  354   button       (170,188)-(195,197)  26x10           D         done_button                        loop  pic COMPIX 3
+  356   button       (144,178)-(169,187)  26x10           U         info_button                        if loop  pic COMPIX 20
+  359   button       (170,178)-(195,187)  26x10           A         auto_button                        loop  pic COMPIX 4
+  360   button       (144,188)-(169,197)  26x10           F         flee_button                        loop  pic COMPIX 21
+  361   region       ( 83,173)-(116,198)  34x26                     panel_control                      loop
+  363   region       (  0,164)-(319,199) 320x36           Esc       esc_control                        loop
+  364   grid         (  0,  0)-(318,163) 319x164                    grid_control                       loop  grid 319x164 of 1x1
+  365   region       key only                             Space     hotkey                             loop
+
+Combat_Results_Scroll  [WIZARDS, src/wizards/COMBEND.C:577]
+  577   region       key only                             R         hotkey_r                           
+  578   region       key only                             R         hotkey_R                           
+  579   region       (  0,  0)-(319,199) 320x200          Esc       control                            
+  599   region       (  0,  0)-(319,199) 320x200          Esc       control                            if loop
+
+Screen_Combat_Info  [WIZARDS, src/wizards/COMBINFO.C:206]
+  206   region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+Screen_Combat_Spellbook  [WIZARDS, src/wizards/COMBSPL.C:447]
+  447   region       ( 32, 29)-(153, 46) 122x18                     left_ctls[i]                       loop i=0
+  447   region       ( 32, 51)-(153, 68) 122x18                     left_ctls[i]                       loop i=1
+  447   region       ( 32, 73)-(153, 90) 122x18                     left_ctls[i]                       loop i=2
+  447   region       ( 32, 95)-(153,112) 122x18                     left_ctls[i]                       loop i=3
+  447   region       ( 32,117)-(153,134) 122x18                     left_ctls[i]                       loop i=4
+  447   region       ( 32,139)-(153,156) 122x18                     left_ctls[i]                       loop i=5
+  449   region       (164, 29)-(284, 46) 121x18                     right_ctls[i]                      loop i=0
+  449   region       (164, 51)-(284, 68) 121x18                     right_ctls[i]                      loop i=1
+  449   region       (164, 73)-(284, 90) 121x18                     right_ctls[i]                      loop i=2
+  449   region       (164, 95)-(284,112) 121x18                     right_ctls[i]                      loop i=3
+  449   region       (164,117)-(284,134) 121x18                     right_ctls[i]                      loop i=4
+  449   region       (164,139)-(284,156) 121x18                     right_ctls[i]                      loop i=5
+  450   region       (175,166)-(193,195)  19x30           key=UI_NO_HOTKEY cancel_ctl                         
+  451   region       (275, 14)-(288, 27)  14x14           F         next_ctl                           
+  452   region       ( 29, 14)-( 42, 26)  14x13           B         prev_ctl                           
+  542   region       ( 32, 29)-(153, 46) 122x18                     left_ctls[i]                       if loop i=0
+  542   region       ( 32, 51)-(153, 68) 122x18                     left_ctls[i]                       if loop i=1
+  542   region       ( 32, 73)-(153, 90) 122x18                     left_ctls[i]                       if loop i=2
+  542   region       ( 32, 95)-(153,112) 122x18                     left_ctls[i]                       if loop i=3
+  542   region       ( 32,117)-(153,134) 122x18                     left_ctls[i]                       if loop i=4
+  542   region       ( 32,139)-(153,156) 122x18                     left_ctls[i]                       if loop i=5
+  544   region       (164, 29)-(284, 46) 121x18                     right_ctls[i]                      if loop i=0
+  544   region       (164, 51)-(284, 68) 121x18                     right_ctls[i]                      if loop i=1
+  544   region       (164, 73)-(284, 90) 121x18                     right_ctls[i]                      if loop i=2
+  544   region       (164, 95)-(284,112) 121x18                     right_ctls[i]                      if loop i=3
+  544   region       (164,117)-(284,134) 121x18                     right_ctls[i]                      if loop i=4
+  544   region       (164,139)-(284,156) 121x18                     right_ctls[i]                      if loop i=5
+  545   region       (175,166)-(193,195)  19x30           Esc       cancel_ctl                         if loop
+  546   region       (275, 14)-(288, 27)  14x14           F         next_ctl                           if loop
+  547   region       ( 29, 14)-( 42, 26)  14x13           B         prev_ctl                           if loop
+
+Combat_Spell_Pick_Target_UI  [WIZARDS, src/wizards/COMBTARG.C:307]
+  307   grid         (  0,  0)-(318,167) 319x168                    grid_ctl                             grid 319x168 of 1x1
+  308   button       (263,186)-(295,196)  33x11           Esc       cancel_ctl                           pic COMPIX 22
+
+Combat_Add_Enchant_Icon_Controls  [WIZARDS, src/wizards/COMBTURN.C:748]
+  748   picture      computed: (x + i * 17, 179) + size of combat_att_icons[i + combat_att_icon_first].pic           combat_att_icon_ctls[i]            loop  help combat_att_icons[i + combat_att_icon_first].help
+  757   picture      computed: (x + i * 17, 179) + size of combat_def_icons[i + combat_def_icon_first].pic           combat_def_icon_ctls[i]            loop  help combat_def_icons[i + combat_def_icon_first].help
+
+Confirm_Dialog  [WIZARDS, src/wizards/COMBUTIL.C:759]
+  759   button       computed: (notify_box_x + 101, notify_box_y + height + 15) + size of keep_button_pic N         keep_button                          pic COMPIX 81
+  760   button       computed: (notify_box_x + 18, notify_box_y + height + 15) + size of raze_button_pic R         raze_button                          pic COMPIX 82
+  762   region       computed: (notify_box_x, notify_box_y)-(notify_box_x + 185, notify_box_y + 63)           box_control                        
+  763   region       (  0,  0)-(319,199) 320x200          Esc       screen_control                     
+
+Screen_Diplomacy_Incoming  [WIZARDS, src/wizards/DIPLOMSG.C:216]
+  216   region       (  0,  0)-(319,199) 320x200                    click                              if loop
+
+Screen_Diplomacy_Offer  [WIZARDS, src/wizards/DIPLOMSG.C:371]
+  371   region       (  0,  0)-(319,199) 320x200                    control                            if
+
+Screen_Diplomacy  [WIZARDS, src/wizards/DIPLOSCR.C:219]
+  219   region       (  0,  0)-(319,199) 320x200                    click                              if loop
+
+Diplo_Show_Reply  [WIZARDS, src/wizards/DIPLOSCR.C:578]
+  578   region       (  0,  0)-(319,199) 320x200                    click                              
+
+Screen_Conquest  [WIZARDS, src/wizards/ENDGAME.C:292]
+  292   region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+Screen_Win  [WIZARDS, src/wizards/ENDGAME.C:584]
+  584   region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+Screen_Lose  [WIZARDS, src/wizards/ENDGAME.C:681]
+  681   region       (  0,  0)-(319,199) 320x200                    control                            loop
+
+Screen_Banish_Vortex  [WIZARDS, src/wizards/ENDGAME.C:805]
+  805   region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+Screen_Final_Score  [WIZARDS, src/wizards/FINSCORE.C:101]
+  101   region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+Screen_Game_Menu  [WIZARDS, src/wizards/GAMEMENU.C:168]
+  168   region       key only                             Esc       hotkey                             
+  169   region       ( 43,171)-( 82,184)  40x14                     game_menu_quit_control             
+  170   region       ( 83,171)-(121,184)  39x14                     game_menu_load_control             
+  171   region       (122,171)-(159,184)  38x14                     game_menu_save_control             
+  172   region       (231,171)-(270,184)  40x14                     settings_ok_control                
+  173   region       (172,171)-(229,184)  58x14                     game_menu_settings_control         
+  176   text_line    ( 43, 47)-(303, 47 + font height)              load_controls[i]                   loop i=0
+  176   text_line    ( 43, 62)-(303, 62 + font height)              load_controls[i]                   loop i=1
+  176   text_line    ( 43, 77)-(303, 77 + font height)              load_controls[i]                   loop i=2
+  176   text_line    ( 43, 92)-(303, 92 + font height)              load_controls[i]                   loop i=3
+  176   text_line    ( 43,107)-(303, 107 + font height)             load_controls[i]                   loop i=4
+  176   text_line    ( 43,122)-(303, 122 + font height)             load_controls[i]                   loop i=5
+  176   text_line    ( 43,137)-(303, 137 + font height)             load_controls[i]                   loop i=6
+  176   text_line    ( 43,152)-(303, 152 + font height)             load_controls[i]                   loop i=7
+
+Screen_Hall_Of_Fame_List  [MAGIC+WIZARDS, src/wizards/HALLFAME.C:86]
+  86    region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+Screen_Hero_Level_Up  [WIZARDS, src/wizards/HEROLVL.C:103]
+  103   picture      computed: (x, y) + size of p_unit_view_list->icon[i]           unit_view_row_icon_ctl[i]          loop  help p_unit_view_list->help[i]
+  106   region       computed: (x + 19, y + 5)-(x + 93, y + 13)           unit_view_row_text_ctl[i]          loop  help p_unit_view_list->help[i]
+  117   region       (  0,  0)-(319,199) 320x200          Esc       leave                              loop
+
+Screen_Merchant_Offer  [WIZARDS, src/wizards/HIRE.C:161]
+  161   button       (257,136)-(305,147)  49x12                     buy                                  "Buy" pic HIRE 1
+  162   button       (257,155)-(305,166)  49x12           key=UI_NO_HOTKEY reject                               "Reject" pic HIRE 1
+
+Screen_Hire_Hero  [WIZARDS, src/wizards/HIRE.C:309]
+  309   button       computed: (x + 221, y + 143) + size of ok_button_pic H         hire                               if  "Hire"
+  311   button       computed: (x + 221, y + 143) + size of ok_button_pic A         hire                                 "Accept"
+  312   button       computed: (x + 221, y + 162) + size of ok_button_pic key=UI_NO_HOTKEY reject                               "Reject"
+
+Screen_Hire_Mercenaries  [WIZARDS, src/wizards/HIRE.C:442]
+  442   button       computed: (x + 221, y + 143) + size of ok_button_pic           hire                                 "Hire"
+  443   button       computed: (x + 221, y + 162) + size of ok_button_pic key=UI_NO_HOTKEY reject                               "Reject"
+
+ItemForge_Add_Controls  [WIZARDS, src/wizards/ITEMFORG.C:455]
+  455   text_input   ( 30, 13)-(148, 13 + font height)              forge_name_field                   
+  458   button       computed: (i % 5 * 33 + 156, i / 5 * 15 + 3) + size of p_forge_type_btn_sel_pics[i]           p_forge_type_btns[i]               if loop
+  460   button       computed: (i % 5 * 33 + 156, i / 5 * 15 + 3) + size of p_forge_type_btn_pics[i]           p_forge_type_btns[i]               loop
+  462   button       (281,180)-(312,195)  32x16           Esc       forge_ok_btn                         pic SPELLSCR 24
+  463   button       (  4, 24)-( 12, 30)   9x7                      forge_icon_prev_btn                  pic SPELLSCR 35
+  464   button       ( 17, 24)-( 25, 30)   9x7                      forge_icon_next_btn                  pic SPELLSCR 36
+  482   region       computed: (x, y - 2)-(x + 78, y + 7)           p_forge_power_ctrls[i + base]      if loop
+  484   region       computed: (x, y - 2)-(x + 98, y + 7)           p_forge_power_ctrls[i + base]      if loop
+
+Screen_Item_Charge_Spell  [WIZARDS, src/wizards/ITEMFORG.C:899]
+  899   region       (187,168)-(205,199)  19x32           key=UI_NO_HOTKEY cancel                             
+  900   region       (287, 14)-(300, 27)  14x14           F         next                               
+  901   region       ( 41, 14)-( 54, 26)  14x13           B         prev                               
+  904   region       computed: (x0 + i / 14 * 130 + 28, y0 + i % 14 * 10 + 7)-(x0 + i / 14 * 130 + 133, y0 + i % 14 * 10 + 16)           ctrls[i]                           loop
+  934   button       computed: (x0 + 158 - done * 140 + k * 23, y0 + done * 10 + i * 10 + 11) + size of forge_charge_btn_pics[k]           ctrls[k]                           if loop
+
+Item_View_Popup  [WIZARDS, src/wizards/ITEMPOP.C:75]
+  75    region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+Item_Award_Popup  [WIZARDS, src/wizards/ITEMPOP.C:169]
+  169   region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+Screen_Items  [WIZARDS, src/wizards/ITEMSCR.C:154]
+  154   region       key only                             Esc       hotkey                             loop
+
+Items_Screen_Add_Controls  [WIZARDS, src/wizards/ITEMSCR.C:595]
+  595   region       computed: (px, py)-(x2, y2)                    p_items_portrait_ctrls[i]          if loop
+  597   region       computed: (px + k * 29 + 40, py + 16)-(px + k * 29 + 61, py + 33)           p_items_slot_ctrls[i][k]           if loop
+  603   region       computed: (x, y)-(x + 19, y + 15)              p_items_vault_ctrls[i]             loop
+  608   button       (236,157)-(294,171)  59x15           A         items_alchemy_btn                  if  pic ARMYLIST 7
+  609   button       (236,177)-(294,191)  59x15           O         items_ok_btn                       if  pic ARMYLIST 8
+  611   region       ( 26,157)-( 65,191)  40x35                     items_anvil_ctrl                   
+  612   region       ( 17,  2)-(300,197) 284x196                    items_window_ctrl                  
+  613   region       (  0,  0)-(319,199) 320x200                    items_outside_ctrl                 
+
+Screen_Treasure  [WIZARDS, src/wizards/LAIR.C:610]
+  610   button       computed: (notify_box_x + 100, bottom + 5) + size of confirm_right_button_pic Y         yes_button                         if  pic RESOURCE 3
+  611   button       computed: (notify_box_x + 17, bottom + 5) + size of confirm_left_button_pic N         no_button                          if  pic RESOURCE 4
+  612   region       computed: (notify_box_x, notify_box_y)-(notify_box_x + 184, bottom + 28)           box_ctl                            if
+  614   region       (  0,  0)-(319,199) 320x200          Esc       outside                            
+
+Screen_Magic  [WIZARDS, src/wizards/MAGICSCR.C:210]
+  210   alt_hotkey   key only                             Alt+R+V+L rvl                                
+  211   alt_hotkey   key only                             Alt+P+W+R pwr                                
+  212   alt_hotkey   key only                             Alt+D+E+S+T+I+N destin                             
+  217   region       key only                             X         hk_x                               loop
+  218   region       key only                             Esc       esc                                loop
+  279   alt_hotkey   key only                             Alt+R+V+L rvl                                if loop
+  280   alt_hotkey   key only                             Alt+P+W+R pwr                                if loop
+  281   alt_hotkey   key only                             Alt+D+E+S+T+I+N destin                             if loop
+  303   alt_hotkey   key only                             Alt+R+V+L rvl                                if loop
+  304   alt_hotkey   key only                             Alt+P+W+R pwr                                if loop
+  305   alt_hotkey   key only                             Alt+D+E+S+T+I+N destin                             if loop
+  322   alt_hotkey   key only                             Alt+R+V+L rvl                                if loop
+  323   alt_hotkey   key only                             Alt+P+W+R pwr                                if loop
+  324   alt_hotkey   key only                             Alt+D+E+S+T+I+N destin                             if loop
+
+MagicScr_Add_Controls  [WIZARDS, src/wizards/MAGICSCR.C:736]
+  736   slider       ( 32,102)-( 37,152)   6x51           M         -                                    range 0..50
+  737   slider       ( 79,102)-( 84,152)   6x51           R         -                                    range 0..50
+  738   slider       (126,102)-(131,152)   6x51           S         -                                    range 0..50
+  739   button       (291,181)-(316,195)  26x15           O         magic_ok_button                      pic MAGIC 14
+  740   button       (232,181)-(289,195)  58x15           A         magic_alchemy_button                 pic MAGIC 13
+  741   region       ( 28, 82)-( 41,101)  14x20                     magic_lock_mana_control            
+  742   region       ( 75, 82)-( 88,101)  14x20                     magic_lock_research_control        
+  743   region       (122, 82)-(135,101)  14x20                     magic_lock_skill_control           
+  747   region       computed: (x, y)-(x + 30, y + 32)              p_magic_gem_ctls[i]                loop
+  755   region       computed: (x, i * 10 + y)-(x + 120, i * 10 + y + 9)           p_magic_enchant_ctls[i]            if loop
+  763   region       computed: (i % 2 * 70 + x, i / 2 * 9 + y)-(i % 2 * 70 + x + 63, i / 2 * 9 + y + 6)           p_magic_enchant_ctls[i]            if loop
+  769   region       (286,163)-(307,169)  22x7                      magic_list_more_control            if
+
+Alchemy_Dialog  [WIZARDS, src/wizards/MAGICSCR.C:880]
+  880   region       key only                             Esc       esc                                loop
+
+Alchemy_Add_Controls  [WIZARDS, src/wizards/MAGICSCR.C:986]
+  986   slider       computed: (alchemy_box_x + 50, alchemy_box_y + 25) + (55, 7) A         -                                    range 3..53
+  987   button       computed: (alchemy_box_x + 13, alchemy_box_y + 39) + size of alchemy_cancel_pic C         alchemy_cancel_button                pic MAGIC 53
+  988   button       computed: (alchemy_box_x + 96, alchemy_box_y + 39) + size of alchemy_ok_pic O         alchemy_ok_button                    pic MAGIC 54
+  990   button       computed: (alchemy_box_x + 66, alchemy_box_y + 39) + size of alchemy_left_arrow_pic Space     alchemy_direction_button           if  pic MAGIC 56
+  993   button       computed: (alchemy_box_x + 66, alchemy_box_y + 39) + size of alchemy_right_arrow_pic Space     alchemy_direction_button           if  pic MAGIC 55
+  996   region       computed: (alchemy_box_x, alchemy_box_y)-(alchemy_box_x + 157, alchemy_box_y + 65)           alchemy_box_control                
+  997   region       (  0,  0)-(319,199) 320x200                    alchemy_outside_control            
+
+Screen_Mastery_Started  [WIZARDS, src/wizards/MASTERY.C:268]
+  268   region       (  0,  0)-(319,199) 320x200          Esc       control                            
+
+Spell_Of_Mastery_Complete  [WIZARDS, src/wizards/MASTERY.C:368]
+  368   region       (  0,  0)-(319,199) 320x200          Esc       control                            
+
+Screen_Undead_Rise  [WIZARDS, src/wizards/MASTERY.C:471]
+  471   region       (  0,  0)-(319,199) 320x200          Esc       control                            
+
+Confirm_Box  [MAGIC+WIZARDS, src/wizards/NOTIFY.C:182]
+  182   button       computed: (notify_box_x + 101, notify_box_y + height + 15) + size of confirm_right_button_pic Y         yes_ctl                              pic RESOURCE 3
+  183   button       computed: (notify_box_x + 18, notify_box_y + height + 15) + size of confirm_left_button_pic N         no_ctl                               pic RESOURCE 4
+  184   region       computed: (notify_box_x, notify_box_y)-(notify_box_x + 185, notify_box_y + 63)           box_ctl                            
+  185   region       (  0,  0)-(319,199) 320x200          Esc       screen_ctl                         
+
+List_Select_Dialog  [MAGIC+WIZARDS, src/wizards/NOTIFY.C:384]
+  384   region       computed: (list_dialog_x + Pic_Width(list_dialog_left_pic) + Pic_Width(list_dialog_scroll_pic), list_dialog_y + Pic_Height(list_dialog_top_pic) + Pic_Height(list_dialog_row_pics[0]) * i)-(list_dialog_x2 - Pic_Width(list_dialog_right_pic), list_dialog_y + Pic_Height(list_dialog_top_pic) + Pic_Height(list_dialog_row_pics[0]) * (i + 1) - 1)           list_dialog_row_ctls[i]            if loop
+  391   region       computed: (list_dialog_x + Pic_Width(list_dialog_left_pic), list_dialog_y + Pic_Height(list_dialog_top_pic) + Pic_Height(list_dialog_row_pics[0]) * i)-(list_dialog_x2 - Pic_Width(list_dialog_right_pic), list_dialog_y + Pic_Height(list_dialog_top_pic) + Pic_Height(list_dialog_row_pics[0]) * (i + 1) - 1)           list_dialog_row_ctls[i]            loop
+  398   button       computed: (list_dialog_x + Pic_Width(list_dialog_left_pic) + 4, list_dialog_y + Pic_Height(list_dialog_top_pic) + 3) + size of list_dialog_top_arrow_pic           up_ctl                             if loop  pic RESOURCE 32
+  401   button       computed: (list_dialog_x + Pic_Width(list_dialog_left_pic) + 4, list_dialog_y2 - Pic_Height(list_dialog_bottom_pic) - 2 - Pic_Height(list_dialog_bottom_arrow_pic)) + size of list_dialog_bottom_arrow_pic           down_ctl                           if loop  pic RESOURCE 33
+  405   region       computed: (list_dialog_x, list_dialog_y)-(list_dialog_x2, list_dialog_y2)           box_ctl                            loop
+  406   region       (  0,  0)-(319,199) 320x200          Esc       cancel_ctl                         loop
+
+Screen_Outpost  [WIZARDS, src/wizards/OUTPOST.C:205]
+  205   region       computed: (x1, y1)-(x2, y2)                    ui_unit_slot_controls[i]           if loop
+  209   region       (  0,  0)-(319,199) 320x200          Esc       leave                              loop
+
+Screen_Overland_Map  [WIZARDS, src/wizards/OVERLAND.C:266]
+  266   region       key only                             X         key_x                              loop
+  268   region       key only                             !         key_excl                           loop
+  269   region       key only                             @         key_at                             loop
+  270   region       key only                             #         key_hash                           loop
+  271   region       key only                             C         key_c                              loop
+  272   alt_hotkey   key only                             Alt+T     key_alt_t                          loop
+  273   alt_hotkey   key only                             Alt+N     key_alt_n                          loop
+  274   alt_hotkey   key only                             Alt+P     key_alt_p                          loop
+  275   region       key only                             Q         key_q                              loop
+  276   region       key only                             U         key_u                              loop
+  277   region       key only                             Keypad7   key_nw                             loop
+  278   region       key only                             Up        key_n                              loop
+  279   region       key only                             Keypad9   key_ne                             loop
+  280   region       key only                             Left      key_w                              loop
+  281   region       key only                             Right     key_e                              loop
+  282   region       key only                             Keypad1   key_sw                             loop
+  283   region       key only                             Down      key_s                              loop
+  284   region       key only                             Keypad3   key_se                             loop
+  285   region       key only                             F10       key_f10                            loop
+  286   region       key only                             F1        key_f1                             loop
+  287   region       key only                             F2        key_f2                             loop
+  288   region       key only                             F3        key_f3                             loop
+  289   region       key only                             F4        key_f4                             loop
+  290   region       key only                             F5        key_f5                             loop
+  291   region       key only                             F6        key_f6                             loop
+  292   region       key only                             F7        key_f7                             loop
+  293   region       key only                             F8        key_f8                             loop
+  294   region       key only                             F9        key_f9                             loop
+  295   alt_hotkey   key only                             Alt+K     key_alt_k                          loop
+  296   alt_hotkey   key only                             Alt+A     key_alt_a                          loop
+
+Overland_Add_Controls  [WIZARDS, src/wizards/OVERLAND.C:829]
+  829   region       (248,175)-(313,199)  66x25           N         next_turn_control                  if
+  831   grid         (  0, 20)-(239,199) 240x180                    map_grid_control                   if  grid 12x10 of 20x18
+  833   grid         (251, 21)-(308, 50)  58x30                     minimap_control                    if  grid 58x30 of 1x1
+
+Overland_Add_Order_Buttons  [WIZARDS, src/wizards/OVERLAND.C:843]
+  843   button       (246,176)-(278,184)  33x9            D         order_done_control                 if  pic MAIN 8
+  844   button       (280,176)-(312,184)  33x9                      order_patrol_control               if  pic MAIN 9
+  845   button       (246,186)-(278,194)  33x9            W         order_wait_control                 if  pic MAIN 10
+  850   button       (280,186)-(312,194)  33x9                      order_special_control              if  pic MAIN 42
+  853   button       (280,186)-(312,194)  33x9                      order_special_control              if  pic MAIN 49
+  856   button       (280,186)-(312,194)  33x9            B         order_special_control              if  pic MAIN 11
+  867   button       (246,186)-(278,194)  33x9            W         order_wait_control                 if  pic MAIN 10
+
+Overland_Add_TopBar_Buttons  [WIZARDS, src/wizards/OVERLAND.C:927]
+  927   button       (  7,  4)-( 45, 15)  39x12           G         topbar_game_control                  pic MAIN 1
+  928   button       ( 47,  4)-( 87, 15)  41x12           S         topbar_spells_control                pic MAIN 2
+  929   button       ( 89,  4)-(138, 15)  50x12           A         topbar_armies_control                pic MAIN 3
+  930   button       (140,  4)-(182, 15)  43x12                     topbar_cities_control                pic MAIN 4
+  931   button       (184,  4)-(224, 15)  41x12           M         topbar_magic_control                 pic MAIN 5
+  932   button       (226,  4)-(268, 15)  43x12           I         topbar_info_control                  pic MAIN 6
+  933   button       (270,  4)-(312, 15)  43x12           P         topbar_plane_control                 pic MAIN 7
+
+Overland_Add_Stack_Icon_Controls  [WIZARDS, src/wizards/OVERLAND.C:966]
+  966   region       computed: (x1 - 1, y1 - 1)-(x2 - 2, y2 - 2)           ui_unit_slot_controls[i]           loop
+
+Natures_Wrath_Strike  [WIZARDS, src/wizards/OVERSPL2.C:841]
+  841   region       (  0,  0)-(319,199) 320x200                    i                                  
+
+Paragraph_Add_Hotkey_Regions  [MAGIC+WIZARDS, src/wizards/PARAGRPH.C:203]
+  203   value_region computed: (region_start[j] - 1, text_line_y[i] - 1)-(region_end[j], text_line_y[i] + font_height) key=hotkey_ptr -                                  loop  help help
+
+Screen_Spell_Learned  [WIZARDS, src/wizards/RESEARCH.C:320]
+  320   region       (  0,  0)-(319,199) 320x200                    i                                  if
+  414   region       (  0,  0)-(319,199) 320x200          key=UI_NO_HOTKEY control                            if
+
+Screen_Apprentice  [WIZARDS, src/wizards/RESEARCH.C:608]
+  608   region       ( 15,  7)-( 30, 22)  16x16                     prev_ctl                           
+  609   region       (290,  7)-(305, 22)  16x16                     next_ctl                           
+  610   region       (  0, 25)-(319,199) 320x175          Esc       exit_ctl                           
+
+Screen_Choose_Research  [WIZARDS, src/wizards/RESEARCH.C:853]
+  853   region       computed: (x1, y1)-(x1 + 110, y1 + 33)           controls[i]                        loop
+
+RoadScr_Add_Controls  [WIZARDS, src/wizards/ROADSCR.C:226]
+  226   grid         (  0, 20)-(239,199) 240x180                    map_grid_control                   if  grid 12x10 of 20x18
+  228   grid         (251, 21)-(308, 50)  58x30                     minimap_control                    if  grid 58x30 of 1x1
+  229   button       (280,181)-(312,189)  33x9            C         map_tool_cancel_control              pic MAIN 41
+  230   button       (246,181)-(278,189)  33x9            O         road_ok_button                       pic MAIN 46
+
+Screen_Settings  [MAGIC+WIZARDS, src/wizards/SETTINGS.C:109]
+  109   region       key only                             Esc       esc_control                        
+  110   region       (265,175)-(306,189)  42x15           O         settings_ok_control                
+  118   region       computed: (31, row_y[j])-(175, row_y[j] + 9)           toggles[i]                         loop
+  120   region       computed: (31, row_y[11])-(175, row_y[11] + 9)           toggles[8]                         
+  121   region       computed: (31, row_y[12])-(175, row_y[12] + 9)           toggles[9]                         
+  128   region       computed: (192, row_y[j])-(310, row_y[j] + 9)           toggles[i + 10]                    loop
+  130   region       (192, 74)-(310, 83) 119x10                     anim_control                       
+
+Screen_Spellbook_Cast  [WIZARDS, src/wizards/SPELLCST.C:175]
+  175   region       ( 32, 29)-(153, 46) 122x18                     left_controls[i]                   loop i=0
+  175   region       ( 32, 51)-(153, 68) 122x18                     left_controls[i]                   loop i=1
+  175   region       ( 32, 73)-(153, 90) 122x18                     left_controls[i]                   loop i=2
+  175   region       ( 32, 95)-(153,112) 122x18                     left_controls[i]                   loop i=3
+  175   region       ( 32,117)-(153,134) 122x18                     left_controls[i]                   loop i=4
+  175   region       ( 32,139)-(153,156) 122x18                     left_controls[i]                   loop i=5
+  177   region       (164, 29)-(284, 46) 121x18                     right_controls[i]                  loop i=0
+  177   region       (164, 51)-(284, 68) 121x18                     right_controls[i]                  loop i=1
+  177   region       (164, 73)-(284, 90) 121x18                     right_controls[i]                  loop i=2
+  177   region       (164, 95)-(284,112) 121x18                     right_controls[i]                  loop i=3
+  177   region       (164,117)-(284,134) 121x18                     right_controls[i]                  loop i=4
+  177   region       (164,139)-(284,156) 121x18                     right_controls[i]                  loop i=5
+  178   region       (175,166)-(193,195)  19x30           key=UI_NO_HOTKEY cancel_control                     
+  179   region       (275, 14)-(288, 27)  14x14           F         next_control                       
+  180   region       ( 29, 14)-( 42, 26)  14x13           B         prev_control                       
+  293   region       ( 32, 29)-(153, 46) 122x18                     left_controls[i]                   if loop i=0
+  293   region       ( 32, 51)-(153, 68) 122x18                     left_controls[i]                   if loop i=1
+  293   region       ( 32, 73)-(153, 90) 122x18                     left_controls[i]                   if loop i=2
+  293   region       ( 32, 95)-(153,112) 122x18                     left_controls[i]                   if loop i=3
+  293   region       ( 32,117)-(153,134) 122x18                     left_controls[i]                   if loop i=4
+  293   region       ( 32,139)-(153,156) 122x18                     left_controls[i]                   if loop i=5
+  295   region       (164, 29)-(284, 46) 121x18                     right_controls[i]                  if loop i=0
+  295   region       (164, 51)-(284, 68) 121x18                     right_controls[i]                  if loop i=1
+  295   region       (164, 73)-(284, 90) 121x18                     right_controls[i]                  if loop i=2
+  295   region       (164, 95)-(284,112) 121x18                     right_controls[i]                  if loop i=3
+  295   region       (164,117)-(284,134) 121x18                     right_controls[i]                  if loop i=4
+  295   region       (164,139)-(284,156) 121x18                     right_controls[i]                  if loop i=5
+  296   region       (175,166)-(193,195)  19x30           Esc       cancel_control                     if loop
+  297   region       (275, 14)-(288, 27)  14x14           F         next_control                       if loop
+  298   region       ( 29, 14)-( 42, 26)  14x13           B         prev_control                       if loop
+
+Vortex_Human_Move  [WIZARDS, src/wizards/SPELLFX.C:901]
+  901   grid         (  0,  0)-(318,167) 319x168                    grid                               if  grid 319x168 of 1x1
+
+SpellTarget_Add_Controls  [WIZARDS, src/wizards/SPELLTGT.C:460]
+  460   grid         (  0, 20)-(239,199) 240x180                    map_grid_control                   if  grid 12x10 of 20x18
+  462   grid         (251, 21)-(308, 50)  58x30                     minimap_control                    if  grid 58x30 of 1x1
+  463   button       (263,181)-(295,189)  33x9            C         spelltarget_cancel_button            pic MAIN 41
+
+Screen_Stack_Popup  [WIZARDS, src/wizards/STACKPOP.C:125]
+  125   region       key only                             X         hotkey                             loop
+
+Stack_Popup_Add_Controls  [WIZARDS, src/wizards/STACKPOP.C:304]
+  304   region       computed: (x, y)-(x + 222, y + 18)             p_stack_popup_controls[i]          if loop
+  307   region       computed: (stack_popup_x, stack_popup_y)-(stack_popup_x + 237, stack_popup_bottom + 4)           stack_popup_window_ctl             if
+  310   region       (  0,  0)-(319,199) 320x200          Esc       stack_popup_outside_ctl            
+
+Screen_Surveyor  [WIZARDS, src/wizards/SURVEYOR.C:148]
+  148   region       key only                             Esc       hotkey                             loop
+
+Surveyor_Add_Controls  [WIZARDS, src/wizards/SURVEYOR.C:201]
+  201   grid         (  0, 20)-(239,199) 240x180                    map_grid_control                   if  grid 12x10 of 20x18
+  203   grid         (251, 21)-(308, 50)  58x30                     minimap_control                    if  grid 58x30 of 1x1
+  204   button       (263,181)-(295,189)  33x9            C         map_tool_cancel_control              pic MAIN 41
+
+Screen_Turn_Report  [WIZARDS, src/wizards/TURNRPT.C:211]
+  211   region       ( 28,  9)-(288, 25) 261x17           U         up                                 if
+  212   region       ( 28,170)-(288,190) 261x21           D         down                               if
+  217   region       (  0,  0)-(319,199) 320x200          Esc       control                            
+
+Screen_Unit_View  [WIZARDS, src/wizards/UNITVIEW.C:250]
+  250   button       computed: (unit_view_x + 222, unit_view_y + 162) + size of ok_button_pic O         unit_view_btn_ok                   if loop  "Ok"
+  253   button       computed: (unit_view_x + 222, unit_view_y + 143) + size of ok_button_pic D         unit_view_btn_dismiss              if loop  "Dismiss"
+  255   region       computed: (unit_view_x, unit_view_y)-(unit_view_x + 217, unit_view_y + 184)           unit_view_ctl_window               loop
+  258   region       computed: (unit_view_x + 213, unit_view_y + 133)-(unit_view_x + 280, unit_view_y + 183)           unit_view_ctl_panel                if loop
+  260   region       (  0,  0)-(319,199) 320x200                    unit_view_ctl_exit                 loop
+  261   region       key only                             Esc       esc_key                            loop
+  262   region       key only                             X         x_key                              loop
+
+UnitView_Add_Ability_Controls  [WIZARDS, src/wizards/UNITVIEW.C:993]
+  993   picture      computed: (col_x, row_y) + size of list->icon[i + first]           unit_view_item_icon_ctl[k]         if loop
+  994   region       computed: (col_x + 19, row_y + 5)-(col_x + 93, row_y + 13)           unit_view_item_text_ctl[k]         if loop
+  997   picture      computed: (col_x, row_y) + size of list->icon[i + first]           unit_view_row_icon_ctl[i]          if loop  help list->help[i + first]
+  998   region       computed: (col_x + 19, row_y + 5)-(col_x + 93, row_y + 13)           unit_view_row_text_ctl[i]          if loop  help list->help[i + first]
+
+UnitView_Add_Scroll_Buttons  [WIZARDS, src/wizards/UNITVIEW.C:1042]
+  1042  button       computed: (x, y) + size of unitview_arrow_up_pic U         unit_view_btn_up                   if  pic UNITVIEW 3
+  1043  button       computed: (x, y + 63) + size of unitview_arrow_down_pic D         unit_view_btn_down                 if  pic UNITVIEW 4
+
+Dev_Choice_Box  [MAGIC+WIZARDS, src/wizards/UTIL.C:675]
+  675   region       (120,130)-(200,145)  81x16                     ctrl1                              if loop  help "NO_HELP"
+  680   region       (120,150)-(200,165)  81x16                     ctrl2                              if loop  help "NO_HELP"
+  685   region       (120,170)-(200,185)  81x16                     ctrl3                              if loop  help "NO_HELP"
+  687   region       (  0,  0)-(319,199) 320x200                    ctrl_screen                        loop
+
+Screen_Wizard_Info  [WIZARDS, src/wizards/WIZINFO.C:84]
+  84    region       (  0,  0)-(319,199) 320x200          Esc       control                            loop
+
+======================================================================================================================
+PART B - LIVE CONTROL TABLES (as the running game holds them)
+======================================================================================================================
+
+MAGIC/m01_main_menu  (intro skipped with Esc; current_screen None; 11 controls)
+    1 region       (108,150)-(211,161) 104x12                     help: LOAD = Screen_Main_Menu ctl_load
+    2 region       (108,138)-(211,149) 104x12                     help: CONTINUE
+    3 region       (108,162)-(211,173) 104x12                     help: NEW GAME = Screen_Main_Menu ctl_new_game
+    4 region       (108,174)-(211,185) 104x12                     help: HALL OF FAME = Screen_Main_Menu ctl_hall_of_fame
+    5 region       (108,186)-(211,199) 104x14                     help: QUIT TO DOS = Screen_Main_Menu ctl_cancel
+    6 region       key only                             C         
+    7 region       key only                             L         
+    8 region       key only                             N         
+    9 region       key only                             H         
+   10 region       key only                             Q         
+   11 region       key only                             Esc       
+
+MAGIC/m02_load_game  (main menu L; current_screen None; 6 controls)
+    1 region       key only                             Esc       
+    2 region       ( 43,171)-( 82,184)  40x14           Esc       help: QUIT BUTTON = Screen_Load_Game ctl_cancel
+    3 region       ( 83,171)-(121,184)  39x14           L         help: LOAD BUTTON = Screen_Load_Game ctl_load
+    4 region       ( 43, 47)-(263, 56) 221x10                     help: SAVED GAMES
+    5 region       ( 43, 62)-(263, 71) 221x10                     help: SAVED GAMES
+    6 region       (172,171)-(229,184)  58x14                     help: SETTINGS BUTTON = Screen_Load_Game ctl_settings
+
+MAGIC/m03_settings  (load game -> Settings; current_screen None; 21 controls)
+    1 region       key only                             Esc       
+    2 region       (265,175)-(306,189)  42x15           O         help: LOAD BUTTON = Screen_Settings settings_ok_control
+    3 region       ( 31, 53)-(175, 62) 145x10                     help: SOUND EFFECTS
+    4 region       ( 31, 64)-(175, 73) 145x10                     help: BACKGROUND MUSIC
+    5 region       ( 31, 75)-(175, 84) 145x10                     help: EVENT MUSIC
+    6 region       ( 31,102)-(175,111) 145x10                     help: CITY SPELL EVENTS
+    7 region       ( 31,113)-(175,122) 145x10                     help: OVERLAND SPELL EVENTS
+    8 region       ( 31,124)-(175,133) 145x10                     help: SUMMONING EVENTS
+    9 region       ( 31,135)-(175,144) 145x10                     help: END OF TURN SUMMARY
+   10 region       ( 31,146)-(175,155) 145x10                     help: RAZE CITY
+   11 region       ( 31,163)-(175,172) 145x10                     help: RANDOM EVENTS
+   12 region       ( 31,174)-(175,183) 145x10                     help: END OF TURN WAIT
+   13 region       (192, 53)-(310, 62) 119x10                     help: STRATEGIC COMBAT ONLY
+   14 region       (192, 64)-(310, 73) 119x10                     help: AUTO UNIT INFORMATION
+   15 region       (192,102)-(310,111) 119x10                     help: ENEMY MOVES
+   16 region       (192,113)-(310,122) 119x10                     help: ENEMY SPELLS
+   17 region       (192,124)-(310,133) 119x10                     help: SPELL BOOK ORDERING
+   18 region       (192,135)-(310,144) 119x10                     help: SPELL ANIMATIONS
+   19 region       (192,146)-(310,155) 119x10                     help: SHOW NODE OWNERS
+   20 region       (192,157)-(310,166) 119x10                     help: EXPANDING HELP
+   21 region       (192, 74)-(310, 83) 119x10                     help: MOVEMENT ANIMATIONS = Screen_Settings anim_control
+
+MAGIC/m04_hall_of_fame  (route: k:esc w:2 k:esc w:2 k:h w:2; current_screen None; 1 controls)
+    1 region       (  0,  0)-(319,199) 320x200          Esc       = Intro_Play click_control
+
+MAGIC/m05_new_game_options  (route: k:esc w:2 k:n w:2; current_screen None; 6 controls)
+    1 button       (252,179)-(315,194)  64x16                     help: OK BUTTON = Screen_NewGame_Options ctl_ok
+    2 button       (171,179)-(234,194)  64x16           Esc       help: CANCEL BUTTON = Screen_NewGame_Options ctl_cancel
+    3 region       (250, 38)-(315, 54)  66x17                     help: DIFFICULTY LEVEL = Screen_NewGame_Options ctl_difficulty
+    4 region       (250, 65)-(315, 81)  66x17                     help: OPPONENTS = Screen_NewGame_Options ctl_opponents
+    5 region       (250, 92)-(315,108)  66x17                     help: LAND SIZE = Screen_NewGame_Options ctl_land_size
+    6 region       (250,119)-(315,135)  66x17                     help: MAGIC INTENSITY = Screen_NewGame_Options ctl_magic_power
+
+MAGIC/m06_select_wizard  (route: c:283,186 w:2; current_screen None; 15 controls)
+    1 region       (168, 26)-(237, 42)  70x17                     help: MERLIN = Screen_Select_Portrait ng_controls[i]
+    2 region       (168, 48)-(237, 64)  70x17                     help: RAVEN = Screen_Select_Portrait ng_controls[i]
+    3 region       (168, 70)-(237, 86)  70x17                     help: SHAREE = Screen_Select_Portrait ng_controls[i]
+    4 region       (168, 92)-(237,108)  70x17                     help: LO PAN = Screen_Select_Portrait ng_controls[i]
+    5 region       (168,114)-(237,130)  70x17                     help: JAFAR = Screen_Select_Portrait ng_controls[i]
+    6 region       (168,136)-(237,152)  70x17                     help: OBERIC = Screen_Select_Portrait ng_controls[i]
+    7 region       (168,158)-(237,174)  70x17                     help: RJAK = Screen_Select_Portrait ng_controls[i]
+    8 region       (244, 26)-(313, 42)  70x17                     help: SSS'RA = Screen_Select_Portrait ng_controls[i + 7]
+    9 region       (244, 48)-(313, 64)  70x17                     help: TAURON = Screen_Select_Portrait ng_controls[i + 7]
+   10 region       (244, 70)-(313, 86)  70x17                     help: FREYA = Screen_Select_Portrait ng_controls[i + 7]
+   11 region       (244, 92)-(313,108)  70x17                     help: HORUS = Screen_Select_Portrait ng_controls[i + 7]
+   12 region       (244,114)-(313,130)  70x17                     help: ARIEL = Screen_Select_Portrait ng_controls[i + 7]
+   13 region       (244,136)-(313,152)  70x17                     help: TLALOC = Screen_Select_Portrait ng_controls[i + 7]
+   14 region       (244,158)-(313,174)  70x17                     help: KALI = Screen_Select_Portrait ng_controls[i + 7]
+   15 region       key only                             Esc       
+
+MAGIC/m06b_select_wizard_custom  (route: k:esc w:2 c:278,46 w:1 c:283,186 w:2; current_screen None; 16 controls)
+    1 region       (168, 26)-(237, 42)  70x17                     help: MERLIN = Screen_Select_Portrait ng_controls[i]
+    2 region       (168, 48)-(237, 64)  70x17                     help: RAVEN = Screen_Select_Portrait ng_controls[i]
+    3 region       (168, 70)-(237, 86)  70x17                     help: SHAREE = Screen_Select_Portrait ng_controls[i]
+    4 region       (168, 92)-(237,108)  70x17                     help: LO PAN = Screen_Select_Portrait ng_controls[i]
+    5 region       (168,114)-(237,130)  70x17                     help: JAFAR = Screen_Select_Portrait ng_controls[i]
+    6 region       (168,136)-(237,152)  70x17                     help: OBERIC = Screen_Select_Portrait ng_controls[i]
+    7 region       (168,158)-(237,174)  70x17                     help: RJAK = Screen_Select_Portrait ng_controls[i]
+    8 region       (244, 26)-(313, 42)  70x17                     help: SSS'RA = Screen_Select_Portrait ng_controls[i + 7]
+    9 region       (244, 48)-(313, 64)  70x17                     help: TAURON = Screen_Select_Portrait ng_controls[i + 7]
+   10 region       (244, 70)-(313, 86)  70x17                     help: FREYA = Screen_Select_Portrait ng_controls[i + 7]
+   11 region       (244, 92)-(313,108)  70x17                     help: HORUS = Screen_Select_Portrait ng_controls[i + 7]
+   12 region       (244,114)-(313,130)  70x17                     help: ARIEL = Screen_Select_Portrait ng_controls[i + 7]
+   13 region       (244,136)-(313,152)  70x17                     help: TLALOC = Screen_Select_Portrait ng_controls[i + 7]
+   14 region       (244,158)-(313,174)  70x17                     help: KALI = Screen_Select_Portrait ng_controls[i + 7]
+   15 region       (244,180)-(313,196)  70x17                     help: CUSTOM
+   16 region       key only                             Esc       
+
+MAGIC/m07_custom_portrait  (route: c:278,188 w:2; current_screen None; 15 controls)
+    1 region       (168, 26)-(237, 42)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i]
+    2 region       (168, 48)-(237, 64)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i]
+    3 region       (168, 70)-(237, 86)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i]
+    4 region       (168, 92)-(237,108)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i]
+    5 region       (168,114)-(237,130)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i]
+    6 region       (168,136)-(237,152)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i]
+    7 region       (168,158)-(237,174)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i]
+    8 region       (244, 26)-(313, 42)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i + 7]
+    9 region       (244, 48)-(313, 64)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i + 7]
+   10 region       (244, 70)-(313, 86)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i + 7]
+   11 region       (244, 92)-(313,108)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i + 7]
+   12 region       (244,114)-(313,130)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i + 7]
+   13 region       (244,136)-(313,152)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i + 7]
+   14 region       (244,158)-(313,174)  70x17                     help: SELECT WIZARD PICTURE = Screen_Select_Portrait ng_controls[i + 7]
+   15 region       key only                             Esc       
+
+MAGIC/m08_wizard_name  (route: c:200,34 w:2; current_screen None; 1 controls)
+    1 text_input   (195, 36)-(275, 45)  81x10                     "Merlin"
+
+MAGIC/m09_custom_picks  (route: k:enter w:2; current_screen None; 25 controls)
+    1 region       (251,181)-(282,196)  32x16                     help: OK BUTTON = Screen_Custom_Picks ctl_ok
+    2 slider       (190, 47)-(286, 69)  97x23                     help: LIFE SPELLS = Screen_Custom_Picks ng_controls[0]
+    3 slider       (190, 73)-(286, 95)  97x23                     help: DEATH SPELLS = Screen_Custom_Picks ng_controls[1]
+    4 slider       (190, 99)-(286,121)  97x23                     help: CHAOS SPELLS = Screen_Custom_Picks ng_controls[2]
+    5 slider       (190,125)-(286,147)  97x23                     help: NATURE SPELLS = Screen_Custom_Picks ng_controls[3]
+    6 slider       (190,151)-(286,173)  97x23                     help: SORCERY SPELLS = Screen_Custom_Picks ng_controls[4]
+    7 region       (164,  5)-(202, 10)  39x6                      help: ALCHEMY = Screen_Custom_Picks ctl_retorts[i]
+    8 region       (203,  5)-(252, 10)  50x6                      help: SAGE MASTER = Screen_Custom_Picks ctl_retorts[i + 6]
+    9 region       (253,  5)-(319, 10)  67x6                      help: CHAOS MASTERY = Screen_Custom_Picks ctl_retorts[i + 12]
+   10 region       (164, 12)-(202, 17)  39x6                      help: WARLORD = Screen_Custom_Picks ctl_retorts[i]
+   11 region       (203, 12)-(252, 17)  50x6                      help: MYRRAN = Screen_Custom_Picks ctl_retorts[i + 6]
+   12 region       (253, 12)-(319, 17)  67x6                      help: NATURE MASTERY = Screen_Custom_Picks ctl_retorts[i + 12]
+   13 region       (164, 19)-(202, 24)  39x6                      help: CHANNELER = Screen_Custom_Picks ctl_retorts[i]
+   14 region       (203, 19)-(252, 24)  50x6                      help: DIVINE POWER = Screen_Custom_Picks ctl_retorts[i + 6]
+   15 region       (253, 19)-(319, 24)  67x6                      help: SORCERY MASTERY = Screen_Custom_Picks ctl_retorts[i + 12]
+   16 region       (164, 26)-(202, 31)  39x6                      help: ARCHMAGE = Screen_Custom_Picks ctl_retorts[i]
+   17 region       (203, 26)-(252, 31)  50x6                      help: FAMOUS = Screen_Custom_Picks ctl_retorts[i + 6]
+   18 region       (253, 26)-(319, 31)  67x6                      help: INFERNAL POWER = Screen_Custom_Picks ctl_retorts[i + 12]
+   19 region       (164, 33)-(202, 38)  39x6                      help: ARTIFICER = Screen_Custom_Picks ctl_retorts[i]
+   20 region       (203, 33)-(252, 38)  50x6                      help: RUNEMASTER = Screen_Custom_Picks ctl_retorts[i + 6]
+   21 region       (253, 33)-(319, 38)  67x6                      help: MANA FOCUSING = Screen_Custom_Picks ctl_retorts[i + 12]
+   22 region       (164, 40)-(202, 45)  39x6                      help: CONJURER = Screen_Custom_Picks ctl_retorts[i]
+   23 region       (203, 40)-(252, 45)  50x6                      help: CHARISMATIC = Screen_Custom_Picks ctl_retorts[i + 6]
+   24 region       (253, 40)-(319, 45)  67x6                      help: NODE MASTERY = Screen_Custom_Picks ctl_retorts[i + 12]
+   25 region       key only                             Esc       
+
+MAGIC/m10_spell_picks  (route: c:250,58 w:1 c:266,188 w:2; current_screen None; 0 controls)
+
+MAGIC/m10_spell_picks  (route: c:160,100 w:1 c:266,188 w:2; current_screen None; 22 controls)
+    1 region       key only                             Esc       
+    2 region       (251,181)-(282,196)  32x16                     = Screen_Custom_Picks ctl_ok
+    3 region       (170, 39)-(240, 44)  71x6                      help: TRUE SIGHT
+    4 region       (170, 46)-(240, 51)  71x6                      help: PLANE SHIFT
+    5 region       (170, 53)-(240, 58)  71x6                      help: RESURRECTION
+    6 region       (170, 60)-(240, 65)  71x6                      help: DISPEL EVIL
+    7 region       (170, 67)-(240, 72)  71x6                      help: PLANAR SEAL
+    8 region       (244, 39)-(318, 44)  75x6                      help: UNICORNS
+    9 region       (244, 46)-(318, 51)  75x6                      help: RAISE DEAD
+   10 region       (244, 53)-(318, 58)  75x6                      help: PLANAR TRAVEL
+   11 region       (244, 60)-(318, 65)  75x6                      help: HEAVENLY LIGHT
+   12 region       (244, 67)-(318, 72)  75x6                      help: PRAYER
+   13 region       (170, 90)-(240, 95)  71x6                      help: LION HEART
+   14 region       (170, 97)-(240,102)  71x6                      help: INCARNATION
+   15 region       (170,104)-(240,109)  71x6                      help: INVULNERABILITY
+   16 region       (170,111)-(240,116)  71x6                      help: RIGHTEOUSNESS
+   17 region       (170,118)-(240,123)  71x6                      help: PROSPERITY
+   18 region       (244, 90)-(318, 95)  75x6                      help: ALTAR OF BATTLE
+   19 region       (244, 97)-(318,102)  75x6                      help: ANGEL
+   20 region       (244,104)-(318,109)  75x6                      help: STREAM OF LIFE
+   21 region       (244,111)-(318,116)  75x6                      help: MASS HEALING
+   22 region       (244,118)-(318,123)  75x6                      help: HOLY WORD
+
+MAGIC/m11_select_race  (route: c:266,188 w:2; current_screen None; 15 controls)
+    1 region       (211, 38)-(270, 45)  60x8                      help: BARBARIAN TOWNSFOLK = Screen_Select_Race ng_controls[i]
+    2 region       (211, 48)-(270, 55)  60x8                      help: GNOLL TOWNSFOLK = Screen_Select_Race ng_controls[i]
+    3 region       (211, 58)-(270, 65)  60x8                      help: HALFLING TOWNSFOLK = Screen_Select_Race ng_controls[i]
+    4 region       (211, 68)-(270, 75)  60x8                      help: HIGH ELF TOWNSFOLK = Screen_Select_Race ng_controls[i]
+    5 region       (211, 78)-(270, 85)  60x8                      help: HIGH MEN TOWNSFOLK = Screen_Select_Race ng_controls[i]
+    6 region       (211, 88)-(270, 95)  60x8                      help: KLACKON TOWNSFOLK = Screen_Select_Race ng_controls[i]
+    7 region       (211, 98)-(270,105)  60x8                      help: LIZARDMEN TOWNSFOLK = Screen_Select_Race ng_controls[i]
+    8 region       (211,108)-(270,115)  60x8                      help: NOMAD TOWNSFOLK = Screen_Select_Race ng_controls[i]
+    9 region       (211,118)-(270,125)  60x8                      help: ORC TOWNSFOLK = Screen_Select_Race ng_controls[i]
+   10 region       (211,147)-(270,154)  60x8                      help: BEASTMEN TOWNSFOLK = Screen_Select_Race ng_controls[i + 9]
+   11 region       (211,157)-(270,164)  60x8                      help: DARK ELF TOWNSFOLK = Screen_Select_Race ng_controls[i + 9]
+   12 region       (211,167)-(270,174)  60x8                      help: DRACONIAN TOWNSFOLK = Screen_Select_Race ng_controls[i + 9]
+   13 region       (211,177)-(270,184)  60x8                      help: DWARF TOWNSFOLK = Screen_Select_Race ng_controls[i + 9]
+   14 region       (211,187)-(270,194)  60x8                      help: TROLL TOWNSFOLK = Screen_Select_Race ng_controls[i + 9]
+   15 region       key only                             Esc       
+
+MAGIC/m12_select_banner  (route: c:240,41 w:2; current_screen None; 6 controls)
+    1 region       (175, 21)-(313, 55) 139x35                     help: SELECT A BANNER = Screen_Select_Banner ng_controls[0]
+    2 region       (175, 56)-(313, 93) 139x38                     help: SELECT A BANNER = Screen_Select_Banner ng_controls[1]
+    3 region       (175, 94)-(313,128) 139x35                     help: SELECT A BANNER = Screen_Select_Banner ng_controls[2]
+    4 region       (175,129)-(313,162) 139x34                     help: SELECT A BANNER = Screen_Select_Banner ng_controls[3]
+    5 region       (175,163)-(313,199) 139x37                     help: SELECT A BANNER = Screen_Select_Banner ng_controls[4]
+    6 region       key only                             Esc       
+
+WIZARDS/w01_name_starting_city  (new game, turn 0: Name Starting City box; current_screen 5; 1 controls)
+    1 text_input   ( 76, 51)-(151, 61)  76x11                     "Bromburg"
+
+WIZARDS/w02_overland_map  (turn 0 after naming the city (Enter); current_screen 5; 44 controls)
+    1 region       (246, 78)-(267,105)  22x28                     
+    2 region       (269, 78)-(290,105)  22x28                     
+    3 grid         (  0, 20)-(239,199) 240x180                    grid 12x10 of 20x18 = Overland_Add_Controls map_grid_control
+    4 grid         (251, 21)-(308, 50)  58x30                     grid 58x30 of 1x1 = Overland_Add_Controls minimap_control
+    5 button       (  7,  4)-( 45, 15)  39x12           G         help: GAME = Overland_Add_TopBar_Buttons topbar_game_control
+    6 button       ( 47,  4)-( 87, 15)  41x12           S         help: SPELLS = Overland_Add_TopBar_Buttons topbar_spells_control
+    7 button       ( 89,  4)-(138, 15)  50x12           A         help: ARMIES = Overland_Add_TopBar_Buttons topbar_armies_control
+    8 button       (140,  4)-(182, 15)  43x12                     help: CITIES = Overland_Add_TopBar_Buttons topbar_cities_control
+    9 button       (184,  4)-(224, 15)  41x12           M         help: MAGIC = Overland_Add_TopBar_Buttons topbar_magic_control
+   10 button       (226,  4)-(268, 15)  43x12           I         help: INFORMATION = Overland_Add_TopBar_Buttons topbar_info_control
+   11 button       (270,  4)-(312, 15)  43x12           P         help: PLANE = Overland_Add_TopBar_Buttons topbar_plane_control
+   12 button       (246,176)-(278,184)  33x9            D         help: DONE = Overland_Add_Order_Buttons order_done_control
+   13 button       (280,176)-(312,184)  33x9                      help: PATROL = Overland_Add_Order_Buttons order_patrol_control
+   14 button       (246,186)-(278,194)  33x9            W         help: WAIT = Overland_Add_Order_Buttons order_wait_control
+   15 region       key only                             X         
+   16 region       key only                             !         
+   17 region       key only                             @         
+   18 region       key only                             #         
+   19 region       key only                             C         
+   20 alt_hotkey   key only                             Alt+T     Alt code T
+   21 alt_hotkey   key only                             Alt+N     Alt code N
+   22 alt_hotkey   key only                             Alt+P     Alt code P
+   23 region       key only                             Q         
+   24 region       key only                             U         
+   25 region       key only                             Keypad7   
+   26 region       key only                             Up        
+   27 region       key only                             Keypad9   
+   28 region       key only                             Left      
+   29 region       key only                             Right     
+   30 region       key only                             Keypad1   
+   31 region       key only                             Down      
+   32 region       key only                             Keypad3   
+   33 region       key only                             F10       
+   34 region       key only                             F1        
+   35 region       key only                             F2        
+   36 region       key only                             F3        
+   37 region       key only                             F4        
+   38 region       key only                             F5        
+   39 region       key only                             F6        
+   40 region       key only                             F7        
+   41 region       key only                             F8        
+   42 region       key only                             F9        
+   43 alt_hotkey   key only                             Alt+K     Alt code K
+   44 alt_hotkey   key only                             Alt+A     Alt code A
+
+WIZARDS/w03_game_menu  (route: k:g w:2; current_screen 1; 14 controls)
+    1 region       key only                             Esc       
+    2 region       ( 43,171)-( 82,184)  40x14                     help: QUIT BUTTON = Screen_Game_Menu game_menu_quit_control
+    3 region       ( 83,171)-(121,184)  39x14                     help: LOAD BUTTON = Screen_Game_Menu game_menu_load_control
+    4 region       (122,171)-(159,184)  38x14                     help: SAVE BUTTON = Screen_Game_Menu game_menu_save_control
+    5 region       (231,171)-(270,184)  40x14                     help: OK BUTTON = Screen_Game_Menu settings_ok_control
+    6 region       (172,171)-(229,184)  58x14                     help: SETTINGS BUTTON = Screen_Game_Menu game_menu_settings_control
+    7 text_line    ( 43, 47)-(303, 56) 261x10                     "2" help: SAVED GAMES
+    8 text_line    ( 43, 62)-(303, 71) 261x10                     "Adam Fight" help: SAVED GAMES
+    9 text_line    ( 43, 77)-(303, 86) 261x10                     help: SAVED GAMES
+   10 text_line    ( 43, 92)-(303,101) 261x10                     help: SAVED GAMES
+   11 text_line    ( 43,107)-(303,116) 261x10                     help: SAVED GAMES
+   12 text_line    ( 43,122)-(303,131) 261x10                     help: SAVED GAMES
+   13 text_line    ( 43,137)-(303,146) 261x10                     help: SAVED GAMES
+   14 text_line    ( 43,152)-(303,161) 261x10                     help: SAVED GAMES
+
+WIZARDS/w03b_settings  (route: c:200,177 w:2; current_screen 1; 21 controls)
+    1 region       key only                             Esc       
+    2 region       (265,175)-(306,189)  42x15           O         help: LOAD BUTTON = Screen_Settings settings_ok_control
+    3 region       ( 31, 53)-(175, 62) 145x10                     help: SOUND EFFECTS
+    4 region       ( 31, 64)-(175, 73) 145x10                     help: BACKGROUND MUSIC
+    5 region       ( 31, 75)-(175, 84) 145x10                     help: EVENT MUSIC
+    6 region       ( 31,102)-(175,111) 145x10                     help: CITY SPELL EVENTS
+    7 region       ( 31,113)-(175,122) 145x10                     help: OVERLAND SPELL EVENTS
+    8 region       ( 31,124)-(175,133) 145x10                     help: SUMMONING EVENTS
+    9 region       ( 31,135)-(175,144) 145x10                     help: END OF TURN SUMMARY
+   10 region       ( 31,146)-(175,155) 145x10                     help: RAZE CITY
+   11 region       ( 31,163)-(175,172) 145x10                     help: RANDOM EVENTS
+   12 region       ( 31,174)-(175,183) 145x10                     help: END OF TURN WAIT
+   13 region       (192, 53)-(310, 62) 119x10                     help: STRATEGIC COMBAT ONLY
+   14 region       (192, 64)-(310, 73) 119x10                     help: AUTO UNIT INFORMATION
+   15 region       (192,102)-(310,111) 119x10                     help: ENEMY MOVES
+   16 region       (192,113)-(310,122) 119x10                     help: ENEMY SPELLS
+   17 region       (192,124)-(310,133) 119x10                     help: SPELL BOOK ORDERING
+   18 region       (192,135)-(310,144) 119x10                     help: SPELL ANIMATIONS
+   19 region       (192,146)-(310,155) 119x10                     help: SHOW NODE OWNERS
+   20 region       (192,157)-(310,166) 119x10                     help: EXPANDING HELP
+   21 region       (192, 74)-(310, 83) 119x10                     help: MOVEMENT ANIMATIONS = Screen_Settings anim_control
+
+WIZARDS/w04_spellbook  (route: c:285,182 w:2 k:esc w:2 k:s w:3; current_screen 12; 15 controls)
+    1 region       ( 32, 29)-(153, 46) 122x18                     help: GUARDIAN SPIRIT = Screen_Combat_Spellbook left_ctls[i]
+    2 region       ( 32, 51)-(153, 68) 122x18                     help: UNICORNS = Screen_Combat_Spellbook left_ctls[i]
+    3 region       ( 32, 73)-(153, 90) 122x18                     help: ANGEL = Screen_Combat_Spellbook left_ctls[i]
+    4 region       ( 32, 95)-(153,112) 122x18                     help: MAGIC SPIRIT = Screen_Combat_Spellbook left_ctls[i]
+    5 region       ( 32,117)-(153,134) 122x18                     = Screen_Combat_Spellbook left_ctls[i]
+    6 region       ( 32,139)-(153,156) 122x18                     = Screen_Combat_Spellbook left_ctls[i]
+    7 region       (164, 29)-(284, 46) 121x18                     help: JUST CAUSE = Screen_Combat_Spellbook right_ctls[i]
+    8 region       (164, 51)-(284, 68) 121x18                     = Screen_Combat_Spellbook right_ctls[i]
+    9 region       (164, 73)-(284, 90) 121x18                     = Screen_Combat_Spellbook right_ctls[i]
+   10 region       (164, 95)-(284,112) 121x18                     = Screen_Combat_Spellbook right_ctls[i]
+   11 region       (164,117)-(284,134) 121x18                     = Screen_Combat_Spellbook right_ctls[i]
+   12 region       (164,139)-(284,156) 121x18                     = Screen_Combat_Spellbook right_ctls[i]
+   13 region       (175,166)-(193,195)  19x30           Esc       help: EXIT SPELL BOOK = Screen_Combat_Spellbook cancel_ctl
+   14 region       (275, 14)-(288, 27)  14x14           F         help: PAGE FORWARD = Screen_Combat_Spellbook next_ctl
+   15 region       ( 29, 14)-( 42, 26)  14x13           B         help: PAGE BACK = Screen_Combat_Spellbook prev_ctl
+
+WIZARDS/w05_armies  (route: k:esc w:2 k:a w:3; current_screen 2; 6 controls)
+    1 region       ( 78, 25)-( 96, 40)  19x16                     
+    2 region       ( 96, 25)-(114, 40)  19x16                     
+    3 region       ( 78, 25)-(240, 40) 163x16                     
+    4 button       (273,163)-(313,177)  41x15           I         help: ITEMS = Screen_Armies items_button
+    5 button       (273,182)-(313,196)  41x15           O         help: OK = Screen_Armies ok_button
+    6 region       key only                             Esc       
+
+WIZARDS/w06_items  (route: k:i w:3; current_screen 9; 10 controls)
+    1 region       ( 69,174)-( 88,189)  20x16                     
+    2 region       ( 90,174)-(109,189)  20x16                     
+    3 region       (111,174)-(130,189)  20x16                     
+    4 region       (132,174)-(151,189)  20x16                     
+    5 button       (236,157)-(294,171)  59x15           A         help: ALCHEMY = Items_Screen_Add_Controls items_alchemy_btn
+    6 button       (236,177)-(294,191)  59x15           O         help: OK = Items_Screen_Add_Controls items_ok_btn
+    7 region       ( 26,157)-( 65,191)  40x35                     help: ANVIL = Items_Screen_Add_Controls items_anvil_ctrl
+    8 region       ( 17,  2)-(300,197) 284x196                    = Items_Screen_Add_Controls items_window_ctrl
+    9 region       (  0,  0)-(319,199) 320x200                    = Items_Screen_Add_Controls items_outside_ctrl
+   10 region       key only                             Esc       
+
+WIZARDS/w07_alchemy  (route: k:a (from Items); current_screen 9; 7 controls)
+    1 slider       (130, 85)-(185, 92)  56x8            A         help: ALCHEMY RATIO
+    2 button       ( 93, 99)-(141,114)  49x16           C         help: CANCEL
+    3 button       (176, 99)-(224,114)  49x16           O         help: OK
+    4 button       (146, 99)-(171,114)  26x16           Space     help: ALCHEMY TOGGLE
+    5 region       ( 80, 60)-(237,125) 158x66                     
+    6 region       (  0,  0)-(319,199) 320x200                    = Screen_Historian control
+    7 region       key only                             Esc       
+
+WIZARDS/w08_cities  (route: map: c:150,9 w:3; current_screen 3; 3 controls)
+    1 region       ( 30, 26)-(289, 34) 260x9                      
+    2 button       (239,182)-(279,196)  41x15           O         help: OK = Screen_Cities ok
+    3 region       key only                             Esc       
+
+WIZARDS/w09_city  (route: c:100,30 w:3; current_screen 0; 32 controls)
+    1 region       (216,103)-(233,118)  18x16                     
+    2 region       (236,103)-(253,118)  18x16                     
+    3 region       (137,142)-(166,156)  30x15                     help: CITY SCAPE
+    4 region       (141,139)-(168,152)  28x14                     help: CITY SCAPE
+    5 region       (144,135)-(172,150)  29x16                     help: CITY SCAPE
+    6 region       (100,120)-(124,158)  25x39                     help: CITY SCAPE
+    7 region       (105,114)-(124,119)  20x6                      help: CITY SCAPE
+    8 region       (119,120)-(124,152)   6x33                     help: CITY SCAPE
+    9 region       ( 81,162)-( 99,174)  19x13                     help: CITY SCAPE
+   10 region       ( 86,154)-(105,161)  20x8                      help: CITY SCAPE
+   11 region       (100,161)-(105,167)   6x7                      help: CITY SCAPE
+   12 region       (124,164)-(143,179)  20x16                     help: CITY SCAPE
+   13 region       (130,159)-(147,173)  18x15                     help: CITY SCAPE
+   14 region       (134,154)-(154,168)  21x15                     help: CITY SCAPE
+   15 region       ( 43,169)-( 62,184)  20x16                     help: CITY SCAPE
+   16 region       ( 49,164)-( 66,178)  18x15                     help: CITY SCAPE
+   17 region       ( 53,159)-( 73,173)  21x15                     help: CITY SCAPE
+   18 button       (247,188)-(282,197)  36x10           C         help: CHANGE = CityScr_Add_Buttons city_change_button
+   19 button       (286,188)-(315,197)  30x10           O         help: OK = CityScr_Add_Buttons city_ok_button
+   20 region       key only                             Esc       
+   21 region       (  4, 27)-( 13, 41)  10x15                     help: BARBARIAN TOWNSFOLK
+   22 region       ( 13, 27)-( 22, 41)  10x15                     help: BARBARIAN TOWNSFOLK
+   23 region       ( 26, 27)-( 35, 41)  10x15                     help: BARBARIAN TOWNSFOLK
+   24 region       ( 35, 27)-( 44, 41)  10x15                     help: BARBARIAN TOWNSFOLK
+   25 region       (  6, 52)-( 44, 59)  39x8                      help: FOOD
+   26 region       ( 44, 52)-(132, 59)  89x8                      help: FOOD
+   27 region       (  6, 60)-(132, 67) 127x8                      help: PRODUCTION
+   28 region       (  6, 68)-( 27, 75)  22x8                      help: GOLD
+   29 region       ( 27, 68)-(132, 75) 106x8                      help: GOLD
+   30 region       (  6, 76)-(132, 83) 127x8                      help: MAGICAL POWER
+   31 region       (  6, 84)-(132, 91) 127x8                      
+   32 region       key only                             X         
+
+WIZARDS/w10_city_production  (route: k:c w:3; current_screen 0; 17 controls)
+    1 region       (240,  4)-(313, 14)  74x11                     help: UNIT OPTIONS
+    2 region       (240, 18)-(313, 28)  74x11                     help: UNIT OPTIONS
+    3 region       (240, 32)-(313, 42)  74x11                     help: UNIT OPTIONS
+    4 region       (  0,  4)-( 73, 14)  74x11                     help: BUILDING OPTIONS
+    5 region       (  0, 18)-( 73, 28)  74x11                     help: BUILDING OPTIONS
+    6 region       (  0, 32)-( 73, 42)  74x11                     help: BUILDING OPTIONS
+    7 region       (  0, 46)-( 73, 56)  74x11                     help: BUILDING OPTIONS
+    8 region       (  0, 60)-( 73, 70)  74x11                     help: BUILDING OPTIONS
+    9 region       (  0, 74)-( 73, 84)  74x11                     help: BUILDING OPTIONS
+   10 region       (  0, 88)-( 73, 98)  74x11                     help: BUILDING OPTIONS
+   11 region       (  0,102)-( 73,112)  74x11                     help: BUILDING OPTIONS
+   12 region       (  0,116)-( 73,126)  74x11                     help: BUILDING OPTIONS
+   13 region       (  0,130)-( 73,140)  74x11                     help: BUILDING OPTIONS
+   14 region       (  0,144)-( 73,154)  74x11                     help: BUILDING OPTIONS
+   15 button       ( 99,181)-(147,192)  49x12           C         "Cancel" help: CANCEL
+   16 button       (172,181)-(220,192)  49x12           O         "Ok" help: OK
+   17 region       key only                             Esc       
+
+WIZARDS/w11_magic  (route: map: k:m w:3; current_screen 6; 16 controls)
+    1 alt_hotkey   key only                             Alt+R+V+L Alt code RVL
+    2 alt_hotkey   key only                             Alt+P+W+R Alt code PWR
+    3 alt_hotkey   key only                             Alt+D+E+S+T+I+N Alt code DESTIN
+    4 slider       ( 32,102)-( 37,152)   6x51           M         help: MANA POINTS RATIO = MagicScr_Add_Controls -
+    5 slider       ( 79,102)-( 84,152)   6x51           R         help: RESEARCH RATIO = MagicScr_Add_Controls -
+    6 slider       (126,102)-(131,152)   6x51           S         help: CASTING SKILL RATIO = MagicScr_Add_Controls -
+    7 button       (291,181)-(316,195)  26x15           O         help: OK = MagicScr_Add_Controls magic_ok_button
+    8 button       (232,181)-(289,195)  58x15           A         help: ALCHEMY = MagicScr_Add_Controls magic_alchemy_button
+    9 region       ( 28, 82)-( 41,101)  14x20                     help: MANA POINTS RATIO = MagicScr_Add_Controls magic_lock_mana_control
+   10 region       ( 75, 82)-( 88,101)  14x20                     help: RESEARCH RATIO = MagicScr_Add_Controls magic_lock_research_control
+   11 region       (122, 82)-(135,101)  14x20                     help: CASTING SKILL RATIO = MagicScr_Add_Controls magic_lock_skill_control
+   12 region       ( 29, 10)-( 59, 42)  31x33                     help: GRAY GEM
+   13 region       (106, 10)-(136, 42)  31x33                     help: GRAY GEM
+   14 region       (183, 10)-(213, 42)  31x33                     help: GRAY GEM
+   15 region       key only                             X         
+   16 region       key only                             Esc       

@@ -1,0 +1,605 @@
+[Published 2026-10-26 from the project's working notes, otherwise as written while matching (2026-10-18 .. 10-21).
+ The compiler rules are general Borland C++ 3.1 facts; the workflow names the project's own tools (tools/, work/,
+ re/ paths, scratch scripts), which are not published - read those parts as a description of the method. Function
+ and variable names are the ones current at the time; some were renamed later (the published source and the map
+ have the final names, and the addresses identify a function either way). Bracketed numbers [n] / batch numbers
+ point into the project's process log, which is not published.]
+
+MATCH PLAYBOOK - distilled working rules for byte-matching a module (written 2026-10-19 after batch 24)
+Read this BEFORE starting a module. Details / evidence per rule: MATCH_CALIBRATION.txt (batch numbers in brackets).
+
+=== WORKFLOW (per module) ===
+1. Prep: python tools/match_prep.py WIZARDS <seg> work/bcc/prep/<seg>.asm.txt   (asm + decompile)
+         python tools/match_prep.py WIZARDS <seg> --decomp                      (decompile + externs list)
+   Also dump the module's DGROUP data (python one-liner on work/flat/WIZARDS_FLAT.EXE, base hdr + 0x26aa*16) and
+   find where it starts / ends: the previous module's last data item and the next module's first.
+2. Read the asm in chunks; filter noise (grep -v pop cx / push ax) and print several instructions per line - the
+   decompile is a hint only (it invents ?:, merges branches, mislabels arrays, garbles long math).
+3. Write src/wizards/<FILE>.C (big repetitive bodies: generate with a scratch Python script, via the Write tool -
+   bash heredocs break on quotes / backslashes; for a literal backslash in a python -c use chr(92)).
+4. python -P tools/match_build.py WIZARDS <seg> src/wizards/<FILE>.C   (grep ^MATCH|^DIFF|segment|fixups|^Error)
+   Diff: python tools/match_diff.py WIZARDS <seg> work/bcc/m/<FILE>.OBJ <Function>   (lcall vs push cs/call lines
+   are normal - TLINK rewrites)
+   Byte-level: compare img[base+off] with the OBJ _TEXT bytes (omf_match.modules) when the diff shows nothing.
+5. 100% bytes -> add to src/wizards/MODULES.TSV and src/magic/MODULES.TSV (../wizards/FILE), then
+   python -I tools/source_names.py --apply ; rerun match_build (WRONG name lines vanish) ;
+   python -P tools/match_build.py MAGIC <magicseg> ... ; python -P tools/match_names.py MAGIC --apply ;
+   rename MAGIC labels the shared source disproves (magic_data_names_hand.tsv + _all);
+   both regressions: python -P tools/match_all.py WIZARDS / MAGIC (run in background, ~2 min each);
+   log MATCH_CALIBRATION.txt, bugs to BUGS_AND_QUIRKS.txt, commit.
+5b. MAGIC-only modules (src/magic/X.C): python -I tools/magic_source_names.py --apply (names -> magic_data_names_hand;
+   0 conflicts), python -P tools/match_all.py MAGIC. [32]
+6. Record progress: module, size, % completed for both programs.
+
+=== COMPILER RULES THAT KEEP COMING UP (BCC 3.1 -mm -a -d) ===
+Registers
+ - Auto allocation (no 'register'): by use count; ties go to the EARLIER declared variable. [19, 22, 23, 25]
+ - Explicit 'register' overrides use counts: SI then DI in declaration order; explicit LOCALS take registers
+   before explicit PARAMS. Mix one explicit + auto when the order needs it. [7, 19, 20, 23, 24]
+ - An UNUSED local takes no stack slot either. A frame slot no instruction touches = a local only mentioned in a
+   statement without code ('x;'). [26]
+ - Register variables take no stack slot: move their declaration freely to fix the order (stack layout of the
+   others is unchanged). Stack slots: first declared = [bp-2]; char arrays word-aligned; a char local sits odd.
+ - Stack layout: locals of <= 10 bytes get slots first (declaration order from bp-2 down), locals of >= 12 bytes
+   (arrays, structs) go below all of them, in declaration order. Test layouts with BCC -S (scratch bccS.py). [34]
+ - A register variable in CX where the game has SI / DI: BCC saw a leaf function - a call is missing. [34]
+ - Leaf functions may put register vars in CX, DX, AX, BX too. [19, 21, 22]
+ - With inline asm (push es ... pop es through a far pointer is a sign): register LOCALS take SI before register
+   PARAMS - copy the param into a register local when the param must be SI. [31]
+ - A far pointer param that is patched in place ('mov ax, ds / mov [bp+N+2], ax'): 'int far *p' +
+   '_AX = _DS; *((unsigned *)&p + 1) = _AX;' (_DS alone stores DS directly). [31]
+ - Functions with inline asm get NO automatic registers; 'asm mov si, x' makes BCC save SI. [8]
+ - A parameter BCC keeps in SI/DI is loaded at entry ('mov si, [bp+N]').
+Branches / layout
+ - if/else of two calls with the same tail is CROSS-JUMPED: each branch pushes its own argument, then jumps into
+   the shared push/call (looks like ?: in the decompile; a real ?: computes into AX and pushes once). [20, 24]
+ - 'if (c) return 1; return 0;' -> second 'jmp exit' cross-jumped onto the first. [19]
+ - The branch order shows the written test: 'if (a != -1) {X} else {Y}' puts X first. [21]
+ - 'default: break;' (last) = the dispatch's no-match lands on a lone 'jmp end'. It changes the tail-merge targets:
+   when merges look wrong, try it and the case order in the variants harness (scratch variants.py + vfuncs.py). [31]
+ - Two identical tails NOT merged = a different nesting: 'if (a) F(); else { G(); F(); }' cross-jumps the then-F
+   into the else-F; 'if (!a) G(); F();' has one F. [31]
+ - 'for (c++; cond; c++)' enters the loop by a jmp onto the increment (init cross-jumped). [31]
+ - for/while loops: jmp to the test at the bottom; a 'for (x = e; ...; ..., x = e)' init is cross-jumped onto
+   the increment copy (bare jmp into the assignment). '(x = e) != 0' tests AX; a separate assignment tests
+   memory; a comma expression in a condition materialises 0/1. [21]
+ - Switches: >= 4 cases -> jump table after the function (aligned from the module start, -a); fewer -> cmp chain.
+   Case bodies in source order; the table order reveals it.
+ - TAIL MERGING is the codegen's own (also with -O-) and not local: alone, a switch merges only its LAST case into
+   the first case's identical tail; if any switch in the function ends its cases with a '?:' expression, EVERY
+   identical case-tail pair in the function gets merged. Extra merges in your build = some '?:' tail that the
+   original wrote as 'if (c) v = A(x1); else v = A(x2);' (same bytes after the if/else cross-jump). Test shapes with
+   a small synthetic file before editing a 4 KB function (scratch synth.py / merges.py). [25]
+Calls / prototypes
+ - Many functions have NO prototype in the original: different argument counts at different calls (LBX_Error 3/4,
+   Font_Select 2/3, Font_Select_Shadow 3/4, EMS_Named_Handle 2/3, Print_Text_Right 3/4). Do not include GAME.H
+   in such modules; declare locally; '#pragma warn -pro' keeps BCC under its warning limit. [18-24]
+ - A function returning long MUST be prototyped where used (else 'cwd'): DOS_File_Size, Random_Get_Seed. [24]
+ - Check the module map's "partial" verdicts first: compare the two segments byte for byte (only 1-2 byte address
+   runs differ = the same source; Sound was one - Ghidra had missed a function). [26]
+ - Calls to functions defined EARLIER = 'push cs; call' (4 bytes); later = far call TLINK turns into
+   'nop; push cs; call'. The nop tells you the definition order.
+ - A non-void function ending in a call with no return returns AX of that call. [8, 24]
+ - Long constants pushed as 'xor ax,ax / mov dx,K / push ax / push dx'; a zero offset written as '0, 0' (two int
+   args) pushes three separate zeros. [23]
+Expressions
+ - x - K compiles as 'add ax, -K' for int x, 'sub ax, K' for unsigned x. Unsigned division (div) means an unsigned operand (find which). [16-24]
+ - 2-D far array param 'T (far *p)[60]': les bx / add row*60 / add col; flat p[y*60+x] adds the index first. [22]
+ - 2-D struct MEMBER 'char a[6][40]': s[i].a[r*40 + k] and s[i].a[r][k] compile the same; a constant on the column
+   tells them apart - only a[r][k + 10] gives base + r*40, + k, disp +10 (the flat form adds k to r*40 first). [33]
+ - Long variables: 'x = x | K' loads DX:AX and stores back, 'x |= K' works in memory (as for ints). [33]
+ - Finding a MAGIC module's data block: scan code refs per DS range (scratch mdsref.py); a block ends where the
+   next module's refs begin. Immediates like 'mov ax, 3840h' (sizes) are false hits. [33]
+ - '(long)a * b': the LEFT operand goes to CX:BX (evaluated first), a constant goes last. [24, 31]
+ - 'v = _DS' is 'mov [v], ds'; the game's 'mov ax, ds / mov v, ax' is inline asm (and 'seg'/'offset' are asm
+   keywords - never C names used in asm). [7, 23]
+ - xor r,r: BCC codegen 33 /r, inline asm 31 /r - tells C from asm. [19]
+ - A char compared with a code >= 80h is written '' (byte cmp; in a switch 'cmp ax, 0FF91h'). [31]
+ - Misplaced parentheses in the original are real: 'Heap_Block_Valid(block == 0)'. [23]
+ - A long quotient truncated to int mid-expression shows as 'cwd' after LDIV@ (or imul instead of LXMUL@): the
+   original has an int cast there, '(int)(L / d) / (long)e'. [25]
+ - 'x = x & K' (via AX) and 'x &= K' (direct on the register) compile differently. [25]
+Data
+ - Local-array initialisers: char arrays byte-packed, int arrays word-aligned (a pad byte before = int[]). [34]
+ - Module data = its initialised globals in definition order, local-array initialisers, then literals in first-
+   use order; -d merges identical literals and tails ("" lands in another literal's NUL). Odd-looking bytes are
+   real source ("YO MOMA\0\0", "  "). The match_fixups 'data block' check compares all of it. [14, 20, 23, 24]
+ - Uninitialised globals = BSS: declare extern (definitions settle at the link milestone).
+ - A local struct copy's size shows in the frame layout: LbxPicHeader is 18 bytes, not the 16 the code copies. [25]
+ - source_names.py reads 'extern ... /* DS:xxxx */' and initialised definitions whose DS comment follows the ';'.
+Names
+ - BCC keeps 32 characters of an identifier: rename longer database names when their module is matched
+   (names.tsv, names_all, magic_names(_all), both current functions.tsv). Still over 32: 4 names (grep). [21, 24]
+ - Our names are ours: rename when the matched code shows they are wrong, note "renamed from" in names.tsv.
+
+=== META OBSERVATIONS ===
+ - First compile now matches 70-90% of functions; the time goes into READING asm, not fixing. Read big regular
+   functions as "one block x N copies" and generate them.
+ - Each module still shows 1-2 new patterns; log them here and in MATCH_CALIBRATION.
+ - The original code is copy-paste heavy (redraw twins, loaders in 3 variants, 8 branch copies): bugs live in the
+   copies that were edited by hand (#339, #387, #391). Compare the copies when reading.
+ - Matching corrects the database: wrong comments (Beep, Paragraph_Layout_Lines), a wrong bug (#207), wrong
+   MAGIC names. Record every correction.
+ - Never run match_build while match_all runs: both use work/bcc/m (a build deletes the regression's files).
+ - Context budget: a 12 KB module costs a lot of reading; prefer finishing a module before a compact and keep
+   STATUS "RESUME HERE" current after each commit.
+ - Jump-table pad (-a) parity is decided BEFORE jump sizing, from BCC's first-guess counter [35]: a conditional
+   jump is first counted short (2) and grows to 'jcc +3 / jmp near' (5); a goto / else jump is first counted
+   near (3) and may shrink to 2; a reused register ('mov bx, ax' for a variable just loaded) is first counted as
+   the load. So 'if (c) { > 127 bytes }' and 'if (!c) goto L;' give the SAME bytes but opposite pads. If every
+   instruction matches and only a table pad is off: compile the function alone (scratch wg_keep.py + bccC.py),
+   read the drift parity, and try the goto / structured spelling of each long forward branch. The drift is per
+   function (earlier functions do not carry it); equivalent spellings (x++ / x += 1, != 0, ...) never change it.
+ - Cross-jumping [35]: BCC replaces a statement tail identical to another one (earlier OR later in the function)
+   with 'jmp' to it - identical case bodies, repeated 'return 1;', the 'x--; y--; break;' tails. Write every case /
+   return out in full in code order; never merge them into one case label to 'explain' the jump.
+ - Functions that return a value only on some paths are 'int' (Place_Neutral_Cities, Progress_Bar, Unit_Create).
+ - Reading big generated code: scratch tcollapse.py (T[y+a][x+b] for p_terrain_maps) and ccollapse.py (C[i].field
+   for p_cities) fold the address arithmetic of a compact listing.
+ - LINK (batch 36): tools/link_magic.py + work/link/exe_cmp.py rebuild MAGIC.EXE byte-identical. A module's globals
+   must be DEFINED in the module that owns them (its data / BSS block); extern-only sources match module by module but
+   do not link. Initialised data: the block owner (wiz_neighbours.py checks both programs); BSS: reverse declaration
+   order. Overlay modules: compile with -Y, and keep their prototypes in the stub thunk order (proto_order.py).
+
+LIST D LESSONS (batches 53-72, 2026-10-20) - evidence in PROCESS_LOG.txt under each batch number
+Registers / locals
+ - Stack slots: the FIRST declared non-register local gets bp-2 (arrays by their start: char a[6] first -> bp-6);
+   register variables take no slot, so they may be declared anywhere. Read the frame first, then order declarations.
+ - SI / DI choice is weighted (loop uses count more), not a plain use count. Recipes that worked: declare the
+   variable that must win the register BEFORE its rival (ties go to the earlier declaration) [66 70 71]; an explicit
+   'register' local outranks a register param [70]; when two explicit registers come out swapped, make only ONE of
+   them 'register' and leave the other an auto declared early [67]; leaf functions also use CX [56 71].
+Control flow
+ - Empty statement forms: 'if (c) { } else { }' -> jne X / jmp X [66]; an empty-bodied 'while (e) ;' -> jmp test /
+   test: ... / je test (a jmp to the next instruction) - not a do-while [67]; a lone 'if (c) {}' keeps only the jcc.
+ - Cross-jump scope: an inner if/else pair of identical calls is merged (mov ax,A / jmp / mov ax,B / push ax ...),
+   but NOT with an outer branch's identical call; a ternary inside one call DOES merge with that outer call. When the
+   game shows two separate full calls, write nested if/else with full calls, never a ternary [65 70 80d6].
+ - Switch: case bodies are laid out in SOURCE order, the compare chain / table is sorted by value [69]; several
+   'case a: case b:' to one body, and 'case 1: default:' sharing a body, show as 'cmp ax,1 / je L / jmp L' [55bb];
+   'switch (x) { case 0: case 1: case 2: ...}' gives 'mov ax,[x] / or ax,ax / je / cmp ax,1 ...' where an || chain
+   compares memory [69]. Writing every case out in full lets BCC cross-jump them into the game's shared tails - no
+   gotos needed (Diplo_Load_Message's 21 cases) [69].
+ - A function ending in 'f();' (no return) returns f's AX; a final 'return f();' after an earlier 'return 0;' adds a
+   jmp to the epilogue [68]. Int functions without a final return are common (AI_Hire_Hero, Fog_Smooth).
+ - Jump-table pad: fix every size difference first - a pad mismatch was twice only a knock-on [72]; otherwise try
+   another spelling of the condition before the table (nested ifs instead of one && gave the pad) [71].
+Expressions
+ - 'c - x' with x in memory compiles mov ax,c / sub ax,x; the game's mov ax,x / neg ax / add ax,c is '-x + c' [72].
+ - 'x = x + n' (load / op / store) vs 'x += n' (op on memory) and 'x++' (inc word ptr) are distinct [all].
+ - Long values: BCC spills a long as mov ax,[hi] / mov dx,[lo] / push / push ... pop / or; long & const tests are
+   word pairs (and dx,lo / and ax,hi / or dx,ax). Two 16-bit struct halves read this way are ONE u32 [71].
+ - Without <string.h> strlen is int: 'i < strlen(s)' is a signed jg [70]. Comparison constants fix the spelling:
+   cmp 22 / jg = '<= 34', cmp 0 / jl = '>= 0', cmp 1 / jle = '<= 1' or '> 1' by branch layout [67 71 72].
+Prototypes / calls
+ - When a module calls a function with a different argument count than elsewhere, the original had no prototype in
+   scope: move that prototype out of GAME.H into the sources that use it (tools: tools/moveproto.py) and declare it
+   unprototyped in the odd module (Print_Text_Centered [67], Font_Select / Font_Select_Shadow [69], Fill_Box_Styled
+   [71], far_strcpy [58], Near_Alloc_Release [65]). Return types too: Screen_Turn_Report is int [72].
+ - A forward call (callee defined later in the same segment) is a far call that TLINK turns into nop / push cs /
+   call; a call to an earlier function is push cs / call from the compiler [66].
+ - BCC keeps 32 characters: rename longer database names (names.tsv, names_all, functions.tsv) [69].
+ - Declaration drift (read-only, < 1 s): python -I tools/declcheck.py -> work/reports/DECL_CONFLICTS.txt. Parses
+   every .C in both MODULES.TSV + GAME.H and lists, per symbol with file:line: 1 extern / definition type clashes,
+   2 prototypes differing between files (also vs a TASM PROC's argument words), 3 call sites whose argument count
+   disagrees with the callee's definition (or its prototypes), 4 documented odd-arity (an unprototyped 'f();' or an
+   implicit call with a comment saying why - NOT errors), 5 unprototyped 'f();' with no comment, 6 DS:xxxx clashes.
+   Run it after adding a module: a NEW entry naming the module is drift to fix now or to log for P1. When a module
+   deliberately calls without a prototype, put the reason in a comment beside 'f();' (or naming f with the word
+   'prototype' in the file header for an implicit call) so it lands in section 4.
+Data / names
+ - '-d' merges a string into the TAIL of an earlier literal ("" into "HIRE"'s NUL, " in " into "Plague in ", "P"
+   into "MP") [65 72]; dump the literal block first (python tools/dstr.py LO HI).
+ - Initialised module data (counters = 0, color tables) is DEFINED with its initialiser; its DS comment must follow
+   the closing ';' and stay on ONE line, or tools/source_names.py skips it [68 70].
+ - Unreferenced BSS between two matched modules (c094, c124) must be given an owner for the stand-in builder:
+   declared last in the later module, PROVISIONAL [66 68]. Variables used only by other modules but inside this
+   module's BSS block are defined here (combat_result_min_lines) [72].
+ - A table indexed [x][i - 1] for i = 1.. shows as [bx + base-1]: the real start is one higher [70].
+ - Signedness retypes this run (all from CBW loads, checked against every decompile reader first): Wizard
+   war_request_target / pending_msg_city, BattleUnit.owner, p_exploration_maps unsigned char; next: Unit.damage i8.
+
+LIST D LESSONS (batches 73-77, 2026-10-20) - evidence in PROCESS_LOG.txt under each batch
+ - 'if (c) continue;' is jcc-over + jmp to the increment (never a single jcc); an inverted if with an empty /
+   continue branch explains a 'jne X / jmp Y' pair that a short jcc could have reached [77].
+ - Jump-table pad: with identical code bytes, the statement shape before the switch decides it - an early
+   'if (x) return;' gave a pad byte the game lacks; 'if (!x) { ... switch ... }' removed it [77].
+ - Cross-jump: to get the game's 'A; jmp L / B; L: tail' with the tail NOT merged into a sibling branch, write the
+   tail statement inside BOTH inner branches (BCC merges that inner pair) instead of once after the if/else [76].
+ - 'if (a == b) return 1; else return 0;' gives mov ax,1 / jmp / jmp / xor ax,ax / jmp; 'return a == b;' is one
+   jmp shorter [76].
+ - 'w[i] *= w[i]' keeps the lvalue address in SI (BX for the operand); 'w[i] = w[i] * w[i]' computes it twice [75].
+ - Long products: the LEFT operand is evaluated and pushed first ('(long)research * bonus_pct') [77]. A long field
+   OR'ed into another as 'a = b | a' (value first, address after) [76].
+ - A char passed where a buffer is meant (cbw / push) only compiles with no prototypes in scope: drop <string.h>,
+   declare the callee unprototyped [77]. A call with a different argument count -> unprototyped too [76].
+ - Ownership from the relink (listd.py "no unmatched module for DGROUP lo..hi"): initialised data before this
+   module's literals and after the previous module's literals is this module's (BCC emits literals last);
+   unowned BSS just below this module's BSS is its too, declared in reverse address order [76]. Unreferenced holes
+   inside the block: PROVISIONAL names [74].
+ - Explicit 'register' on a local again stole SI from a param (Badges, Maybe_Buy, Global_Enchant_Relations): when
+   the game keeps the param in SI, leave the local a plain auto [73 75 77].
+ - Sparse switches (> ~4 non-dense cases) use BCC's search table (cx count / cs:[bx] compare loop / jmp cs:[bx+2n]);
+   the case bodies still follow source order [77].
+
+LIST D LESSONS (batch 78 + the P1 early pass, 2026-10-20)
+ - A caller's prototype must match the byte-matched DEFINITION (return type, int / unsigned, pointer targets); a
+   GAME.H prototype that contradicts the definition is removed or fixed (Unit_Move_Points is int: no mov ah,0) [78].
+ - Before labelling a call "odd-arity", read the definition: an unread extra parameter (Palette_Load's last when
+   first = -1) or an unused one (Overland_Draw_Stack_Panel) is still documented as odd-arity, not "fixed" [P1 early].
+ - declcheck workflow: after each batch run python -I tools/declcheck.py; a NEW entry naming the new module is drift:
+   fix the declaration to the definition's types, or (a real count difference) declare 'f();' with a comment saying
+   how many arguments this module passes and why. Then rerun match_all WIZARDS + MAGIC, link_magic and listd.py -
+   declaration-only edits must leave every byte unchanged [P1 early].
+ - Never re-wrap source with a heuristic over all long lines: it merged multi-line if statements; restrict any
+   rewrite to the exact declaration text you generated (git checkout + replay of scripted edits recovered it).
+
+LIST D LESSONS (batches 79-82, 2026-10-20)
+ - BCC's automatic register allocation (plain autos) favours the locals declared FIRST: City_Weapon_Grade's loop
+   index only got DI (city param keeping SI) when 'int i;' was the first declaration; an explicit 'register' on it
+   took SI from the param, and the same plain auto declared after the arrays got no register at all [82].
+ - 'x *= 2' compiles to mov dx,2 / mov ax,si / imul dx / mov si,ax; 'x = x * 2' and 'x = 2 * x' become shl [82].
+ - Switches over the 23 single terrain squares (0xa2..0xb8): write each terrain group as its own case group in
+   source order (grassland, forest, mountain, desert, swamp, tundra, sorcery, nature, chaos, volcano 0xb3, hills
+   0xab); BCC's cross-jumping turns identical bodies into jmps by itself. Decode the tables with raw words (a
+   scratch reader of work/flat/WIZARDS_FLAT.EXE), not with the disassembly of the table bytes [82].
+ - Return idioms: 'if (c) return 1; return 0;' has no dead jmp; 'if (c) return 1; else return 0;' leaves the dead
+   jmp after the first return (Tile_Is_Corrupted). In an if / else-if chain a 'return' branch leaves a dead jmp
+   to the end of the chain; a run of independent 'if (...) return n;' does not [82].
+ - Comparison constants are literal: cmp 0x25a / jl is 't >= 602', cmp 0x1d8 / jle is 't > 0x1d8' [82].
+ - Leaf functions put plain autos and even params in CX / DX (Build_Stacks' unit in DX) [81].
+ - BSS blocks: define never-referenced holes and other modules' variables that fall inside the block here, in
+   reverse address order; the fixup check reports "N different BSS bases" until the block is complete [80 81].
+ - Spearmen / Swordsmen filter: 'if (a == 0 || b == 0) continue;' gives je-to-jmp / jne-over [80].
+ - Line endings: GAME.H and some sources (WIZSTATS.C) are stored LF, most .C files CRLF - after a sed -i, restore
+   the file's OWN convention (check git cat-file -p HEAD:path) [82].
+ - ReMoM was not consulted until the whole rebuild was done (decided 2026-10-20) - resolve odd patterns by
+   experiment [81].
+
+LIST D LESSONS (batches 83-84 + the 83d2 checkpoint, 2026-10-20)
+ - Register ties keep coming back: when the game keeps a PARAM in SI and a local in DI, declare that local as a
+   plain auto FIRST (no 'register'); an explicit 'register' local takes SI [83 x2, 84, 83d2 x3 pending].
+ - Unreferenced locals (pointer or array) get NO stack slot; a frame with one unused word between used ones is an
+   array whose last entry is never set (Text_Article_A_An: 'char *article[3]', [2] unused) [83].
+ - With a prototype in scope, passing -1 to a char * parameter is a compile ERROR ("Type mismatch in parameter"):
+   write (char *)-1 (Screen_Spellbook_Cast's first Cancel control) [84].
+ - Long math: 'x - (int)((long)x * pct / 100)' - the divisor 100L is pushed first, then the LEFT factor; the
+   (int) cast keeps the subtraction 16-bit [84].
+ - A 'a > b ? b : a' assignment compiles to one store after both loads (Wizard_Begin_Casting's avail) [84].
+ - Search switches (> ~4 sparse cases): dump the value and target tables as raw words (python -I tools/jt.py PROG SEG OFF N, reading
+   work/flat/WIZARDS_FLAT.EXE at SEG:OFF), then order the case bodies by target address; identical bodies are
+   cross-jumped by BCC itself [84].
+ - Signedness from the code: cbw / jl / jge on a struct byte means i8 - check every reader with fuses.py, retype
+   in re/structs.tsv, make_header, full regressions (Spell.effect_type, SpellbookPage.count) [84].
+ - A function whose last statement is a call and that has an earlier 'return 0;' returns the call's AX - leave the
+   final call without 'return' (Spell_Fizzle_Message_Overland + Heap_Release) [84].
+ - Switch with one case on a fresh value ('switch (r) { case 2: ...; break; }') explains 'mov ax,si / cmp ax,2 /
+   je / jmp' after a store to SI (Combat_Who_Will_Cast) [83d2].
+
+LIST D LESSONS (batch 85, 83d2)
+- A leaf with three register variables puts the third in CX: declared order i, type, node -> SI, DI, CX.
+- `mov ax, field / cmp ax, K / je A / jmp B` with A right after is a one-case switch with a default:
+  `switch (x) { case K: ... break; default: ... break; }` (the default's break is a jmp to the next instruction).
+- listd "no unmatched module for DGROUP a..b before SEG": the gap between the previous matched module's BSS and
+  ours belongs to us - turn the externs living there into definitions.
+- (b86, f978) A function that needs SI as a temp for a nested far index (push es / les si, e.g.
+  p_landmass_ids[c.plane][c.y][c.x]) has only DI for register variables: the FIRST declared plain int gets DI and the
+  rest go on the stack (first declared at bp-2). 8/8 matched first time by following this.
+- (b87, 6ad6) Register ties: run tools/declperm.py PROG SEG FILE FUNC [MAXLINES] - it rebuilds every order of the
+  function's local declarations and lists the matching ones (the leaf Any_Global_Enchant_Active wanted k, player,
+  found -> CX, SI, DI: the order is NOT simply "first declared gets SI").
+- `mov al,[bx] / mov ah,0 / or ax,ax / jle` on an unsigned char = ((int)p[k] > 0); plain p[k] > 0 gives cmp byte,0 / jbe.
+- `jne body / jne body / jne body / jmp end` = if (a == 0 && b == 0 && c == 0) { } else { body } (empty then-branch).
+- (b88, 78ba) A call to a far function DEFINED EARLIER in the same module compiles to `push cs / call near` (4 bytes);
+  calls to later ones are lcalls the linker turns into `nop / push cs / call`. So keep the module's function order.
+- listd "no unmatched module for DGROUP a..b" can name a gap spanning several matched modules without BSS: the
+  bytes then allow any of them (or a code-less data module) as owner - pick by content, mark PROVISIONAL, WATCH it.
+- (b89, a76b) `cmp / jne over x3 / jmp L` inside a loop where L is the increment = `if (a && b && c) continue;`
+  (even when L is near). A lone `jmp next` as a whole case body (falling into the next case) = an empty statement that
+  compiles to a jump: `while (0);` reproduces it (a goto too); plain `break`, `{}`, `if (0)`, `do {} while (0)` do not.
+- `mov si,ax / add si,[bp-x]` = two statements (v = a; v += b;); `v = a + b` gives add ax / mov si,ax.
+- Long tests: `or ax,ax / jl / jg / or dx,dx / jbe` = SIGNED long > 0 (declare the long signed); `and dx,lo / and ax,hi /
+  or dx,ax / je` = (x & mask) != 0.
+- (b91, cbdf) `[bx+0x200]` after scaling the index = a 2-D table: int (*t)[256] read as t[1][i]; t[i + 256] gives add ax,0x100.
+- A listing can run into the NEXT module: a function after zero padding at a paragraph boundary (seg:1ac0 = nextseg:0000) that the
+  stub of another module exports belongs to that module - leave it out.
+- b92 (d95b MAPLAYER.C): register-to-register bytes tell inline asm inside a C function - 89 c3 (mov bx,ax) and 01 d8
+  (add ax,bx) are TASM's encodings; BCC emits 8b d8 / 03 c3. BCC never strength-reduces '* 24' into shifts (it uses
+  imul; a shift count > 1 goes through 'mov cl,n'), so 'mov bx,ax / shl ax,1 / add ax,bx / shl ax,1 x3' is asm.
+- A table whose second byte is read by RE-LOADING the far pointer and using [bx+1] (les bx,[p] / add bx,ax / mov al,
+  es:[bx+1]) is an array of 2-byte structs (p[i].b); a flat 'p[i*2+1]' compiles to mov bx / mov es / add bx,[p].
+- '(c & 1) > 0' with 'mov al / cbw / test ax,1 / jg' = a SIGNED char field (an unsigned one gives mov ah,0).
+- A twin of a matched function in another module (Map_Draw_Cities ~ MAPVIEW.C Map_Draw_Cities_Move_Anim): copy its text
+  first, then change only what the listing shows differs - matched first time.
+- b93 (888b COMBAUTO.C, long math): BCC's long multiply (LXMUL@: DX:AX x CX:BX) puts a plain long variable on the
+  LEFT into CX:BX and the right into DX:AX; an operand that needs work (a call, a cwd conversion, a sum) is evaluated
+  first and pushed. Read which variable lands in CX:BX to get the written order ('att_missile * def_damage').
+  Calls are evaluated before the rest only when written first: 'Random(10) * (a + b)', not '(a + b) * Random(10)'.
+- 'int_var += long_expr' compiles to mov dx,[v] / add dx,ax / mov [v],dx; the game's 'add [v],ax' is
+  'v += (int)(long_expr)'. 'v *= expr' (right side first, push, mov ax,v / pop dx / imul dx) differs from
+  'v = v * expr' (imul si) when v is a register variable.
+- A big function's frame can be written out completely before the first build: list every [bp-N] with its role,
+  then declare in bp order (small locals first, arrays last) - Combat_Strategic's 39 locals matched on the first try.
+- b94 (6ea7 DIPLOSCR.C): a failed 'if' inside a switch case that jumps STRAIGHT past the switch (not to the case's
+  'jmp end' break) is 'if (!cond) break;' at the top of the rest of the case, not 'if (cond) { ... } break;'.
+- BCC cross-jumps the identical tails of two whole statements (if / else of two calls), but not of the two arms of a
+  ?: inside an argument: a game listing whose arms jump into a shared 'add bx,ax / mov ax,[bx] ...' tail is if / else.
+- '*p = *p + x' through a long pointer = load into CX:BX, add / adc, store through SI ('mov si,[bp+N]'); '*p += x'
+  is add / adc on memory.
+- With several pointer tables of strings, BCC -d merges "" into the terminator of an earlier literal.
+- declcheck baseline is now 0/8/29/22/0/0 (Paragraph_Height called with 2 and 3 arguments in DIPLOSCR.C, documented).
+- b95 (7b88 MOVESTK.C): BCC drops a declared but never-referenced local from the frame; a gap of 2 bytes in the game's
+  frame next to an array means the array is one element larger (int modes[9] although 8 are used).
+- 'for (i = 0; c; i++) { if (i > n) break; ... }' puts the break test at the loop top and c at the bottom;
+  'for (i = 0; c && i <= n; i++)' tests both at the bottom.
+- b96 (45fc ASSETS.C): a function Ghidra lists past the overlay segment's end ("segment code ends at ...") belongs to
+  the next segment (here the hidden stub overlay 47bb) - check the segment end before writing it. A long list of
+  store targets is fastest through a table of address / label / existing declaration (scratch addrtab.py); globals
+  the decompiler shows as 'array+N' past the array's real size are separate variables (new PROVISIONAL names; listd
+  adds them to data_names.tsv, which also clears the 'WRONG ... data_names has None' fixup notes).
+- b97 (bcc7 CASTUI.C, 12/12 first build): a BSS word nobody reads right after an array is one more entry of that
+  array (counts[6], lists[5], first[5]); words read only by OTHER unmatched modules inside this module's ref range
+  can be defined here (PROVISIONAL owner) - listd accepts or rejects the split. A relink error "Undefined symbol
+  _Xxx...(32 chars)" means a database name over 32 characters: rename it (names.tsv, names_all.tsv,
+  current_WIZARDS/functions.tsv) and rerun listd - the stand-ins regenerate from the database.
+- b98 (4fb6 OVERLAND.C): BCC word-aligns a switch jump table by its OWN size estimate ('db 1 dup (?)' in -S output),
+  so two sources with identical bytes can still differ by a pad byte before a later table: early 'return's vs
+  nested ifs changed the estimate (nested ifs matched). An extra 'jmp' to the next instruction after an if/else
+  chain = an empty 'else { }'. <stdlib.h> makes abs() inline (cwd / xor / sub): declare 'int abs(int x);' and
+  itoa yourself when the game calls abs. Initialised globals always precede the module's literals: an initialised
+  word right after a module's literal pool is the NEXT module's first initialised variable.
+- b99 (5315 STACKCMD.C): BCC lays BSS out in reverse order of each name's FIRST declaration - an 'extern' in GAME.H
+  counts, so a header-declared global can only be the HIGHEST word of a module's BSS block. When a stand-in's BSS gap
+  ends up between matched modules ("no unmatched module for DGROUP x..y"), give each word to a module in link order
+  that references it (or any between) and mark the owner PROVISIONAL. A function returning int on an early path that
+  falls off the end ('return 0;' then no return) shows as xor ax,ax only on that path; its callers' void prototypes
+  must become int. A cbw / cmp ax,K / je / jmp on a char field = a one-case switch.
+- b100 (64e7 ADVISORS.C): BCC -d merges a literal into the TAIL of an earlier one too (" " = end of " Tax Per
+  Population ", "Power" = end of "History Of Wizards Power") - the pool address tells nothing more. Octal escapes for
+  a control code before a digit ("\0354", not "\x1d4"). 'jne next; jmp end' where the target is close = an empty
+  then-branch again ('else if (owner == 5) { } else if (...)').
+- b101 (be86 CASTANIM.C): which call tails BCC cross-jumps is a hint to the source shape: three if / else strcpy
+  calls give 'mov ax,A / jmp' for the middle one but leave the first separate; a ?: in the argument gives one call.
+  A signed compare on a word declared unsigned elsewhere = an (int) cast in this source. 'a[strlen(a) - 1]' folds the
+  -1 into the displacement only when the length is int ('(int)strlen(a) - 1'); with size_t BCC emits 'dec ax'.
+  A table indexed 'x - 100' shows as [bx + table - 200]: an odd displacement (here DS:009a, the heap base) is a table
+  further on. A sparse switch = a value table + address table after the code ('mov cx,N / mov bx,tbl / loop').
+- (b102, 9ef8) A long multiply (LMUL) puts the operand evaluated first in cx:bx, the second in dx:ax: write the
+  first-evaluated one on the LEFT ((long)a * b) - matched 10/10. A long divisor constant is pushed before either.
+- An unsigned long field compared with an int (type < effect_param) compiles as a 32-bit unsigned compare (xor dx,dx /
+  cmp dx / jb); the game's single word cmp / jl needs (int)field.
+- x = x ^ K on a far long field reloads and stores through a second pointer (push es / les si); x ^= K does not.
+- signed char > 0 gives cmp 0 / jle; cmp 1 / jl is >= 1.
+- A switch whose out-of-range jump lands on a lone jmp to the end has a "default: break;" after the cases.
+- (decl pass after b102) declcheck baseline is 0/2/0/44/0/0. A call with an odd argument count and no prototype in
+  scope is documented by a comment in the file naming the function and saying "no prototype" (no code change). A
+  far pointer passed for an (offset, segment) pair goes through a commented unprototyped declaration. A long param
+  split into words: 'w = (unsigned long)x >> 16' (a signed >> adds cwd).
+- (b103, 7057) x = x * 2 (or * 4) on a plain assignment compiles to shl; p *= 2 gave imul (b102). x = x / K
+  loads x before K; x /= K loads K first. -(e) - 50 gives neg / add; -50 - e gives mov dx,-50 / sub.
+- A function with "return 0" on its early paths that falls off the end returns the last expression in AX: it is
+  int; fix callers that declare it void (result unused: same code) - part of the per-module decl check.
+- (b104, 7eb0) "test byte ptr es:[bx+K], m" on a field the struct has as unsigned int = the source read it as
+  char: (char)field & m. An || chain whose then-branch is empty ("je T / ... / jne E / T: jmp END / E: body") is
+  if (a || b || ...) { } else { body }. msys sed -i turns CRLF into LF: re-normalise after any sed edit.
+- (b105, 9c9a) Cross-jumping: in "if A x = a; else if B x = b; else x = c;" BCC merges only the last two tails, so the
+  first branch keeps its own store + jmp; "x = c ? a : b" or a ?: argument merges them all. "cmp / jl END" on the last
+  test of a guard = "if (a || b || ... || !last) { body }", not an early return. An initialised local array
+  (int a[6] = {..}) puts its initialiser in the module data before the literals and copies it with SCOPY@.
+  source_names.py reads only one-line DS comments.
+- (b106, 6080) An unsigned char tested '> 0' compiles to cmp byte / jbe; the game's 'mov al / mov ah,0 / or ax,ax /
+  jle' is '(int)g[i] > 0'. 'cmp K / jg' skipping the body is 'x <= K' (not 'x < K+1': that gives cmp K+1 / jge).
+  Two whole calls that differ in one argument and share the rest ('push A / jmp' + 'push B' + common pushes and
+  call) are if / else with the full call in each branch - BCC cross-jumps the tails; a ?: argument would not.
+  BCC -d merges a literal into the tail of an earlier one ("R" = end of "PWR", "C" = end of "MAGIC").
+- (b107, b66a) Two branches that each end in the same call: a ?: ARGUMENT inside a branch lets BCC cross-jump the
+  enclosing if / else tails too (pop cx / pop cx merged across); writing the inner choice as if / else with whole
+  calls keeps the outer tails apart (the game's shape). 'wizards[i - 20].name' = (C + i) + 1; '&wizards[i - 20]
+  .name[0]' = i + (C + 1) (mov dx,C / inc dx / add ax,dx).
+- (b108, b425) 'je K / [report body] / jmp NEXT / K: inc k' = 'if (a != b) { body } else k++' (then-branch is the
+  fall-through). A row test 'or si,si / jl SKIP / cmp si,40 / jl BODY / SKIP: jmp NEXT' = the empty-then
+  'if (y < 0 || y >= 40) { } else { body }'. A call pushing fewer / more arguments than the definition takes is
+  an original inconsistency: declare it unprototyped with a 'no prototype here' comment (declcheck category 4).
+- (b109, 9a4b) When Ghidra's pseudo-C degenerates into stack-slot CONCAT shuffling (seen with many by-value struct
+  arguments through the struct-push helper), ignore it and decode the asm directly - it matched first time. An
+  unsigned char struct field read with cbw is a (char) cast in the source (switch operands too). listd 'entries
+  differ' on the module's own stub = the prototype order is not PUBORDER reversed.
+- (b110, acd6) A module read across a context compact still matched 16/16 first build from written decodes
+  (work/reports/acd6_notes.txt): write per-function locals with offsets + register roles + branch shapes before a
+  compact. One register for two roles (UI_Add_Region handle then the loop index, both SI) = one variable in the
+  source: BCC 3.1 never splits live ranges. 'cmp ax,K / jle BODY / jmp END' = x <= K (keep the constant).
+- (b111, 5e1f) A leaf whose prologue loads the 2nd (pointer) parameter's register BEFORE the 1st = the 1st is copied
+  into a register local first ('w = weapon_icon; switch (w)'); 'explicit register' on the param does not reorder it.
+  A switch jump table's alignment pad that looks wrong can be just an earlier size shift - fix the earlier function
+  first. 'push A / jmp X / push B / X:' before a call = the whole call in each if/else branch, not a ?: argument.
+- (b112, 8cf2) '!(f & K)' on a char field compiles to mov al / cbw / test ax; the game's 'test byte' needs '(f & K) == 0'.
+  A struct field the game only ever touches as a byte (survey every prep with grep 'es:[bx + OFF]') is a char in the
+  original even when Ghidra typed it as a word - fix STRUCTS.H, then run the FULL match_all for both programs.
+  A module may lack <string.h> entirely (94df: strcpy called with 3 args, strlen compared signed).
+- (b113, 94df) Local pointer arrays filled by 'mov word [bp-x], OFS' x N = single assignments (an initialiser
+  becomes a static copy + rtl_struct_copy). 'jne X / jmp X' = 'if (c) { } else { }'. 'if (c) break;' compiles to
+  je + jmp; a direct jcc to past the loop can be a goto-loop ('again: while (...) {...} if (..) { .. goto again; }').
+  BSS: declare highest address FIRST (all fixups 'own BSS' wrong = the order is reversed). Never run match_build
+  while a background match_all runs (shared work/bcc/m: false FAILs). BCC keeps 32 identifier chars.
+- (b114, b1af) '(field & mask) > 0' compiling to jge/jmp/jg (or 'test / jg') means the field was SIGNED: STRUCTS.H
+  Unit.enchantments and BattleUnit.combat_enchantments are long, BattleUnit.combat_flags is int (full regression).
+  A plain call as the last statement of an if-branch leaves its value in AX and jumps straight to the epilogue;
+  'return f()' instead jumps to a shared 'xor ax,ax / jmp' tail. 'if (c) return 0; switch' inside an else block,
+  not 'else if (c) return 0; else {...}' (that adds a jmp). A branch whose jmp skips a following loop = the loop is
+  inside that if's else. Uninitialised-pointer arrays (char *names[8] passed to strcpy) are kept as the game's bug.
+- (b115, c165) A big switch whose case bodies are 'jmp' into other cases: write every case in full (address
+  order = source order); BCC's cross-jumping recreates the jumps. A mask like 0x97ff tested with jle/jg is
+  '~0x6800' (signed int); hex constants >= 0x8000 are unsigned. A variable set inside a call's last argument
+  ('c ? (v = a, b) : (v = 0, -1)') and passed as an earlier argument = right-to-left argument evaluation.
+- (b116, a4fa) BSS between a module and the next sourced module's BSS must be defined by the module (wiz_standins:
+  'no unmatched module for DGROUP x..y'): add the unreferenced words as PROVISIONAL unused arrays. A ternary string
+  argument ('strcat(m, c ? A : B)') lets BCC cross-jump an earlier branch's identical strcat into it; the game's
+  separate if/else strcats do not merge. Two unsigned char fields compared with 'mov ah,0' on both sides = one side
+  cast to int. cwd on a masked unsigned field widened to long = the field is signed (STRUCTS.H).
+- (b117, af2c) ALWAYS take the prototype block's order from PUBORDER (reversed), never from the listing's address
+  order: match_build passes either way, only listd's relink catches it ('overlay X: entries differ' and other
+  overlays' calls into it off by a thunk). A leaf's int param in CX (and a local in DX) is ordinary BCC allocation.
+- (b118, 47bc) BSS order also counts EXTERN declarations: a variable GAME.H declares extern is placed by where that
+  extern was first seen (GAME.H lists p_text_buf2 before p_text_buf, which put them in the wrong order). Fix it in the
+  module: define those variables AHEAD of #include "GAME.H". With every int local auto-registered, BCC may give SI/DI
+  to the wrong pair (screen x/y over the loop counters): explicit 'register' on the intended two fixes it.
+- (b119, 679a) A module whose data is initialized TABLES: generate the initializers from the game's bytes with a
+  script (strings_inline.dgroup + struct.unpack), never by hand. The literal pool follows the source order of first
+  use (table strings in table order, then each function's literals); a table whose strings sit AFTER a function's
+  literals is defined after that function (its data block still lands in definition order). BCC suffix-merges pool
+  strings ("First Strike" = tail of "Negate First Strike") and -d merges duplicates across tables and code.
+- Never change a STRUCTS.H member LIST (splitting a word into two bytes): MAGIC.C initializes unit_types
+  positionally and the full regression showed its data shifted (MAGIC.C +27b). Use a (char) cast for a byte read of a
+  word field instead - BCC loads only the low byte (mov al / cbw). Changing a member's signedness is safe.
+- A switch on a long builds a cs: search table (n lo words, n hi words, n targets, sorted by value; jt.py dumps it)
+  and copies the value to a compiler temp that BCC places after the scalar locals (before the arrays). Case bodies
+  in address order give the source order.
+- `x[k - 1].field` with field offset > 0 compiles as 'mov dx, &x[-1]; add dx, offset; add ax, dx' (not folded),
+  while `x[k - 1].first_field` folds into one displacement: write the plain expression.
+- (b120, ba2c) When the last stand-in of a stretch becomes a source, listd may report an unowned BSS gap
+  ("no unmatched module for DGROUP a..b before X"): define it in the most plausible module of that stretch
+  (highest address first, PROVISIONAL owner). A void function whose value a caller uses was called undeclared
+  (implicit int): leave it undeclared there and say so in the header comment.
+- (b121, 8f51) When only the register choice differs and several locals compete, trying each position of the
+  register candidate (plain and 'register', param plain and 'register') is quick: in Combat_Cast_Banner the plain
+  local declared FIRST got DI. Under Git Bash, 'sed -i' rewrote a CRLF source as LF - edit with Python.
+- (b122, 9218) 'f(c ? a : b)' loads the value into ax (mov ax / jmp / mov ax / push ax); the game's 'push [a] / jmp
+  / push [b] / lcall' is 'if (c) f(a); else f(b);' cross-jumped. A loop whose failed tests each jump to a nearby
+  'jmp <loop end>' (instead of an inverted pair per test) is a run of separate 'if (...) continue;' statements; one
+  long && condition gives 'jcc next / jmp end' for every test.
+- (b123, a22c) Leaf functions (no calls) may keep a register variable in CX (and a char one in CL) - BCC's own
+  choice, nothing to write. 'x += -5' on an int compiles 'add [bx], -5' while 'x -= 5' gives 'sub [bx], 5'. A
+  'return 0;' inside 'if (a) {... return 0;} else if (b)' adds a jmp: write two separate ifs. A word field tested
+  '(f & m) > 0' with jle is int: retype the STRUCTS.H member (full regression after).
+- (b124, 8a20) A jcc that reaches the loop end SHORT cannot come from 'continue': write the test as the last && term
+  of a wrapping if ('if (a && b) { if (!c) continue; ... }'). A missing / extra pad byte before a jump table with
+  identical code: change a far-exit test between 'continue' and a wrapping if (same bytes, other parity). An early
+  exit that jumps to the case's own final 'jmp end' is a wrapping if, not 'break'. 'x[k - 20].arr[i]' folds the
+  field offset; '(&x[k - 20].arr[i])[0]' gives the game's run-time 'add dx, offset'.
+- Tools added at the b124 checkpoint: tools/compact_asm.py SEG (asm-only reading copy of the prep listing) and
+  tools/objdis.py OBJ FUNC [from to] (compiled function with offsets: where a jump goes, where a table / pad sits).
+- (b125, dc99) A module's initialised data runs up to its first literal: a word between the last variable the module
+  uses and its literals is still the module's (battlefield_reuse_map at 709c, read only by df82) - the census 'refs' ranges
+  are guesses, the literal address decides. Read PUBORDER reversed literally: a stub entry between two address-order
+  functions (Combat_Draw_Uncalled_Nop after Combat_Render_Unit_Figures) is easy to misplace; only listd catches it. A long
+  struct field compared with jl on the high word is signed long. A whole 12 KB module (24 functions, 55 BSS
+  variables) matched on the first build when every function was decoded from the asm before writing: decode fully
+  first, then write once.
+- (b126, 9748) Replacing a stand-in can orphan BSS it held: listd's 'no unmatched module for DGROUP a..b before X' then
+  names the gap; give it to the neighbour whose code uses those words (SPELLBK.C, defined after its own BSS so they
+  land below it). Read 'jne' to a body as '||' (a set bit jumps INTO the assignment). A byte field compared with
+  jle/jg is signed: cast '(char)' where earlier sources already do (BattleUnit.race), retype only fields no matched
+  source compares (Item.item_type). The game's own style per statement: 'x = x + 3' gives load / add / store,
+  'x += field' gives add-to-memory, 'x++' gives inc byte.
+- (b127, d208) 'x *= 2' compiles 'mov dx,2 / imul dx' into the same address; 'x = x * 2' gives shl. 'if (c) return 1;
+  return 0;' gives the game's cross-jumped returns, a boolean 'return c;' does not. An 'x += e' whose right side the
+  game evaluates first (or adds without a push) points at the TYPES: an unsigned array taking an unsigned sum
+  (ai_lm_*_strength are unsigned *). Functions Ghidra places after a segment's code end (seg_ends) belong to the
+  next module (d208's three stubs are AISTUB.C's). Replacing a stand-in can orphan DATA too (listd: 'no unmatched
+  module for DGROUP 6f62..6f78'): give unread words to the module itself, a used word to its main user.
+- (b128, df82) Register-indexed 'les bx,p / add bx,row / add bx,di / add bx,cx' is a 2-D array index ([y][x]); the
+  flat 'a[y * 21 + x]' adds the pointer after the row: if a struct array is declared flat but a function with
+  register indices does not match, try [rows][cols] (the Battlefield grids were [22][21]; stack-index uses compile the
+  same both ways, so matched sources keep matching after the retype). 'v - 0x7ff' compiles 'sub' for unsigned v and
+  'add ax,0xf801' for int v. A loop whose test is 'jcc over a backward jmp' (not a short jcc back) is a label +
+  'if (...) goto'; '||' tests compiled as separate je/jmp pairs are separate 'if (...) goto' statements. 'je L' with L
+  a 'jmp skip' before the && chain is an empty then-branch: 'if (a == 0 || a == 4) ; else if (...)'. An overlay's
+  draft can live in work/reports across a compact (src/ only once it builds).
+- (b129, c3f5) A signed test of a masked long field ('(abilities & 0x20000000L) > 0': jl / jg on the high word, jbe
+  on the low) means the field is a signed long. 'x -= e' adds to memory only when both sides have the same
+  signedness: an int minus an unsigned expression gives load / sub / store (mastery_research_cost is unsigned). An
+  assignment inside an && chain compiles 'or ax,ax'; a separate statement 'cmp [bp-n],0'. 'if (a == X || b == 0)
+  continue;' gives the je to the jmp after the second test. A char loaded and tested as an int ('mov al / cbw /
+  or ax,ax') is '(int)c > 0'. A no-op char write-back with a 16-bit mask whose low byte is 0 ('x = x - 0x4000';
+  -, ^, +, | all compile alike) loads and stores the byte unchanged. Uninitialised globals are allocated highest
+  address first: an unread BSS gap below the next module goes FIRST in the declarations. A function that loads
+  'xor ax,ax' on an early exit returns int even when callers declared it void (fix their prototypes).
+- (b130, 4a3f) BCC cross-jumps the common tail of IF / ELSE branches (identical trailing pushes + call, or a shared
+  'mov ah,0 / pop dx / add ax,dx / store'), never of a ternary: a jump into the middle of an argument list or of an
+  expression means two statements. With 'a + call()' the call is evaluated first and the other operand loaded after
+  ('upkeep + abs(...)' gives push / load / pop dx / add ax,dx). A ternary of a char and an unsigned char extends both
+  the same way; the game's per-branch cbw / mov ah,0 is if / else. A local reused for a second purpose (the
+  breakdown's 'lines' as the icon count) shows as one stack slot written in several cases. 'x[k + first]' loads k
+  first, 'x[first + k]' the global first. Explicit 'register' keeps a parameter OFF the registers when three locals
+  must take SI / DI / CX. Callers' prototypes must follow the definition: two void ones became int, a call with an
+  extra argument (CITYSCR's Building_Sell_Price(bldg, city)) became an unprototyped, commented declaration.
+- (b131, f48f) A 38-function module resumed across a compact from written notes + a draft: 34/38 matched on the
+  first build, the 4 KB AI_Landmass_Plan included. Read EVERY local's slot and register role off the frame first
+  (one slot reused for two purposes = one variable; a temp in SI via 'push es / les si' leaves only DI, which the
+  FIRST declared int wins). A byte field compared with a constant after cbw is '(int)field < 60'. An int array
+  indexed 'i*6 + j*2' with a centre store at base+8 is int a[3][3] (Ghidra splits it). 'if (A) return 0; if (B)
+  return 0; return 1;' gives jle / jmp / or / jle with the first return 0 cross-jumped into the second. A switch
+  on a char: decode the table with tools/jt.py; case bodies come out in source order. Read PUBORDER reversed for
+  the prototype block from the COMMITTED work/link/wiz/PUBORDER.TSV (listd drops the module's row once it compiles
+  from source); a swapped pair only shows in listd ('entries differ' + another overlay's call off by a thunk).
+  Bytes only one module reads, inside a stand-in's label, get a data_names.tsv entry so the stand-in labels them.
+- (b132, cd8b) A function at offset 0 of an overlay can be missing from match_prep when functions.tsv files it under
+  the previous segment's numbering (Cityscape_Reveal_Reset = cbdf:1ac0 = cd8b:0000): PUBORDER still lists it -
+  disassemble it from work/flat/WIZARDS_FLAT.EXE (base = header paras * 16 + (seg - 0x1000) * 16). MoM's Random(n)
+  returns 1..n: 'tab[Random(n) - 1]' folds the -1 into the base (a base 2 bytes below a known array names the array).
+  wiz_layout 'refs' data ranges can stop short: a table reached only by computed index runs to the next module's
+  data. When a long function is a fixed sequence (grid marks, cut-outs, neighbour tests), generate the C from a
+  decoded table with a script - 6 of 14 functions matched first time that way. Two complex comparison sides: the
+  game's first-loaded side is the LEFT operand. 'register' on two locals keeps a busier plain int off SI / DI.
+- (b133, c751) Resumed across a compact from a parked draft + decoded notes: 36/36, with 9 of the 15 new
+  functions matching on the first build. Operand order: 'a + b' with a MORE complex right side evaluates b first,
+  then loads a and adds (City_Rebels: tax_unrest_pct[...] + race table x 10); '(long)a * b / c' - the operand
+  loaded first (into cx:bx) is a; 'f(a) + g(x, y, z)' - the 3-argument call is evaluated first (write
+  Road + Trade). 'x *= 2' on a memory int compiles to mov dx, 2 / imul (not shl). One store after two values is a
+  ternary ('out[0] = plane == 0 ? books : books + 5'). A filter that skips the loop body: when the game jumps
+  straight to the loop increment, put the negated test in the if; 'continue' compiles to a shared true label + jmp
+  (both forms occur in one module). An int function with 'return 0' early and NO return at the end (the city
+  breakdowns, Mercenary_Offer_Roll) - callers that declared it void need the prototype fixed (declcheck section 2).
+  A retry loop with several 'continue's is 'retry:' + 'if (...) goto retry;' (while (1) leaves extra jumps).
+  Register ties: declare the winner first (City_Calc_Gold's gold), or explicit 'register' (Fortress_Find_Unit_Tile's
+  k and j; a leaf's plane -> CX); a parameter used most can take SI over the locals (Road_Build's plane). Long apostrophes in bash heredocs
+  still break: write fragments with the Write tool and append them with a small Python script.
+- (b134, ebda) 38 functions / 26 KB, 30 on the first build, written in code order straight from the compact listing:
+  read each frame (slot -> variable, one slot reused = one variable), then write. Register ties: with two
+  auto-allocated register candidates the FIRST declared takes SI (declare the loop index first); a heavily used
+  parameter takes a register before the locals; explicit 'register' also works. 'x++' on a char compiles to 'inc
+  byte ptr'; mov / inc / mov (and the array element version with the address computed twice) is 'x = x + 1'.
+  An apparent extra argument may be a real parameter: AI_Stack_Pick_Target loads its 6th parameter into DI at entry
+  and reuses it as the loop counter - check the prologue before calling a call odd-arity. A BSS gap reported by
+  listd ('no unmatched module for DGROUP a..b') right after the module's last variable is an unreferenced variable of
+  this module. A field read with cbw everywhere is signed: fix the struct (City.building_count) instead of casting.
+  Never use sed -i on the sources: it rewrites CRLF as LF (normalise with Python).
+- (b136, e318) 59 functions / 30.5 KB, resumed from a parked 5-function draft; 54 written this session, most on the
+  first build. The weighted spell pickers (AI_Pick_*) are generated from the game's own compare / store tables read
+  off the compact listing (work/reports/e318_gen_weights.py + e318_gen_picker.py, e318_gen_city.py,
+  e318_gen_globtarget.py): 'if (known[S] == 2 [&& cond]) w[k] = ...;' rows, penalty loops written 'i <= hi', then
+  'switch (Random_Weighted_Pick(w, 50))' with 'case p: return spell;'. BCC orders a sparse switch's search table by
+  case VALUE; the bodies stay in source order. A switch inside 'if' whose last label is 'default:' with NO break
+  compiles to one jmp over the else ('break' adds a second jmp). BCC cross-jumps identical tails: two separate
+  'if (x) return 0;' statements become 'jcc +3 / jmp <earlier return 0>' (the long form), while one '||' / '&&'
+  condition keeps short jumps - pick the form by the jump size. A long constant argument is pushed from a dx:ax
+  pair (xor ax, ax / mov dx, lo / push ax / push dx) - the parameter is long; an argument that is always 0 and never
+  read by the callee is a real unused parameter (AI_Pick_Unit_For_Enchant has 9 words). A parameter loaded into SI
+  at entry and overwritten at once is reused as the loop counter (AI_Target_Plane_Shift). A frame store of
+  [bp + 6] that is never read is 'unused = param;' (start or end of the function). Two char fields normally compare
+  as bytes; when the game sign-extends both sides (cbw / cbw / cmp dx, ax) cast one side to int (AIStack vs City).
+  String literals go AFTER a module's initialised variables in _DATA, so an unreferenced data word after the strings
+  belongs to the NEXT module in link order (DS:7114 -> AIPROD.C, PROVISIONAL). declperm.py on just the register
+  candidates: put them first, a blank line, then the frame locals.
+- (b137, 13ec) The main module (16 functions + DS:00aa..2904 data + DS:8890..bf7f BSS). BCC lays _BSS out in reverse
+  order of each symbol's FIRST declaration (not its definition): a header with extern declarations of the module's
+  own globals (GAME.H) reorders the block - the defining module includes only STRUCTS.H / ENUMS.H. Initialised
+  _DATA keeps definition order, byte arrays are not word-aligned, and string literals (merged by -d, including a
+  "" that lands on another string's NUL) follow the variables. A stand-in label inside a bigger variable shows up
+  as a size overlap (wizards[6] past text_palette_flag_b6c8 = wizards[5].banner_color). Generating the tables from
+  the game's bytes + the matched externs (gen_wizards_globals.py) matched on the first build once the include was
+  fixed. Never run match_build while match_all runs in the background: both use work/bcc/m.
+
+P1 LESSONS (2026-10-21)
+- 'int f() { ...; g(); }' (no return statement, AX passes through) and 'return g();' compile DIFFERENTLY in BCC: keep
+  the original's no-return form for wrappers whose callers use the value, with a comment.
+- A far pointer seen as a long ('(long)Seg_To_Far_Ptr(seg) + 0x4a') reproduces the 32-bit add/adc, so a prototype
+  can stay honest (void far *) and the cast carries the arithmetic.
+- Changing a function's return type from void to int, or swapping a file's private struct copy for STRUCTS.H, does
+  not move any byte; only declaration ORDER does (thunk order, _BSS order).
+
+P2 LESSON (2026-10-21): compile every module in a FRESH DOSBox session. BCC runs in one session are not independent:
+a run can generate different code depending on earlier runs (memory state), so a rename in one file changed another
+file's register choice. match_build / match_all always did one module per session (that is what proved each module);
+the full build now does too (tools/bcc_run.py run_many). And a verify step that stops early must FAIL, never compare
+whatever EXE an earlier run left (tools/verify_fast.sh deletes the EXEs first and names failed steps).

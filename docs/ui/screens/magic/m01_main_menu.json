@@ -1,0 +1,211 @@
+{
+ "prog": "magic",
+ "name": "m01_main_menu",
+ "note": "intro skipped with Esc",
+ "time": "2026-10-21 18:42:19",
+ "current_screen": null,
+ "control_count": 11,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 108,
+   "y1": 150,
+   "x2": 211,
+   "y2": 161,
+   "w": 104,
+   "h": 12,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "LOAD"
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 108,
+   "y1": 138,
+   "x2": 211,
+   "y2": 149,
+   "w": 104,
+   "h": 12,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "CONTINUE"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 108,
+   "y1": 162,
+   "x2": 211,
+   "y2": 173,
+   "w": 104,
+   "h": 12,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "NEW GAME"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 108,
+   "y1": 174,
+   "x2": 211,
+   "y2": 185,
+   "w": 104,
+   "h": 12,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "HALL OF FAME"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 108,
+   "y1": 186,
+   "x2": 211,
+   "y2": 199,
+   "w": 104,
+   "h": 14,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "QUIT TO DOS"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 67,
+   "help": -1,
+   "key": "C",
+   "offscreen": true
+  },
+  {
+   "id": 7,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 76,
+   "help": -1,
+   "key": "L",
+   "offscreen": true
+  },
+  {
+   "id": 8,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 78,
+   "help": -1,
+   "key": "N",
+   "offscreen": true
+  },
+  {
+   "id": 9,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 72,
+   "help": -1,
+   "key": "H",
+   "offscreen": true
+  },
+  {
+   "id": 10,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 81,
+   "help": -1,
+   "key": "Q",
+   "offscreen": true
+  },
+  {
+   "id": 11,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "0x1b",
+   "offscreen": true
+  }
+ ],
+ "help": [
+  {
+   "help": 629,
+   "title": "LOAD",
+   "x1": 108,
+   "y1": 148,
+   "x2": 211,
+   "y2": 162
+  },
+  {
+   "help": 628,
+   "title": "CONTINUE",
+   "x1": 108,
+   "y1": 138,
+   "x2": 211,
+   "y2": 149
+  },
+  {
+   "help": 630,
+   "title": "NEW GAME",
+   "x1": 108,
+   "y1": 162,
+   "x2": 211,
+   "y2": 173
+  },
+  {
+   "help": 798,
+   "title": "HALL OF FAME",
+   "x1": 108,
+   "y1": 174,
+   "x2": 211,
+   "y2": 185
+  },
+  {
+   "help": 631,
+   "title": "QUIT TO DOS",
+   "x1": 108,
+   "y1": 186,
+   "x2": 211,
+   "y2": 199
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

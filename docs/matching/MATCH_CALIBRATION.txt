@@ -1,0 +1,644 @@
+[Published 2026-10-26 from the project's working notes, otherwise as written while matching (2026-10-18 .. 10-21).
+ The compiler rules are general Borland C++ 3.1 facts; the workflow names the project's own tools (tools/, work/,
+ re/ paths, scratch scripts), which are not published - read those parts as a description of the method. Function
+ and variable names are the ones current at the time; some were renamed later (the published source and the map
+ have the final names, and the addresses identify a function either way). Bracketed numbers [n] / batch numbers
+ point into the project's process log, which is not published.]
+
+MATCH CALIBRATION LOG - what byte-matching proved about our annotations (step 78c-T onward)
+=============================================================================================
+Byte-matching a module with Borland C++ 3.1 (BCC -c -mm) checks every type, signedness, array shape and expression we
+wrote: a wrong one changes the compiled bytes. Each row: what we had, what the match proved, the evidence, the module.
+Kinds: TYPE (struct field / global / local type), SHAPE (array / pointer shape), FORM (how the source was written -
+changes the decompile's readable form only), NAME / LOGIC (our reading was wrong), CONFIRMED (a provisional reading
+proved right).
+TWO CHECKS, both needed (adversarial review 2026-10-19): tools/match_module.py compares every byte the compiler fixes;
+it MASKS the bytes the linker fills in, so on its own it cannot tell which global or which function an instruction
+refers to. tools/match_fixups.py checks those: every data reference against the source's '/* DS:xxxx */' address,
+every call against functions.tsv (linear address; overlay stubs accepted), every string literal against the game's
+text. Negative test: swapping vis_bitmap_arcanus / vis_bitmap_myrror in Visibility_Clear still byte-'MATCH'es and
+is caught by the fixup check (2 WRONG). tools/match_build.py runs both. A module counts as matched only with both.
+
+module 7851 (src/wizards/MAPVIS.C), 2026-10-19
+  TYPE  Unit +0x00 x, +0x01 y, +0x02 plane, +0x16 scout_range: u8 -> i8 (signed char; loaded with CBW)
+  TYPE  City +0x0f x, +0x10 y, +0x11 plane: u8 -> i8 (CBW)
+  SHAPE p_explored: far pointer to char[40][60] (index order plane -> y -> x in the code)
+  FORM  Tile_Visible / Tile_Set_Visible / Tile_Clear_Visible: 'if (plane == 0) f(bit, arcanus); else f(bit, myrror);'
+        (two calls merged by the compiler) - Ghidra's 'bitmap = ...; f(bit, bitmap)' is not the source form
+  FORM  Unit_Check_Contact: the Invisible test and the Tile_Visible test are one '&&' condition, not two returns
+  CONFIRMED  Visibility_Rebuild's plane loop (plane = 0 ... plane = 1 at the end of the pass) - no hidden bug
+  LOGIC Visibility_Mark_Square returns 0 for range 0 and nothing otherwise (no final return; callers ignore it)
+
+module 5297 (src/wizards/MOVE.C), 2026-10-19 - 7 functions, 2,003 bytes, 100%
+  TYPE  City +0x13 size: u8 -> i8 (CBW before indexing city_size_names)
+  TYPE  Unit +0x05 type: enum byte is UNSIGNED (MOV AH,0) - tools/make_header.py ENUM_CTYPE['UnitTypeId']
+  TYPE  UnitType +0x00 name: u16 -> near char * (passed to strcat)
+  TYPE  CityNotice +0x00 city: u8 -> i8 (CBW; compared with -1)
+  FORM  Units_Compact reads p_units[unit].type into a local that is never used (a dead store Ghidra drops; the
+        compiler keeps it - BCC warns)
+  FORM  Human_End_Turn: unit name vs building name ('if (prod >= 100) { prod -= 100; strcat(.., unit name) } else
+        {.. strcat(.., word) }') - the two strcat calls are merged by the compiler; Ghidra shows one strcat of a temp
+  FORM  Units_Reset_Moves*: 'moves_max = Unit_Move_Points(unit)' directly - Ghidra's move_points temp is not in the source
+  OPEN  the string " " is stored as the tail of "The " (DS:2fff inside DS:2ffc) - check at link time whether BCC -d
+        (merge duplicate strings) or the original literal layout explains it
+
+module 86a6 (src/wizards/HALLFAME.C), 2026-10-19 - 2 functions, 1,078 bytes, 100% on the FIRST compile
+  CONFIRMED  every name / reading in the two functions (written from the annotated decompile + asm)
+  FORM  Font_Select_Shadow takes 4 arguments (font, 15, 0, 0) - Ghidra prints one
+  FORM  UI_Set_Redraw_Fn(far function pointer, ticks) - Ghidra prints (0x20, 0x3524, 2) (offset, segment, ticks)
+  FORM  'if (i == 0) Print_Text_Right(x, y, "Master"); else {...; Print_Text_Right(x, y, p_text_buf);}' (calls merged);
+        Ghidra's 'text' temp is not in the source
+  FORM  the 16 text colours are 16 separate stores, not an initialised array
+  FORM  percent = (long)score * 100 / 8000L (Borland LMUL@ / LDIV@); Ghidra's 'b = 8000' local is not in the source
+
+module 150a (src/wizards/HEAP.C), 2026-10-19 - 19 functions, 1,674 bytes, 100% (12 on the first compile)
+  LOGIC NEW BUG #381: Near_Alloc_Error calls strcat(" bytes") with one argument - the module has NO <string.h>
+        (proved: with the prototype the line does not compile)
+  FORM  module boundary is NOT paragraph-aligned: the module starts at 150a:000b (the previous module's code ends
+        at 150a:000a) - Ghidra segments are paragraphs, modules are byte-aligned code segments
+  FORM  Near_Alloc_Reset / Near_Alloc return '(char *)((unsigned)near_heap + n)' (the address is not folded)
+  FORM  Heap_Make_Far_Ptr builds the pointer as ((unsigned long)seg << 16) + off, not MK_FP
+  FORM  Heap_Alloc_Raw / Raw2: 'if (p == NULL) return 0;' then the rest (no else)
+  FORM  Heap_Fatal_Error: the cases share their tails through gotos into case 1 (as Ghidra showed), and case 4's goto
+        targets a SECOND label at the same place as case 2's (otherwise BCC merges case 2 into case 4)
+  PROVISIONAL  Heap_Alloc_Block's 'seg' must stay in memory (declared volatile here; an address-taken variable would
+        compile the same) - BCC would otherwise give it DI
+  FORM  data: the module's string literals are stored once each in first-use order -> compiled with -d (merge duplicate
+        strings); near_alloc_top (DS:727c) is this module's initialised variable, just before its strings
+  CONFIRMED  every name and reading in the module (Near_Alloc_Mark / Release swap fixed in step 78a holds)
+  CONFIRMED  Borland C++ 3.0 compiles this module the same as 3.1 - no sign of an older library compiler
+
+module a0ec (src/wizards/WIZSTATS.C), 2026-10-19 - 14 functions, 5,111 bytes, 100% (5 on the first compile)
+  SETTING  -a (word alignment) proved: without it the switch jump table of UnitTypes_Init_Upkeep_Sounds lands one byte
+        early; all five matched modules compile identically with -a -> the game's settings are BCC -c -mm -a
+  TYPE  signed char proved (CBW / signed compares / DEC AL): Unit +0x06 hero_slot; City +0x14 population;
+        Wizard retorts[], global_enchantments[], spell_library[]; City enchants[]; UnitType melee, ranged, ranged_type,
+        defense, moves, hits, figures, transport_capacity; BattleUnit ranged_type
+  TYPE  signed long: Wizard +0x25e skill_points (signed compare), Item +0x2e powers ('(powers & 0x2000L) > 0')
+  TYPE  signed int: UnitType +0x0a cost (IDIV in (cost - 1) / 50 and (cost - 100) / 10)
+  FORM  no <stdlib.h>: abs() is a real call (the header's inline abs would differ)
+  FORM  Unit_Create opens with three early 'return 0' tests (owner != 0 && num_units > 950 && src != 2000, ...);
+        Ghidra's single combined condition is not the source form
+  FORM  Spell_Casting_Cost: 'if (omens == 1)', 'cost = cost - (long)cost * reduction / 100; return cost;'
+  FORM  Spell_Cost_Reduction_Pct: 'if (realm != REALM_ARCANE) books = ...; else books = 0;', then a temporary
+        'excess = books - 7; pct += excess * 10;'
+  FORM  UnitType_AI_Strength / AI_Unit_Strength: one temporary is reused for hits x figures and for the ranged value,
+        set INSIDE the last argument: 'ranged_type >= 100 ? (tmp = ranged, ranged_type) : (tmp = 0, -1)' (a comma
+        expression - possibly a macro in the original); tests are '/ 10 <= 3' and '!= -1'
+  FORM  Unit_Move_Points: 'powers = powers | p_units[unit].enchantments;' as its own statement before the tests;
+        'flight_item == 1'
+  FORM  Cheat_PWR: 'for (book = 0; book <= 5; book++)'
+  FORM  Hero_Pick_Random: a label + goto retry (Ghidra's while(true)); confirmed on the first compile
+  CONFIRMED  every name, constant and rule reading in the module (casting cost, skill, hero picks, move points,
+        upkeep exceptions: the 13 Spearmen + Dwarf Swordsmen cost no upkeep - TC-ECON's finding)
+SCREENING TOOL  tools/signedness_census.py lists u8 fields that Ghidra shows sign-extended ((char) casts) - 37
+        candidates; a byte-match is the proof (field names collide across structs, so the census is a list to check)
+
+FIXUP CHECK over the five modules (2026-10-19): 963 linker references - 652 data references, 207 calls, 39 own-code
+references, 33 string literals (+ helpers) - all equal, 0 unchecked. So the CONFIRMED lines above now include which
+global / function / literal each reference names.
+  MODULE MAP  Move_Stub_Return0 is the FIRST function of module 54e2 (called as 54e2:0000); Ghidra files it as
+        5315:1cd0 (same linear address) - one more sign that module boundaries are byte-aligned, not paragraph-aligned
+  OVERLAY     far pointers to overlaid functions are VROOMM stub addresses (UI_Set_Redraw_Fn(Hall_Of_Fame_List_Redraw)
+        pushes 2524:0020 = the stub of 86a6:01a2); the source just names the function
+
+module 9ec1 (src/wizards/NEXTTURN.C), 2026-10-19 - 3 functions, 871 bytes, 100%
+  SHAPE Wizard +0x482: a NESTED STRUCT of 24 named flags (new struct GlobalEnchants, field 'globals'), not a char[24]:
+        'wizards[time_stop_player - 1].globals.time_stop = 0' folds into one displacement (DS:wizards-0x4c8+0x488);
+        every array / union spelling compiles unfolded (tested a..h). Variable-index uses (about 10 in the decompile)
+        must then go through a pointer to the struct. All earlier modules re-matched with the change.
+  LOGIC time_stop_player is 1-based (player + 1): the Time Stop upkeep reads wizards[time_stop_player - 1]
+  LOGIC the Grand Vizier loop (Ghidra printed it as long-multiplication noise): for each HUMAN city, choose new
+        production when it is on 'auto' (-4), or on Housing / Trade Goods with a 1-in-4 roll
+  FORM  the Time Stop mana test is '(&wizards[time_stop_player - 1])->mana_reserve < 0' (pointer form - unfolded),
+        the -= 200 and = 0 use the plain form (folded) - two spellings side by side in the original
+  TYPE  City +0x15 farmers: u8 -> i8 (CBW)
+  TYPE  turn_rng_seed / Random_Seed / Random_Get_Seed: long
+
+batch 2, 2026-10-19: 517e MAINSCR.C, dc56 GAMEDATA.C, 8546 HELP.C (+ 9ec1 above) - all 100%, both checks
+  SETTING  -d (merge duplicate strings) PROVED in CODE: Help_Load_Unit_View's two calls merge through the push of
+        "hlpentry" - only possible when both uses are one literal. Settings now: BCC -c -mm -a -d; every earlier
+        module re-matched with it.
+  FORM  Help_Load_Unit_View: 'if (mode != 2) Load(..13..); else Load(..22..);' - no 'entry' variable
+  FORM  Overland_Draw_Stack_Panel has no final return (callers use AX = the outline tick); Music_Mood_Track tests
+        'cur + best / 10 >= best' (99) and 'worst > 0 && cur - worst / 10 <= worst' (101)
+  SHAPE Alloc_Game_Data points the AI per-plane pointers (p_ai_attack_landmass[2] ... p_ai_circle_timer) at 14
+        separate near arrays DS:b916..b9f6 (names PROVISIONAL, after their pointers); p_hero_stats[0] gets 0x1c
+        paragraphs, [1..5] 0x1b
+  NAME  new PROVISIONAL globals: stack_outline_tick (305c), ems_handle_figures / _tiles / _cont (cf9c / cf9a / 9ec0),
+        p_ai_table_a / _b (8fa2 / 8fa6)
+
+batch 3, 2026-10-19: 1df0 LINEPATH.C, f23a HELPSCR.C, 6c53 EVENTS.C - all 100%, both checks
+  FORM  INLINE ASSEMBLY in C (LINEPATH: the 16.16 Bresenham step - 'asm mov ax, 0 / asm div bx / asm add ax, step /
+        asm jae label' around C statements); BCC 3.1 assembles it itself, matched as written
+  FORM  far_memcpy is UNPROTOTYPED in HELPSCR: 32768 (decimal -> long, 4 bytes pushed) vs 4000 (int); callee reads
+        the low word - harmless by little-endian luck
+  DATA  modules define their own initialised data, verified by the fixup check: HELPSCR's two text palettes;
+        EVENTS' int 27, event_is_good[19], event_cooldown and the mineral-name table (written to follow "a":
+        "n iron", " coal" ... "n adamantium", " quork", " crysx") - its 10 pointers checked against the game
+  FORM  register tie rule confirmed: equal use counts -> the EARLIER-declared variable gets the register;
+        register variables take no stack slot, so they can move freely in the declaration list
+  FORM  '< 1' (not '<= 0'), 'total = total + w[i]' (not +=), 'default: out++; break;', early 'return -1;'
+  OPEN  EVENTS' jump table sits at an odd offset (6c53:043b) yet matched with -a - recheck when data / link work starts
+TOOLS  match_module ignores data publics; match_fixups masks + verifies pointers inside module data ('data pointer')
+
+78c-Y / 78c-Z, 2026-10-19: GameConfig struct, MAGIC module map, first MAGIC matches, names back into the database
+  DATA  MAGIC.SET = ONE struct GameConfig game_config (decision D4): the code bytes cannot tell a struct from
+        separate globals; the 4 whole-block fwrites decide it for a correct C source. Regression 16 / 16 unchanged.
+  SHAPE CORRECTION of batch 2: the 14 AI arrays DS:b916..b9f6 are NOT separate variables. They lie exactly inside the
+        NEUTRAL player's spell_library (wizards[5] +0x264, 240 bytes; 118 ints = 236 bytes fit): Alloc_Game_Data
+        points the AI tables into it - p_ai_attack_landmass[1] = (int *)(wizards[5].spell_library + 0x0c) etc. Both
+        sources give the same bytes and fixups (wizards + disp vs 14 externs); only this one is consistent with the
+        save writing Wizard[6] (7344 bytes from DS:9eca) - so the AI tables are saved / loaded with the game.
+  NAME  one address = one symbol: near_heap (HEAP / HELPSCR) and name_text (MOVE) were two source names for DS:d49a
+        -> near_heap; p_explored -> the database name p_exploration_maps; vis_bitmap_myrror is DS:9392 (the database
+        had it at 9394, its segment half - MAGIC inherited the error).
+  MAGIC whole-twin modules compile UNCHANGED from the WIZARDS source: HEAP (1478), LINEPATH (1d5d), AUTOSAVE (4d54),
+        GAMEDATA (553b), HELPSCR (55ca), HALLFAME (5645) - 100% bytes. Their fixups then PROVE MAGIC names by link:
+        11 data names (near_heap, min_free_kb, race_plural_names ...), mouse_region_arrow = DS:1f54 (the hand label
+        had it on 205e), vis_bitmap_myrror = DS:5bb2, and MAGIC's own Palette_Fade_To_Black (3da3:5919) and
+        Screen_Present (3da3:5b42, a 10-byte version that only calls Mouse_Refresh).
+TOOLS  match_fixups: MAGIC externs are looked up by NAME in MAGIC's tables (the DS comments are WIZARDS addresses);
+        unchecked refs print the game's address / call target; WIZARDS: a source name that differs from
+        re/data_names.tsv is WRONG (negative test: a renamed extern is caught). New tools/source_names.py (source ->
+        data_names.tsv, 16 names added, 0 conflicts) and tools/match_names.py (names proved in MAGIC by shared modules).
+
+batch 4, 2026-10-19: 1c79 PALETTE.C (= MAGIC 1be7) - 100% in both programs, both checks
+  FORM  inline asm blocks inside C functions (Palette_Load's flagged copy loop, Palette_Clear_Range's rep stosb,
+        Palette_Cycle_Color's INT 10h AX=1010h); BCC saves SI / DI in the prologue when the asm uses them
+  FORM  'asm mov ax, ds / asm mov data_seg, ax' - NOT 'data_seg = _DS' (BCC stores DS directly: 2 bytes shorter) and
+        not FP_SEG (same as _DS); Palette_Gradient_Range keeps the idiom with the local never read (copied code)
+  FORM  three switches on the same variable (2-3 cases each) compile to compare chains with shared tails
+  PROTO Palette_Load is DEFINED with (entry, first, last) but every caller in both programs passes 2 arguments
+        (entry, -1): the callers saw a 2-parameter declaration (removed from GAME.H, each caller declares its own);
+        'last' is read only when first != -1, so no call reads the missing argument
+  NAME  palette_backup_seg, font_lbx_name (char[16]), palette_entry_seg, palette_load_buf, mouse_pointer_pics,
+        palette_block_400 (PROVISIONAL) - in both programs (MAGIC proved by the shared file)
+
+batch 5, 2026-10-19: 1573 DOSIO.ASM, 14f8 FARMEM.ASM (TASM), 169a DOSFILE.C - 100% in WIZARDS and MAGIC (14e1, 1466, 1607)
+  TOOL  HAND-WRITTEN ASSEMBLY MATCHES: Turbo Assembler 3.1 (same BC++ 3.1 tree), '.MODEL MEDIUM, C' + 'PROC USES
+        si di es ds, arg:WORD' + 'ret' = the game's code exactly (push bp / mov bp, sp, the USES pushes, and at EVERY
+        ret the pops + pop bp + retf). USES lists differ per procedure (ds si / es di / si di es). First try, no options
+        beyond /mx. match_build assembles *.ASM with TASM.
+  KIND  'C = every function has a BP frame' does NOT separate C from assembly: TASM procedures with arguments get a
+        BP frame too. Assembly signs: several retf exits each with the full pop sequence, no 'mov sp, bp'. DOSFILE
+        (169a) is C with inline asm (stricmp calls, register parameter, return jump); DOSIO / FARMEM are .ASM.
+  FORM  'seg' and 'offset' are assembler words - not usable as C names referenced by inline asm (buf_seg, pos)
+  FORM  DOS_File_Seek(fp, long pos, whence) - the fseek shape: inline asm reads 'word ptr pos' / 'word ptr pos + 2'
+  NAME  dos_io_bytes (DS:e5e6, PROVISIONAL), both programs
+TOOLS source_names: an extern comment containing '*' was skipped (fixed); match_names reads the hand table directly
+        (rows added since the last export were proposed twice - 6 duplicates removed)
+
+batch 6, 2026-10-19: 1484 TIMER.ASM, 1491 DOSUTIL.ASM, 14ab DOSFIND.ASM - 100% in WIZARDS and MAGIC (13f2, 13ff, 1418)
+  TOOL  TASM /ml (not /mx): a data name and a procedure that differ only in case (timer_mark / Timer_Mark) clash
+        under /mx. Single-pass TASM pads a forward 'jmp' with a NOP (EB xx 90) - the game has the same padding.
+        Procedures without arguments get no BP frame (USES pushes only); LOCAL dta:DWORD gives 'sub sp, 4'.
+        Code segments are WORD aligned (a 00 byte between TIMER and DOSUTIL).
+  DATA  The asm modules DEFINE their variables in .DATA, in module order: TIMER 71e0..71e5 (timer_mark dd 0,
+        timer_input_enabled dw 1 - starts ENABLED), DOSUTIL 71e6 (saved_int24_vector dd 0), then the Error module's
+        min_free_dos_kb = 0FA00h and its strings at 71ea. Defined, not EXTRN.
+  CHECK match_fixups strengthened: all references into the module's own data must agree on one base, and the
+        whole initialised data block (initial values) must equal the game's bytes. It caught a real error at once:
+        HALLFAME.C passed "" where the game has "\x1b" (ESC, the screen control's hotkey) - the old literal check
+        compared zero bytes for "" and passed.
+  BUGS  #383 Wait_Ticks_Or_Input loads ES from BX (dead); #384 DOS_Drive_Ready restores the INT 24h vector read
+        with DS = CS (dead). Both carry C reference lines ("; C:") for a port, as all .ASM modules now do.
+
+batch 7, 2026-10-19: 14b5 ERROR.C, 14f0 DOSEXIT.ASM, 16a9 EMS.ASM - 100% in WIZARDS and MAGIC (1422, 145d, 1617)
+  FORM  explicit 'register int y; register int i;' (Error_Exit_Message): explicit register variables take SI, DI in
+        DECLARATION order and override the use-count choice (fp had more uses but stays in memory)
+  FORM  a call to a function DEFINED EARLIER in the same file is 'push cs; call near' (4 bytes) straight from BCC;
+        a forward call is a far call that TLINK rewrites to 'nop; push cs; call' - so call forms show definition order
+  FORM  inline-asm functions: variables named in asm statements stay in memory, others may still get SI / DI
+        (Exec_Program: path in SI, the asm-used handle at [bp-2])
+  FORM  empty 'else if (line[0] == 17) ;' -> cmp / jne next / jmp end (an empty statement, not '!=')
+  DATA  ERROR.C defines 'unsigned min_free_dos_kb = 0xFA00' (unsigned compare jae); EMS.ASM defines ems_frame_seg,
+        "EMMXXXX0" and the AX=5000h map table {0,0}{0,1}{0,2}{0,3} at DS:760c (27 bytes + 1 pad byte)
+  ASM   a WORD IN THE CODE SEGMENT at the module start (EMS 16a9:000a, cs: override) - module code starts there, not
+        at the first procedure; 'mov ax, DGROUP' segment loads (checked: 26AAh = DGROUP)
+  BUG   Text_Add_CRLF_Print appends CR LF CR LF '$' past the string's end and exits with AL from AH=09h ('$' = 36)
+  NAME  MAGIC 145d:000e Video_Set_Text_Mode -> Video_Text_Mode (proved by ERROR.C's calls)
+TOOLS match_module finds functions by LINEAR address (Ghidra files Video_Text_Mode under the segment before);
+        match_fixups places references before the first function and checks group-base (DGROUP) fixups
+
+batch 8, 2026-10-19: 18f8 MODEX.ASM, 1fd7 VGAPAGE.ASM, 1869 GRAPHICS.C - 100% in WIZARDS and MAGIC (1866, 1e4b, 17d6)
+  TASM  a far call to a procedure of the same segment assembles as 'push cs; call near': backward = 4 bytes, forward
+        ('call far ptr X' - TASM needs the override) = the same + a NOP pad. LOCAL a, b, c: a at [bp-2], b at [bp-4] ..
+  FORM  a non-void function that ends with a call and NO return statement (Fill_Rect_Clipped, Plot_Pixel_Clipped):
+        AX of the call is the result; 'return f();' would add a jump to the exit
+  FORM  'asm mov si, text' that is never used: BCC then saves SI (DOS_Print_Dollar); in a leaf function a C register
+        variable goes to BX, and in a function with inline asm BCC allocates no register on its own
+  FORM  unprototyped calls with different argument counts in one function (Sound_Init: 11, 9 and 2 arguments)
+  ALIGN -a aligns a jump table to an even offset FROM THE MODULE START, and C modules start at any byte (1869 at
+        1869:0001): so a table at an odd segment offset is normal - closes the EVENTS 6c53:043b question
+  DATA  GRAPHICS.C defines clip 0,0,319,199 + "FONTS.LBX" (DS:76da); draw_page_seg / _index (76ec) follow - the
+        next module's (18fc) data
+
+batch 9, 2026-10-19: 18fc DRAW.ASM - 100% in WIZARDS and MAGIC (186a)
+  ASM   the planar drawing primitives: 20 bytes of CODE-SEGMENT words at the module start (per-plane spans of
+        Remap_Rect / Gradient_Fill_Shade), register-argument routines (Gradient_Pingpong_Run DX/BX, Random_LFSR8 AX
+        with hand-written push / pop and a dead 'ret' after a backward jmp), PROC USES with LOCAL lists up to 11 words
+  DATA  the module defines draw_page_seg (A000h), draw_page_index, the 3 plane-mask tables, gradient_remap[64] and a
+        256-byte noise table (DS:76ec..783b, 336 bytes) - all verified as one block
+  BUGS  Gradient_Pingpong_Run's colour path decrements SI (unused there) - leftover of the list path; Draw_Line's
+        8.8 DDA divides (d_short * 256) in 16 bits (needs d_short < 256 - always true on a 320 x 200 screen)
+
+batch 10, 2026-10-19: 1e9f ANIMEMS.ASM - 100% in WIZARDS and MAGIC (1e0d)
+  TASM  a NOP after ONE push of three ('push [bp+0Ah] / nop / push [bp+8] / push [bp+6]'): a forward-referenced
+        operand - TASM sized it for a 16-bit displacement in its single pass and padded. Reproduced by pushing the
+        argument name of the procedure defined LATER in the file (ARG names are global equates).
+  ASM   a near register helper (Anim_EMS_Map, PROC NEAR) and a far procedure that runs in its caller's register
+        state (Anim_Blit_EMS_Frame_Remap: SI, the code-segment width); unreachable 'ret's after jumps (twice)
+  NOTE  Ghidra ended Anim_Blit_EMS_Frame_Remap 4 bytes early (its last 'jmp' + the dead 'pop bp / retf'): the
+        apparent fall-off into the next module is not real
+
+batch 11, 2026-10-19: 23a4 PICCLIP.ASM - 100% in WIZARDS and MAGIC (2218)
+  TASM  'xchg al, ah' and 'xchg ah, al' encode differently (86 E0 / 86 C4): the operand order is part of the source
+  DATA  every assembly module carries its own private plane-bit table 01 02 04 08 in its .DATA, in module order
+        (ANIMEMS 7894, 1edd 789a, 2006 78a0, PICCLIP 78a4, 23f7 78a8, 2459 78ae) - a copied idiom, not a shared table
+  BUG   #339 (segment re-base 'mov ds, cx / add cx, 0FC0h / mov cx, ds') is in BOTH procedures of the module
+
+batch 12, 2026-10-19: 1b42 FONT.ASM - 100% in WIZARDS and MAGIC (1aaf), first assembly
+  ASM   68h bytes of code-segment storage at the module start (12 state words + an 80-byte column buffer the clipped
+        glyph blitter decodes into with ES = CS); register-call glyph blitters (DS:SI glyph, ES row, BX x, DX columns)
+  NAME  font_color1..3 (DS:e818 / e816 / e814, PROVISIONAL) in both programs
+
+batch 13, 2026-10-19: 2500 TRIG.ASM - 100% in WIZARDS and MAGIC (2374), first assembly
+  ASM   tables IN THE CODE SEGMENT: arctangent thresholds (byte + word), sin(0..89) and cos(1..90) as 0.16 fractions
+        (2500:0006..01f4, generated from the binary into db / dw lines); 14 working words BETWEEN two procedures
+        (2500:0417); 23-argument warp blitters
+  TOOL  match_module now also compares the bytes BEFORE the first public of a module (code-segment tables and
+        words of the assembly modules were not compared before - 495 table bytes here; the earlier modules' heads
+        re-checked: all equal)
+
+batch 14, 2026-10-19: 1e46 SCRDUMP.C - 100% in WIZARDS and MAGIC (1db4), first compile
+  DATA  BCC -d also merges a literal into the TAIL of another (".FLI" = "SCRDMP00.FLI" + 8) - verified in the data
+        block; the module defines release_flag (0; Release_Version sets 1) before its literals
+  FORM  a loop condition 'while (f(..) != 0)' tested at the bottom: the first strcpy's stack cleanup is cross-jumped
+        with the body's last strcat cleanup ('jmp' to the shared 'pop cx / pop cx')
+  FORM  'long x = 0xFDB0L' stores the high word first
+
+batch 15, 2026-10-19: 23f7 PICEMS.ASM - 100% in WIZARDS and MAGIC (226b), first assembly
+  ASM   built from PICCLIP.ASM's matched procedure bodies (the remap variant is a near-verbatim copy, BUG #339
+        included) + the EMS-specific head; 7 code-segment words; EMS_Map_Pages called far with stack arguments
+  BUG   #339 corrected: its EMS site is Pic_Draw_Clipped_EMS_Remap, not Pic_Draw_Clipped_EMS
+
+batch 16, 2026-10-19: 2006 PICRLE.ASM - 100% in WIZARDS and MAGIC (1e7a), first assembly
+  ASM   generated from ANIMEMS.ASM's matched procedure bodies (the column-RLE blitters are one piece of source copied
+        into ANIMEMS / PICRLE / PICCLIP / PICEMS with small edits: window size 4000h / 7C00h vs C000h, a mapping call
+        vs INT 67h pairs, with / without the EMS checks); 3 code-segment words BETWEEN the memory and the EMS blitters
+
+batch 17, 2026-10-19: 1cde PALUPLD.ASM - 100% in WIZARDS and MAGIC (1c4c), first assembly
+  ASM   22 code-segment words at the module start (1cde:000c; the module begins 2 bytes after PALETTE.C's last retf -
+        word alignment); the 7 procedures share them (tint colour, rotation parts, the remap search state). Hand-
+        written long branches: 'ja $+5 / jmp near' pairs (no JUMPS directive - forward conditional jumps are 2 bytes,
+        only forward 'jmp' gets the 3-byte slot + NOP); dead 'ret' after 'jmp @@clear' in one procedure, not in its
+        copy (Palette_Tint_Upload) - the copies were edited by hand
+  ASM   the 128-per-retrace dirty-colour upload loop is pasted 5 times (plain / darken / black / tint / solid)
+  BUG   #385 (Palette_Tint_Upload, percent >= 100 sends the previous call's tint, latent) and #386
+        (Pic_Load_Palette maps the same EMS page to physical pages 0 and 1, latent)
+  NOTE  Ghidra's function sizes end 1-7 bytes short in 4 procedures (dead tails after the last jump) - not real
+
+batch 18, 2026-10-19: 4558 SAVELOAD.C - 100% in WIZARDS and MAGIC (3c7e), first compile
+  FORM  the block calls are UNPROTOTYPED with 5 words each (offset, segment or 0, size, count, handle): far pointers
+        pass as 2 words (p_hero_stats[i], p_terrain_maps ...), near globals as '&x, 0'; DOS_File_Read/Write_Far
+        (DOSFILE.C) take 4 and ignore the handle; DOS_File_Close(handle) likewise (defined (void))
+  DATA  literals "SAVE" ".GAM" "wb" "MAGIC.SET" "rb" (DS:2904..291b): Save_Game's DOS_File_Open "wb" and its fopen
+        "wb" are one merged literal (-d)
+  NAME  MAGIC: ng_difficulty / ng_magic_power / ng_land_size / ng_num_wizards (DS:87cc..87d2) ARE difficulty /
+        magic_setting / land_size / num_players - the shared Load_Game / Save_Game link to them; renamed.
+        top_unit_in_stack (DS:87c4) new in MAGIC.
+
+batch 19, 2026-10-19: 1d4d UTIL.C - 100% in WIZARDS and MAGIC (1cbb), 4th compile
+  FORM  BCC's built-in assembler encodes 'xor r, r' as 31 /r; BCC's own code generator as 33 /r - so the 33 D2 in
+        Random_Get_Seed proves C there: '_AX = rng_state_hi; _DX = 0;' (pseudo-registers) + asm adc / stores
+  FORM  'if (c) return 1; return 0;' -> the final 'jmp exit' is cross-jumped onto the first one (jmp to a jmp);
+        'if / else return' adds an else-skip jump, '?:' places the blocks differently
+  FORM  a parameter overwritten in the body vs a new local: 'pic = pic + 1' keeps pic in memory, a separate
+        'register unsigned pic_seg' (SI) + 'register int i' (DI) is the original
+  FORM  'offset' is an asm keyword: a C local named so breaks inline asm (renamed pos)
+  FORM  the module does not include GAME.H: its far-memory routines take (offset, segment) pairs where GAME.H has
+        far pointers (callers elsewhere were unprototyped)
+  DATA  UTIL.C defines rng_state = 0x3568:0x3568, bit_masks {1..128}, dev_box_color 100 / 50 / 0 / 0; literal "" is
+        merged into the tail of "RND no 0's"; Dev_Choice_Box passes the STRING "NO_HELP" as the help index (dead code)
+  BUG   #207 WITHDRAWN: the seed save / restore is exact (Random_Get_Seed returns DX = high word)
+  NAME  database comments corrected: Video_Int10 = a BEL beep, Keyboard_Int16 = wait for a key (not "INT with the
+        caller's registers"); bit_masks / dev_box_unused / _font_color / _font new (source_names now also reads C
+        definitions with a DS comment, not only externs)
+
+batch 20, 2026-10-19: a8fc SETTINGS.C - 100% in WIZARDS and MAGIC (3cfc), 2nd compile
+  FORM  'if (c) f(x, y, A); else f(x, y, B);' -> BCC cross-jumps the identical call tail: each branch pushes only its
+        own argument and jumps into the shared 'push y / push x / call' (looks like '?:' in a decompile; a real '?:'
+        argument evaluates into AX first and pushes once) - 7 check boxes + the OK button
+  FORM  explicit 'register int i; register int k;' puts i in SI against the use counts (k has more uses)
+  DATA  local array initialisers (row_y[13] at DS:60e2, colors[4] at 60fc) open the module's data, before the
+        literals; a far function pointer argument (UI_Set_Redraw_Fn(Settings_Redraw, 1)) pushes seg + offset
+  NAME  load_background_pic / load_ok_pic (shared with Screen_Game_Menu), settings_unused_pics (PROVISIONAL);
+        MAGIC gets the 6 settings names from the shared source. GAME.H's UI_Add_Control parameters are (.., hotkey
+        string, help index) - the 5th is the hotkey ("O" = OK), not help
+
+batch 21, 2026-10-19: 1b9d PARAGRPH.C - 100% in WIZARDS and MAGIC (1b0a), 7th compile
+  FORM  'for (ch = text[pos]; ch != 0 && ...; pos++, ch = text[pos])': the init copy of the assignment is
+        CROSS-JUMPED onto the increment's identical copy, so the loop starts with a bare 'jmp' into the
+        assignment + tests at the bottom (looks like an assignment inside the condition, but '(ch = x) != 0' tests
+        AX ('or ax, ax') where this tests memory, and a comma condition materialises 0 / 1)
+  FORM  'if (stop_code != -1) {codes} else {space break}' - the branch order shows which test was written
+  FORM  explicit 'register' pairs again decide SI / DI (3 functions); a far pointer from 'Seg_To_Far_Ptr(seg) +
+        0x4a' with add / adc = long arithmetic: this module sees Seg_To_Far_Ptr as returning long (GAMEDATA.C as
+        void far *) - no shared prototype
+  FORM  BCC keeps 32 characters of an identifier: our Print_Text_Justified_To_Pic_Clamped (35) became
+        Print_Justified_To_Pic_Clamped; 6 more database names are over 32 (Notify_Picture_Box_Centered_Redraw in
+        d677 among them) - rename them when their modules are matched
+  DATA  PARAGRPH.C defines text_layout_allocated (DS:7840, PROVISIONAL) and para_excl_count (7842) = 0; the next
+        word, palette_cycle_state (7844 = -1), is then PALETTE.C's own data (PALETTE.C declares it extern today -
+        fix at the data / link milestone)
+  BUG   #387 (19h / 1Dh position codes read the first digit twice; latent - no v1.31 text uses them), #388 (dead
+        Text_Draw_Paragraph_Core counts spaces until INDEX 29)
+  NAME  para_excl_left / _top / _right / _bottom (DS:e854 / e84c / e844 / e83c), both programs; database comment
+        corrected: Text_Layout_Lines returns nothing (0 only on the row-200 abort; no caller reads it)
+
+batch 22, 2026-10-19: db07 PATHWIN.C - 100% in WIZARDS and MAGIC (503f), 4th compile (DEAD module: no caller)
+  FORM  a 2-D far array parameter 'unsigned char (far *map)[60]': map[y][x] loads ES:BX first and adds the row, then
+        the column (les bx / add bx, y*60 / add bx, x) - a flat map[y * 60 + x] computes the index first (add ax / mov
+        es); the decompile shows both as one index
+  FORM  leaf functions put register variables in CX too (cell counter in Path_Win_Search / Path_Win_Blocks, the edge
+        count in Path_Win_Block_Edges); local pointer aliases 'prev = path_win_prev; cost = path_win_cost;' land in
+        SI / DI ([bx + si] / [bx + di] addressing)
+  FORM  equal use counts: the EARLIER declared variable gets SI (j declared before i -> j = SI, i = DI)
+  FORM  Path_Win_Search (1830 bytes, 9 copies of the relaxation block) matched at the first compile, generated by a
+        script from one block - the original is likely the same copy-paste
+  DATA  PATHWIN.C defines path_win_edge_ofs[5] = {2, 1, 3, 0, 4} (DS:704c), the module's only data
+  NAME  db07:0a56 Path_Win_Coarse -> Path_Win_Leg, db07:0d04 Path_Win_Refine -> Path_Win_Blocks (what they do:
+        one 15 x 15 window leg; the 12 x 8 block-grid route); path_win_list (DS:cc2e) new, both programs
+
+batch 23, 2026-10-19: 16d5 EMSLBX.C - 100% in WIZARDS and MAGIC (1643), 7th compile, 32 functions
+  FORM  NO prototype for EMS_Named_Handle / EMS_LBX_Load_Entry_Data in the original: calls pass 2 / 3 and 6 / 5
+        arguments (the dead Range_Core passes no 'reserved' flag - the callee reads stack garbage);
+        '#pragma warn -pro' keeps BCC from stopping at its warning limit (no effect on code)
+  FORM  'Heap_Block_Valid(block == 0)' (or / jne / mov ax, 1 - a compare as a value) vs '!block' (neg / sbb / inc):
+        the original has a misplaced parenthesis, meant 'Heap_Block_Valid(block) == 0' - in all 3 loaders
+  FORM  an EMS offset 0 written as two int zeros '0, 0' (three separate xor / push) where '0L' gives xor ax / xor dx
+  FORM  register choice by declaration position: 'result' declared FIRST gets DI over 'handle' (same use counts),
+        while the stack order of the other locals is unchanged
+  DATA  ems_reserved_pages = 40, ems_lbx_count = 0, char ems_marker_name[] = "YO MOMA" (DS:762c), then literals -
+        the second "YO MOMA" is "YO MOMA\0\0" (10 bytes, an 8-character EMS handle name + padding: not merged),
+        and the number separator is "  " (two spaces)
+  STRUCT EmsLbxEntry.reserved is a signed char (cbw)
+  QUIRKS (comments, all latent or dead): Load_LBX returns an uninitialised handle when EMS is off / the table full;
+        the entry loaders round paragraphs up on (paragraphs & 15) not (bytes & 15) and lose the last 32 KB of an
+        exact multiple; Cache_LBX_Core reads (left % 16) bytes of the last page and never closes the file
+  NAME  ems_frame_handle (e5f0), ems_required_k (e7dc), ems_marker_name (762c); MAGIC + ems_frame_mark
+
+batch 24, 2026-10-19: d677 NOTIFY.C - 100% in WIZARDS and MAGIC (4d5b), 6th compile, 22 functions (11.8 KB)
+  FORM  explicit locals take registers BEFORE explicit params; equal-count auto choice goes to the earlier declared
+        (Zoom_Step_Rect: x1 declared first -> DI, steps register param -> SI)
+  FORM  '(long)zoom_step * (x1 - cx)' - the long multiply loads its first operand into CX:BX after the second
+  FORM  a call returning long needs the prototype (Random_Get_Seed): without it BCC adds 'cwd'
+  FORM  'if (i == last) {f(a, 1); f(b, 1);} else {f(a, 0); f(b, 0);}' cross-jumps into 'mov ax, k / jmp / push ax'
+  DATA  6 five-byte text palettes, box offsets, notify_box_mode, two [4][5] palette tables, three [5] gem / text
+        offset tables, zoom_step = 1, then "RESOURCE" "" "Y" "N" ESC (DS:6f78..6ff3)
+  NAME  Notify_Picture_Box_Centered_Redraw -> Notify_Pic_Box_Centered_Redraw (32-char limit); 37 new globals;
+        source_names needs the DS comment AFTER the ';' of a multi-line initialiser
+  BUG   #389 Confirm_Box ignores Esc, #390 Zoom_Step_Rect bottom clamp 315, #391 Window_Zoom_Draw copy-paste lines,
+        #392 Notify_Picture_Box dim zeroed / wrong redraw in mode 1
+
+batch 25, 2026-10-19: 2072 PIC.C - 100% in WIZARDS and MAGIC (1ee7), 7th compile, 46 functions (13.1 KB)
+  FORM  TAIL MERGING (the codegen's own cross-jumping, it happens with -O- too) is not purely local: a 'switch' whose
+        cases END with a '?:' expression gets its identical case tails merged pairwise (case 2 -> 4, case 3 -> 1),
+        and that also turns on pairwise merging in an EARLIER switch of the same function (case 2 -> case 3). The
+        game had only the plain merge (the last case into the first case's identical tail). The original wrote
+        those four divisions as 'if (c) v = A / (x1 - x0); else v = A / (x2 - x0);' - the if-branch is
+        cross-jumped into the else's identical tail, giving the SAME bytes as '(c ? x1 : x2) - x0' but no
+        case-level merging. Synthetic tests (scratch synth.py): a switch alone merges its last case into case 1
+        only; a later switch with '?:' tails makes both switches merge every identical pair. Compiler memory size
+        (DOSBox 2 / 4 / 16 MB) and -O / -O- / -Od / -Ob / -Z- do not change it.
+  FORM  register choice by declaration position again: a1 (DI) and a2 have equal use counts - declaring a1 BEFORE a2
+        gives it the register (it takes no stack slot, so the move is free)
+  FORM  inline-asm functions with 'register' params (Pic_Create_Blank width = SI, Draw_Pic_Frame x / y = SI / DI)
+  FORM  the frame-advance poke is 'if (hdr.frame >= hdr.frame_count) Poke(loop) else Poke(frame)' (branch order)
+  FORM  '(int)(LONG / (len2 - 1)) / (long)(xs[2] - xs[0])' and '(int)(LONG / ...) * height': the game truncates
+        a long quotient to int mid-expression (cwd after LDIV@ / imul instead of LXMUL@) - written as casts
+  FORM  'x = x & 0x7fff' (mov ax, si / and / mov si, ax) vs 'x &= 0x7fff' (and si, ...)
+  FORM  Draw_Bitmap passes Pic_Blit_Planar a literal 0 as its 7th argument (skip) - easy to miss in the decompile
+  STRUCT LbxPicHeader is 18 bytes (the local copies leave 2 bytes after +0x0e): +0x10 full_frames, +0x11 remap
+        (i8); frame is i16 (signed jl against frame_count)
+  DATA  none (no initialised globals or literals); anim_lbx_name (DS:e860) is BSS
+  NAME  anim_lbx_name new (both programs); Anim_Load_To_EMS comment corrected (+0A / +0C, not +6 / +8);
+        Pic_Draw_EMS_Frame args are (x, y, pic, frame)
+  BUG   #378 (warp y range) confirmed in source; new #393 Pic_Shift_Rows_H copy-paste (no visible effect),
+        #394 Pic_Keep_Rect off by one (dead), #395 Anim_EMS_Read_Frame error names an uninitialised buffer,
+        #396 Pic_Draw_Rect_Outline header offset + wrong stride (dead)
+
+batch 26, 2026-10-19: 3151 SOUND.C - 100% in WIZARDS and MAGIC (2fc5), 6th compile, 12 functions (3.8 KB)
+  MAP   not a partial twin: MAGIC has Sound_Load_Data at 2fc5:0006 too (Ghidra made no function there, so the module
+        map said "no Sound_Load_Data"); every byte that differs between the two segments is an address. Added the
+        function to re/current_MAGIC/functions.tsv + magic_names_hand.tsv; magic_modules.tsv says 'whole' now
+  FORM  an UNUSED local takes no stack slot (BCC drops it); a local merely MENTIONED in a statement with no code
+        ('x;', '&x;') gets one. A frame gap no instruction touches = such a mention (synthetic test u1-u5).
+        Sound_Init has one (PROVISIONAL 'unused;')
+  FORM  'unsigned - 2' compiles as 'sub ax, 2'; 'int - 2' as 'add ax, -2' (timbre_size is unsigned)
+  FORM  equal use counts: a param vs a local - Sound_Play: type declared before timbre gets DI (auto, no 'register':
+        an explicit register local would take SI before the param)
+  FORM  the AIL 2 calls with the AIL.H prototypes (far cdecl; char far * / void far * params, describe_driver
+        returns a far pointer); string helpers WITHOUT prototypes (strlen compared signed; isalnum / toupper are
+        library calls, not <ctype.h> macros); DOS_File_Seek / DOS_File_Read_Far called with 4 / 5 and 5 / 6 words
+  FORM  case bodies identical to an earlier case become 'jmp' stubs (case 3 = case 1 in Sound_Init's card switch,
+        cases 1, 7, 14 in Sound_Fatal_Error) - written out in full, BCC merges them
+  DATA  the module's data starts with three ints no code reads (5, 6, 95), then the driver / handle state, a second
+        -2 handle and two zero words nobody reads, music_mode, "AIDT", the radix table, the BLASTER target pointers,
+        then the literals ("" of AIL_shutdown merged into the NUL of "SNDDRV.LBX", " sound file" into the tail of
+        "Not a valid sound file")
+  NAME  music_drvr_image / digi_drvr_image are far pointers (were _off / _seg pairs); new timbre_size, timbre_entry
+        (struct TimbreEntry), drvr_suffix, timbre_data, sound_xmidi_data, timbre_file_name, timbre_file,
+        music_state_table; both programs
+  BUG   #397 Sound_Fatal_Error strcpy-over-strcpy: driver errors show only "reconfigure hardware options"
+
+batch 27, 2026-10-19: 1584 LBX.C - 100% in WIZARDS and MAGIC (14f2), 5th compile, 17 functions (4.4 KB)
+  MAP   whole twin (the 409 / 415 LBX_Error sizes were Ghidra function bounds); magic_modules.tsv corrected
+  FORM  the 9 wrappers have no 'return': they call the core and leave its AX (a return adds 'jmp exit')
+  FORM  LBX_Error has no prototype (3 / 4 arguments): an old-style 'void LBX_Error();' declaration
+  FORM  the LAST case of a switch without 'break' is not tail-merged; with 'break' BCC merged it into the shared
+        strcat (game: LBX_Error case 16 written out)
+  FORM  'entry >= lbx_entry_count' signed (jl): the count is int
+  FORM  three near-identical loaders with different local buffers (path 60 / 80 bytes) and small differences
+        (only Records_Core re-tests the handle; Records_Near reads (count x size) % 60000 bytes)
+  DATA  lbx_loader_ready = 0, lbx_file_handle = -1, lbx_header_mode = 0 (never set), char lbx_path[50], then
+        ".LBX", ".LBX [entry ", "] ", the LBX_Error messages
+  NAME  lbx_name_buf -> lbx_path (it is the fallback directory); lbx_open_name (DS:e5d6) new, both programs
+  BUG   #398 LBX_Error case 14 runs on into case 15
+
+batch 28, 2026-10-19: 2459 PICDEC.ASM - 100% in WIZARDS and MAGIC (22cd), 2nd assembly, 19 procedures (2.7 KB)
+  MAP   whole twin: MAGIC's Pic_Dissolve / Pic_Random_Mod sit at 22cd:07e7 / 09e9 (no Ghidra functions there;
+        added to the MAGIC function list) - the "missing functions" of the module map were Ghidra misses again
+  FORM  hand-written TASM: 'PROC USES si di es ds' + args; code-segment words between the procedures (decoder
+        counters, blit rows / columns / skip, scale steps, the dissolve seed + 256-byte threshold table, the
+        module's own LFSR state 2893h / 000Ah); a forward far call assembles as push cs / call near / nop
+  DATA  dw 0, plane bits 1 2 4 8, dw 0 (DS:78ac-78b3) - the words around the plane table belong to this module
+  BUG   #399 Pic_EMS_Next_Pages maps with whatever DX holds (its PICEMS twin loads the handle)
+
+batch 29, 2026-10-19: 2579 INPUT.ASM - 100% in WIZARDS and MAGIC (23ed), 3rd build, 49 procedures (3.6 KB)
+  MAP   whole twin: four MAGIC procedures (Input_Record_Clear and three Ghidra never found in EITHER program:
+        Mouse_Available 03c6, Input_Record_Paused 0e11, Input_Record_Play_Next 0e63 - PROVISIONAL names) added to
+        both function lists
+  FORM  the key lookup is 'mov dx, offset alt_keys_last / add dx, 4' (the last entry's address + one entry) - the
+        MAGIC copy (table 2 bytes later) shows it is an address, not a size constant
+  FORM  the save / restore / blit procedures are copy-paste families, generated from one template each
+  TOOL  match_fixups: a SEGMENT fixup to the module's own code (asm 'mov ax, SEG Mouse_Event_Handler', and the
+        segment half of far pointers to own functions in C) is now checked (= the segment, or the overlay stub of an
+        overlaid function) - 8 such fixups in older C modules were unchecked before
+  DATA  the mouse state from DS:78b8 (position 158 / 100, one region), two 600-word save-under buffers, the
+        recorder words up to DS:8249
+  BUG   #400 Mouse_Restore_Under_Back restores from the front buffer
+
+batch 30, 2026-10-19: 19b4 TEXT.C - 100% in WIZARDS and MAGIC (1922), 3rd compile, 69 functions (6.2 KB)
+  MAP   whole twin (the 405 / 419 Print_Text_Core sizes were Ghidra bounds)
+  FORM  'text_cursor_y += Far_Peek_Word(...)' is 'add [mem], ax' only when Far_Peek_Word has NO prototype (int); with
+        the unsigned prototype BCC loads / adds / stores - this module calls it unprototyped
+  FORM  sparse switches (codes 1-4, 0Dh, 14h, 15h, 19h, 1Dh) compile to a value table + address table searched with
+        'loop'; shared bodies show as repeated addresses (0Dh = 14h, 19h = 1Dh; Print_String_Clipped: all five
+        line codes stop); the _To_Pic core has no 19h case
+  FORM  Print_Char_Clipped reads the font metrics with inline asm, so its x / y are explicit 'register' params
+  FORM  the getters keep 'r = global; return r;' (store + reload + jmp), the print wrappers 'result = ...; return
+        result;' - same in all 20 wrappers
+  DATA  text_shadow_color = 0, text_shadow_pass = 0 (DS:783c)
+
+batch 31, 2026-10-19: 2666 UI.C - 100% in WIZARDS and MAGIC (24da), 85 functions (38.3 KB), compiled in 9 parts
+        (most parts matched on their first compile; UI_Poll_Input 3.9 KB, UI_Run_Dialog 2.7 KB and
+        UI_Find_Control_In_Direction 3.5 KB first time)
+  MAP   whole twin - the last module both programs share (MAGIC's Input_Record_Stop_Playback at 24da:0f92 was
+        missing from its function list); MAGIC's segment base is 2 bytes later (module at 24da:0002)
+  FORM  'default: break;' as the last case shows as the dispatch's no-match jumping to a lone 'jmp end' (5
+        switches); with it the tail-merge targets change (UI_Hotkey_Control: dy = 0 tails merge into the FIRST
+        case, the others into the last) - test with the variants harness, not by reasoning
+  FORM  a non-merged pair of identical tails = different nesting: UI_Draw_Controls case 10 is 'if (enabled)
+        Print_Text(..); else { Font_Select(..); Print_Text(..); }' (the then-branch cross-jumps INTO the else's
+        call), not 'if (!enabled) Font_Select(..); Print_Text(..);'
+  FORM  'for (c++; cond; c++)': the init is cross-jumped onto the increment (the loop is entered by a jmp to the
+        'inc si') - UI_Move_Cursor_To_Control; '++c < n' / 'n - 1 > ++c' both compile differently
+  FORM  a char compared with a key code >= 80h: the source writes '\x91' (char constant) - a byte cmp in an if, a
+        'cmp ax, 0FF91h' after cbw in a switch
+  FORM  inline asm in Slider_* / UI_Draw_Controls (push es ... pop es through a far value pointer): only explicit
+        register variables there, and register LOCALS take SI before register params - Slider_* copy the index
+        into a register local first ('register int control = index;')
+  FORM  a far pointer parameter passed as two words: UI_Add_Slider(.., int far *value, ..) with
+        'if (FP_SEG(value) == 0) { _AX = _DS; *((unsigned *)&value + 1) = _AX; }' - the only form found that gives
+        'mov ax, ds / mov [bp+18h], ax' and keeps width / height in CX / DI (two int params put the segment in CX;
+        '_DS' alone gives 'mov [bp+18h], ds')
+  FORM  '(long)a * b': the LEFT operand is evaluated first into CX:BX ('(long)percent * range'); a constant operand
+        goes last ('100L * x' puts x in CX:BX)
+  FORM  'len -= len' is 'sub si, si' (a real bug, #401); 'x = x + 1' on globals (inc via AX) in every adder
+  DATA  DS:824a..829b: 30 ints, the MouseRegion {0,0,0,319,199,0}, "NOT IN USE" (no reader); literals "rb", "wb",
+        "" (merged into rb's NUL at 829e), "\x05", "\x06", "_" (DS:82a2..82a7)
+  CORR  SOUND.C (batch 26) declared DS:82a2/82a4/82a6 as three unused ints 5, 6, 95: they are UI.C's literals "\x05",
+        "\x06" (the list dialog's scroll-button hotkeys) and "_" (the edit cursor) - removed; SOUND.C still 100%
+        in both programs with its data starting at DS:82a8
+  NAMES ui_draw_color1/2 -> ui_press_dx/dy, UI_Set_Draw_Colors -> UI_Set_Press_Offset (a pressed label's x / y
+        shift), ui_hover_drawn -> ui_edit_active, DS:828a / 828c = ui_show_control_boxes / ui_show_help_boxes (the
+        developer keys ` and ~, non-release builds); 9 new data names (source_names.py)
+  BUG   #338 confirmed; new #401 (over-wide default text cleared), #402 (second click on the edited save name
+        leaves the edit active on control -1), #403 (quirks)
+
+batch 32, 2026-10-19: list C part 1 - four MAGIC-only modules, 100% in MAGIC (no WIZARDS twin)
+  5624 CREDITS.C (2 fns, 522 B, 2nd compile): the credits table char *credits[48][2] = {role, name} - its strings
+        follow it in the data (duplicates merged by -d); the palette local is 4 bytes (2 used)
+  557e INTRO.C (6 fns, 1.2 KB, 1st compile): intro_frames[13]; five fade loops
+  518e REGIONS.C (Region_Bits_Pack, 2.5 KB, 2nd compile): y0 / i explicit 'register' (auto allocation gave DI to
+        the window row); bugs #366 / #367 are the source as written
+  1320 MAGIC.C (9 fns, 3.2 KB + 10 KB data, 3rd compile): main() + the main menu, and MAGIC.EXE's game tables
+        (DS:00aa .. 28e3): unit_types (198 UnitType), race_table, name tables, AI weights, difficulty, mouse regions,
+        their 190 strings, then the code literals. The data matched on the first compile: string pointers found
+        by value (string starts + 2 tails: "" and "Life"), and their first-use order = the string pool order
+  DATA  DS:00aa..00ed (36 bytes + 16 ints, no reader found) is identical in WIZARDS at the same address: both main
+        modules start with the same declarations
+  FORM  sparse switches in main(): the value / address tables follow the function in REVERSE switch order; the
+        identical case bodies (music driver 0 / 1 / 10h ...) are tail-merged
+  FORM  'if (cond) { } else X();' gives 'jne X / ... / jmp end' (the JENNY check)
+  NAMES Magic_Main -> main; struct ConfigMom added (CONFIG.MOM, PROVISIONAL field names)
+
+batch 33, 2026-10-19: list C part 2 - 522e GAMESTRT.C (17 fns, 11 KB code + 762 B data), 100% in MAGIC
+  522e GAMESTRT.C: new-game setup after the world is built (AI wizards, spell libraries, power, relations, realms,
+        heroes, items, events). 9 functions before the compact, the other 8 after it; Spell_Lists (3.1 KB) and
+        Fix_Books on the 1st compile apart from one addressing form; Wizard_Casting_Skill = WIZSTATS.C's text
+  FORM  2-D MEMBER ARRAY: Wizard.spell_library is char [6][40] in the original. 'a[r * 40 + k]' and 'a[r][k]'
+        compile the same (base + r*40, then + k), but with a constant on the column BCC re-associates the flat form
+        ('a[r*40 + k + 10]' adds k to r*40 first); only 'a[r][k + 10]' gives base + r*40, + k, disp +10
+  FORM  long locals follow the 'x = x | K' (via DX:AX) vs 'x |= K' (in memory) rule too; 32-bit flag sets with
+        AX = high, DX = low word in BCC's long codegen
+  FORM  else-if chain with complete branches vs 'else { if/else; shared tail }': the shared-tail form lets an
+        earlier branch's identical last store cross-jump into it (Hero_Item_Slot_Types; variants harness)
+  FORM  register tie again (Random_Weighted_Pick): total and pick have equal use counts; declaring total first
+        gives it DI (register variables take no stack slot, so the frame is unchanged)
+  DATA  GameStart's data block DS:354c..3846: personality_weights[6][6], objective_weights[6][5] (Arcane rows 0),
+        hero_templates[35] (new struct HeroTemplate, 18 B); the next block (GAMEDATA.C) starts at 3846. Found with
+        scratch mdsref.py (code refs per DS range); 'mov ax, 3840h' sizes and a code jump table were false hits
+  STRUCT Wizard.spell_library i8[240] -> i8[6][40] (WIZSTATS.C [book][slot], GAMEDATA.C spell_library[0] + n:
+        both still 100%); HeroStats.abilities_a / abilities_b -> one u32 abilities (522e copies it as a long,
+        WIZARDS 9748:0b98 tests it as a long); struct HeroTemplate added
+  NAMES personality_weights, objective_weights, hero_templates (PROVISIONAL); magic_source_names skips data_XXXX
+        placeholders (DS:8130 / 843c: written once by Wizards_Setup, read nowhere in MAGIC)
+
+batch 34, 2026-10-19: list C part 3 - 3da3 NEWGAME.C (38 fns, 23 KB code + 2168 B data), 100% in MAGIC
+  3da3 NEWGAME.C: the load-game screen and every new-game screen (options, wizard, portrait, name, banner, race,
+        custom picks, spell picks), the presets, the hand-off to WIZARDS.EXE. 31 of 38 functions on the first
+        compile; data DS:2abc..3333 (globals: mouse region, name-box colours, wizard_presets[15], the start-spell
+        tables, default_spells, retort_requirements[18][7], custom_retort_slots; then 60 local-array initialisers;
+        then the literal pool) identical once the last local was fixed
+  FORM  STACK LAYOUT RULE (BCC -S experiments, scratch bccS.py E1/E2): locals of <= 10 bytes are laid out first,
+        in declaration order from bp-2 down; locals of >= 12 bytes (arrays, structs) follow below them, also in
+        declaration order. Explains int[9] / char[5][10] arrays initialised first yet sitting at the frame bottom
+  FORM  initialiser data in the data block is byte-packed for char arrays but word-aligned for int arrays: a pad
+        byte before a run tells int[] from char[] (twelve 0xff = int unused_ff[6] = { -1, .. })
+  FORM  a register variable in CX where the game has SI / DI = BCC treats the function as a leaf: a call is missing
+        from the source (Ghidra's listing had cut Wizard_Apply_Preset's final strcpy)
+  FORM  nested 'if (c) F(2, a); else F(2, b);' inside an if/else looks like F(2, c ? a : b) but keeps the outer
+        else's identical call apart; a real ?: there gets merged with it (SelectRace_Redraw)
+  FORM  strlen() is unsigned: the game's signed 'cmp ax, 1 / jge' is '(int)strlen(s) < 1'
+  FORM  'default: break;' at the end of a switch again shows as the dispatch's lone 'jmp end' (two switches)
+  FORM  x = x + y (via AX) vs x += y (in memory) told apart again for globals (custom_picks_left both ways)
+  NAMES name_box_colors, retort_requirements (PROVISIONAL); data_2c1a (2 .. 11, no reader found) stays unnamed
+
+batch 35, 2026-10-19: WorldGen (MAGIC 4358, 54 functions, 40890 bytes + data block) - 100% in MAGIC
+  FORM  a switch with no breaks (Lair_Create's guardian realm: every branch ends as nature) and cross-jumped
+        identical cases ('case 2: realm = 20; break;' compiled as 'jmp case1')
+  FORM  'budget = (long)budget * (difficulty + 1) / 4' / 'treasure = (long)treasure * 4 / (difficulty + 1)' (*4 ->
+        rtl_shl32); 'x - 1' on a byte compiles to 'add al, 0ffh'
+  REG   Lair_Create: 'register int treasure' put the parameter lair in DI; with no register keywords BCC gives
+        lair SI and treasure DI (the game) - explicit register is not always right
+  ALIGN the jump-table pad follows BCC's first-guess size counter, not the final offsets (see PLAYBOOK [35]):
+        Place_Fortresses' table needed one long branch written as a goto (the Myrran race test or the difficulty
+        test - both give the same bytes; the Myrran one chosen, PROVISIONAL). Proven with toy files (scratch
+        bccC.py): structured long jcc vs goto flip the pad; BCC -B, TASM /m5 and BC++ 3.0 all ruled out (far worse)
+  FORM  a function that returns a value on one path and falls off the end otherwise is 'int' (BCC warns 'should
+        return a value'): Place_Neutral_Cities, Progress_Bar, Unit_Create (return 0 early)
+  FORM  'if (c) return 1; return 0;' - an 'else' before the last return adds a dead jump the game lacks; repeated
+        'return 1' blocks (and identical case bodies / statement tails) are CROSS-JUMPED, to an earlier OR a later
+        copy, so a case or return that is only 'jmp X' was written out in full; case order = code order (Gen_Terrain_
+        Edges 2, 4, 8, 6, 10, 12, 14; Mineral_Pick_B / C keep repeated kinds in separate cases)
+  FORM  char == char compares bytes ('cmp al, es:[bx]'); CBW on both sides + 'cmp dx, ax' = an int on one side
+        (Place_Neutral_Cities' unit race tests: PROVISIONAL (int) cast)
+  FORM  unprototyped calls show in the pushes: far_strcpy(name, names[pick], 0) pushes the far dst as 2 words and
+        the near src + 0 = the real 4-word far_strcpy(dst, dst_seg, src, src_seg) of DOSIO.ASM; WORLDGEN.C has no
+        prototype for it (GAME.H's 3-argument one is not in scope)
+  FORM  a buffer of two 256-int tables is int (*)[256]: variants[1][mask] gives a constant +0x200 displacement,
+        variants[mask + 256] adds first (Gen_Shorelines); index term order: [y + dy][dx + x] (Gen_Desert_Edges)
+  FORM  LBX_Load_Records_Near(name, entry, dest, first_record, count, size): CITYNAME uses entry 0, record = race
+  REG   leaf functions: register variables in CX, then SI / DI, and DX (City_Catchment_List: count SI, dx DI, dy CX,
+        nx DX); Tower_At's index sits in DX because CL is the shift count; explicit 'register' for x / y where BCC
+        would give another variable the register (Gen_Terrain_Variety, Explore_Start); otherwise the earlier
+        declaration wins a tie (Build_Movement_Maps: x declared before y)
+  STRUCT UnitType.upkeep (CBW load, Pick_Creature_Of_Realm) and Unit.level (signed jle, Unit_Create) are signed chars
+  TYPES the map pointers are typed in WORLDGEN.C ((far *)[40][60] etc., see WORLDGEN_4358_NOTES); GAMEDATA.C /
+        SAVELOAD.C still declare void far * (to unify)
+  DATA  WORLDGEN data DS:3334..34c0 (0x18d) + pad 34c1; 34c2..34c3 (zeros) belong to Notify 4d5b (check there)
+  NAMES lair_site_names, river_variants (magic_source_names --apply)
+
+batch 36, 2026-10-19: LINK TEST - MAGIC.EXE byte-identical (report work/reports/LINK_TEST_MAGIC.txt)
+  SETTING  overlaid modules: BCC -Y as well (code bytes equal; own-function far pointers go through the stub thunks)
+  SETTING  TLINK 5.1 /c; object order C0M, MAGIC, /o 14 overlays /o-, resident in segment order (AIL between UI and
+           SOUND); CM.LIB before OVERLAY.LIB; link date 3 March 1995 (_EXEINFO_ day, month, year)
+  FORM     overlay thunk order = the module's first-declaration order of its functions (prototype block order)
+  FORM     BSS: Borland lays _BSS out in REVERSE declaration order (int aligned, char not); uninitialised globals are
+           public _BSS definitions (not communals)
+  DATA     DGROUP 0xaa4a: _DATA (all module blocks in link order) | _INIT_ 0x18 | _EXIT_ 6 | _BSS (Simtex 52b2..a90f,
+           runtime 0x13a); MAGIC.C BSS = a reshuffled copy of WIZARDS' main-module globals
+  STRUCT   Wizard.defeated_wizards u8[2] (bit array: Bit_Set_Near in WIZARDS; MAGIC clears byte 0 of wizards[5])

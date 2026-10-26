@@ -1,0 +1,128 @@
+DRIVING THE DOSBox-X DEBUGGER FROM A SCRIPT - notes from testing Master of Magic 1.31
+=====================================================================================
+How the project's regression cases set breakpoints and watchpoints in the running game, read memory and use save
+states. Everything below was tested on WIZARDS.EXE / MAGIC.EXE in DOSBox-X between 2026-10-17 and 2026-10-23
+(DOSBox-X 2026.10.01, then a CI nightly of the main-ai branch for the save-state commands). The harness scripts
+themselves (a Python client and the test cases) are not in this repository; this file is what one needs to write
+one.
+
+
+1. THE CONTROL CHANNEL
+-----------------------
+DOSBox-X has a built-in debugger, and current versions can let a program drive it over TCP. With
+
+    [dosbox]
+    mcp_server=58991
+
+DOSBox-X is the TCP CLIENT: it connects to 127.0.0.1:58991 and retries until something listens. The listener is your
+script (a plain socket is enough; the separate "dosbox-x-mcp-server" program upstream turns the same channel into MCP
+tools for an AI agent and is not needed). Upstream: github.com/joncampbell123/dosbox-x, PR #6519 (protocol), the
+debugger's README.debugger (commands).
+
+Protocol - text lines, one request at a time:
+    REQ <id> PING                 -> BEGIN <id> / OK / PONG / END <id>
+    REQ <id> BREAK                -> stops emulation in the debugger
+    REQ <id> EXEC <debugger cmd>  -> runs one debugger command, returns what it printed
+RUN / RUNWATCH / VRT are acknowledged before emulation resumes. There are NO pushed events: a breakpoint hit is found
+by polling (CS:IP stays on the breakpoint address).
+
+Useful commands
+    BP seg off, BPINT nn [ah], BPLIST, BPDEL n|*     code / interrupt breakpoints
+    BPM seg:off, BPLM linear                          memory-change breakpoints (real mode / linear address)
+    EV expr                                           read registers or expressions ('EV CS IP' reads both at once)
+    MEMDUMPBIN seg:off count file, MEMREAD            dump memory to a file / hex bytes in the reply
+    LOGC n / LOGS n / LOG n / LOGL n                  log the next n instructions to LOGCPU.TXT
+    STEPIN                                            single step
+    SAVESTATE / LOADSTATE [slot|file.sav]             save states (debugger stopped first)
+    DOS MCBS / DOS EMS / DOS XMS / IDT                system tables
+    RUN / VRT                                         resume / run to the next vertical retrace
+MEMREAD, STEPIN, SAVESTATE and LOADSTATE are newer than release 2026.10.01: they need a build that includes PR #6683
+(merged 2026-10-17; a main-ai nightly, or a release after 2026.10.01). PR #6682 in the same build fixes loading a
+state (with 2026.10.01 the Host+L hotkey loaded a state and DOSBox-X exited on the next timer tick).
+A read-only harness never needs SM / SMV / FM / SR (they write memory or registers).
+
+
+2. GOTCHAS (each one cost a debugging session)
+----------------------------------------------
+- Debugger numbers are HEX. 'LOGC 20000' logs 0x20000 instructions; 'MEMDUMPBIN ... 64' dumps 100 bytes.
+- Command operands are EXPRESSIONS: 'BP 2E1C AC' and 'BP 2E1C CF' set 2E1C:0000, because AC / CF are read as flag
+  names. Always write addresses as 4 hex digits with a leading zero where needed (%04X).
+- BPLIST shows the newest breakpoint first, and its numbers are hex too ('2E. BP 1234:00C5'); BPDEL takes that
+  number. A parser that expects decimal digits misses every breakpoint numbered 0A-0F, 1A-1F, ...
+- Breakpoints take effect when the debugger resumes: BREAK, set them, RUN.
+- Deleting and re-adding the breakpoint the CPU is stopped on makes the next RUN stop again at once: change only the
+  breakpoints that differ.
+- Two separate EV requests while the game runs pair values from different moments: read CS and IP in one 'EV CS IP'
+  and re-check after a short delay before calling it a hit.
+- DS is not DGROUP inside some routines: find the game's data segment by searching memory for a known string of the
+  data segment instead of trusting EV DS.
+- Watchpoints (BPLM, one per byte) stop right AFTER the writing instruction; the BPLIST entry shows the address and
+  the value it compares with. Linear addresses above 1 MB work.
+- The debugger has no conditions: a conditional breakpoint or a tracepoint is a check in your script at each stop,
+  one round trip (tens of milliseconds) per stop.
+- Use core=normal while debugging (single-stepping may not work on the dynamic core).
+- STEPIN into the overlay loader crashed the nightly build.
+- The debugger console window belongs to the DOSBox-X process: a script looking for the game's window must skip it
+  (window class ConsoleWindowClass).
+- Screenshots of a hidden or background window: PrintWindow works while the game runs.
+
+
+3. ADDRESSES: RUNTIME VS THE MAP
+---------------------------------
+The map (index.html) and the source comments give WIZARDS.EXE addresses as segment:offset with the program loaded at
+segment 1000, and DGROUP at 36aa. At run time DOS loads the program elsewhere; for resident code:
+    map segment = runtime segment + (0x36AA - runtime DGROUP segment)
+(compute it per run). Example: runtime 0CA8:00CC with DGROUP 2ECE -> map 1484:00CC.
+
+
+4. BREAKPOINTS IN OVERLAY CODE (VROOMM)
+---------------------------------------
+Most of the game's modules are VROOMM overlays (115 in WIZARDS.EXE): their code is copied into an overlay buffer at
+changing segments, evicted, and reloaded elsewhere many times a second on some screens. What worked:
+- Each overlaid module has a resident STUB segment: a header and a table of thunks, one per entry function. An
+  unloaded entry's thunk is 'INT 3Fh' (CD 3F, the overlay manager); after the module is loaded, each thunk is patched
+  to 'JMP FAR off:seg' (EA ...) - one at a time, as each entry is first called, so testing only the first thunk
+  misses loaded modules. The stub header word at +0x10 holds the overlay's current load segment (0 when not loaded):
+  read it to know where the module is.
+- Loading ONE overlay can MOVE another that is already loaded (the manager compacts its buffer). A breakpoint left at
+  the old segment silently stops working: after every overlay load, re-check that each wanted address is still armed
+  where its overlay now is.
+- THUNK TRACKING (the method that works best): put breakpoints on the stub thunks of the module you want (resident,
+  fixed addresses). A call into the module from outside stops there once; then place the real breakpoints at the
+  overlay's current segment. If the overlay is not loaded yet, arm one more stop at the overlay manager's exit
+  (Ovr_Int3F_Handler + 0x5C, resident: after the load, before the stub re-runs; ES there = the stub segment of the
+  overlay just loaded) and place the breakpoints there - otherwise the first call runs the whole entry, and every call
+  inside its own module, without breakpoints. Each real hit must be re-checked against the current overlay map (an
+  evicted overlay leaves other code at the armed address).
+- Stopping at the overlay manager on EVERY load is too slow: the overland map loads overlays constantly and a turn
+  change hundreds of times; with that stop armed a turn change did not reach its target in 150 s, with thunk tracking
+  it did in 7.6 s. Hot modules (tile helpers called by every map redraw) should not have their thunks armed once
+  their overlay is in.
+- INPUT IS LOST while the overlay-manager stop is armed on a busy screen (the end-of-turn screen reloads overlays
+  about 2.5 times a second): drop the stop while sending a key or click, then set it again. And arm the breakpoints
+  BEFORE the key that starts the action - a turn change runs in about 2 s.
+- Turn-change code in overlays is still awkward to break on; reading memory before and after the turn is often
+  simpler. Breakpoints suit resident code and single actions (opening a screen, one move).
+
+
+5. MEMORY, SNAPSHOTS, WATCHES
+-----------------------------
+- All code runs in the first 640 KB (real mode; overlays are copied into the buffer from an EMS / XMS cache), but
+  data also lives in EMS / XMS, which DOSBox-X keeps in its extended memory: snapshot all 16 MB to diff states.
+- SAVESTATE / LOADSTATE over the channel take about 0.35 s and ~0.9 MB per state; after a load the screen is restored
+  and the game runs on, with the channel still connected. A test that needs a hard-to-reach situation: build it
+  once, SAVESTATE, then LOADSTATE before each run.
+- State-versus-state memory diffs of one small action show which globals and records it touches; a memory-change
+  breakpoint then names the code that writes a byte.
+- Interrupt breakpoints show what the game does with DOS: BPINT 21 3D (file opens), BPINT 67 (EMS), BPINT 33 (mouse).
+
+
+6. TWO USES THAT PAID OFF
+-------------------------
+- Dead code checked by execution: breakpoints on the entries of all 28 graphics functions that no code references
+  (GRAPHICS_ENGINE.txt section 6); none was hit in a tour of the main screens, while live controls on the same
+  screens were. Support for the static result, not proof for screens the tour did not open.
+- Source line -> code address: compile the module with 'BCC -S' (assembly listing, same switches as the build) and
+  align the listing's instructions with the game's bytes (a conditional jump out of short range is an inverted
+  jcc + jmp; a far call within a segment becomes nop / push cs / near call after TLINK). Then a regression case can put
+  a breakpoint on a line of C.

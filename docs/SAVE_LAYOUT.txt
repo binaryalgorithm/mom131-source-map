@@ -1,0 +1,46 @@
+SAVE FILE LAYOUT - SAVEn.GAM (WIZARDS.EXE / MAGIC.EXE v1.31)
+=============================================================
+Source: the write sequence of Save_Game (src/wizards/SAVELOAD.C, 4558:0000); Load_Game reads the same sequence.
+Offsets are computed from the record sizes; their sum is exactly 123,300 bytes, the size of every v1.31 save checked
+(saves from play, from the world generator and from other projects). Record layouts: the structures in
+src/include/STRUCTS.H, field by field. Written 2026-10-18, names updated to the published source 2026-10-26.
+
+block            offset    rec     count  bytes    contents
+-------------------------------------------------------------------------------------------------------------------
+hero stats       0x00000   12      210    2520     struct HeroStats [6 players][35 hero types] (p_hero_stats; player-major)
+header           0x009d8   2       8      16       8 words: num_players, land_size, magic_setting, difficulty,
+                                                   num_cities, num_units, game_turn, top_unit_in_stack
+wizards          0x009e8   1224    6      7344     struct Wizard [6] (5 wizards + the neutral player)
+terrain          0x02698   4800    2      9600     terrain per square, 60 x 40 words per plane, Arcanus then Myrror
+                                                   (p_terrain_maps; see TERRAIN_IDS_PER_PLANE)
+region bits land 0x04c18   96      2      192      p_region_bits_land: 8 x 12 blocks of 5 x 5 squares per plane, edge bits
+                                                   N 1 / E 2 / S 4 / W 8 = the block can be crossed on foot that way
+region bits water 0x04cd8  96      2      192      p_region_bits_water: the same for ships. Built by the world generator
+                                                   (MAGIC.EXE, Block_Edge_Bits_Build); WIZARDS.EXE only saves and loads
+                                                   them - its block pathfinder is dead code
+landmass         0x04d98   2400    2      4800     landmass id per square (p_landmass_ids, 60 x 40 bytes per plane)
+nodes            0x06058   48      30     1440     struct Node [30]
+fortresses       0x065f8   4       6      24       struct Fortress [6] (x, y, plane, active)
+towers           0x06610   4       6      24       struct Tower [6] (x, y, owner; no plane - a tower is on both planes)
+lairs            0x06628   24      102    2448     struct Lair [102] (encounter zones, tower records included)
+items            0x06fb8   50      138    6900     struct Item [138]
+cities           0x08aac   114     100    11400    struct City [100]; live = header num_cities
+units            0x0b734   32      1009   32288    struct Unit [MAX_UNITS + 9]; live = header num_units
+minerals         0x13554   2400    2      4800     mineral / special byte per square (p_mineral_maps)
+exploration      0x14814   2400    2      4800     exploration byte per square (p_exploration_maps)
+movement cost    0x15ad4   14400   2      28800    per plane 6 movement-type layers of 60 x 40 bytes (p_movement_cost_maps)
+events           0x1cb54   100     1      100      struct Events (p_events)
+terrain flags    0x1cbb8   2400    2      4800     terrain flag byte per square (p_terrain_flags_maps; bit meanings at
+                                                   their readers in the source and in ENUMS.H)
+grand vizier     0x1de78   2       1      2        the Grand Vizier option word
+items in game    0x1de7a   1       250    250      p_items_in_game[250]: prefab item already created
+hero names       0x1df74   16      35     560      struct HeroName [35] (the human's hero names and experience)
+-------------------------------------------------------------------------------------------------------------------
+total 0x1e1a4 = 123,300 bytes
+
+Notes
+- No header, version or checksum: the file is the raw arrays in this order. Load_Game reads the last block (hero
+  names) only when the file is exactly 123,300 bytes (SAVE_FILE_SIZE); otherwise - a save of an older version - it
+  clears the names instead, but only 0x221 of the block's 0x230 bytes (a quirk; harmless).
+- The unit block holds 9 records past MAX_UNITS (allocated too); why 9 is not known.
+- A save slot below 8 also marks the slot as used in MAGIC.SET (struct GameConfig) - see Save_Game.

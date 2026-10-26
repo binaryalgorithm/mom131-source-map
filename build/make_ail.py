@@ -27,7 +27,10 @@ def fill(tpl_path, game):
     head = lines[0].decode('latin-1').split()
     assert head[0] == '@HEADER', tpl_path
     exe_name, start, want = head[1], int(head[2], 16), head[3]
-    exe = open(os.path.join(game, exe_name), 'rb').read()
+    path = os.path.join(game, exe_name)
+    if not os.path.isfile(path):
+        sys.exit('%s not found in %s - give the folder of your installed Master of Magic v1.31' % (exe_name, game))
+    exe = open(path, 'rb').read()
     have = hashlib.sha256(exe).hexdigest()
     if have != want:
         sys.exit('%s: SHA-256 %s - not the v1.31 file this build matches (%s)' % (exe_name, have, want))

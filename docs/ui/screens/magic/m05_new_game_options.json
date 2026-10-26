@@ -1,0 +1,151 @@
+{
+ "prog": "magic",
+ "name": "m05_new_game_options",
+ "note": "route: k:esc w:2 k:n w:2",
+ "time": "2026-10-21 18:43:54",
+ "current_screen": null,
+ "control_count": 6,
+ "controls": [
+  {
+   "id": 1,
+   "type": "button",
+   "x1": 252,
+   "y1": 179,
+   "x2": 315,
+   "y2": 194,
+   "w": 64,
+   "h": 16,
+   "hotkey": 0,
+   "help": -1,
+   "label": "",
+   "help_title": "OK BUTTON"
+  },
+  {
+   "id": 2,
+   "type": "button",
+   "x1": 171,
+   "y1": 179,
+   "x2": 234,
+   "y2": 194,
+   "w": 64,
+   "h": 16,
+   "hotkey": 27,
+   "help": -1,
+   "key": "0x1b",
+   "label": "",
+   "help_title": "CANCEL BUTTON"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 250,
+   "y1": 38,
+   "x2": 315,
+   "y2": 54,
+   "w": 66,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "DIFFICULTY LEVEL"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 250,
+   "y1": 65,
+   "x2": 315,
+   "y2": 81,
+   "w": 66,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "OPPONENTS"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 250,
+   "y1": 92,
+   "x2": 315,
+   "y2": 108,
+   "w": 66,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "LAND SIZE"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 250,
+   "y1": 119,
+   "x2": 315,
+   "y2": 135,
+   "w": 66,
+   "h": 17,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "MAGIC INTENSITY"
+  }
+ ],
+ "help": [
+  {
+   "help": 641,
+   "title": "CANCEL BUTTON",
+   "x1": 171,
+   "y1": 179,
+   "x2": 233,
+   "y2": 192
+  },
+  {
+   "help": 640,
+   "title": "OK BUTTON",
+   "x1": 252,
+   "y1": 179,
+   "x2": 314,
+   "y2": 192
+  },
+  {
+   "help": 642,
+   "title": "DIFFICULTY LEVEL",
+   "x1": 250,
+   "y1": 38,
+   "x2": 315,
+   "y2": 54
+  },
+  {
+   "help": 648,
+   "title": "OPPONENTS",
+   "x1": 250,
+   "y1": 65,
+   "x2": 315,
+   "y2": 81
+  },
+  {
+   "help": 649,
+   "title": "LAND SIZE",
+   "x1": 250,
+   "y1": 92,
+   "x2": 315,
+   "y2": 108
+  },
+  {
+   "help": 653,
+   "title": "MAGIC INTENSITY",
+   "x1": 250,
+   "y1": 119,
+   "x2": 315,
+   "y2": 135
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

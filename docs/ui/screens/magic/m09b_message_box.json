@@ -1,0 +1,20 @@
+{
+ "prog": "magic",
+ "name": "m10_spell_picks",
+ "note": "route: c:250,58 w:1 c:266,188 w:2",
+ "time": "2026-10-21 18:45:07",
+ "current_screen": null,
+ "control_count": 0,
+ "controls": [],
+ "help": [],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

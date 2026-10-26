@@ -1,0 +1,111 @@
+{
+ "prog": "wizards",
+ "name": "w08_cities",
+ "note": "route: map: c:150,9 w:3",
+ "time": "2026-10-21 18:49:24",
+ "current_screen": 3,
+ "control_count": 3,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 30,
+   "y1": 26,
+   "x2": 289,
+   "y2": 34,
+   "w": 260,
+   "h": 9,
+   "hotkey": 0,
+   "help": -1
+  },
+  {
+   "id": 2,
+   "type": "button",
+   "x1": 239,
+   "y1": 182,
+   "x2": 279,
+   "y2": 196,
+   "w": 41,
+   "h": 15,
+   "hotkey": 79,
+   "help": -1,
+   "key": "O",
+   "label": "",
+   "help_title": "OK"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "Esc",
+   "offscreen": true
+  }
+ ],
+ "help": [
+  {
+   "help": 249,
+   "title": "REDUCED MAP",
+   "x1": 42,
+   "y1": 162,
+   "x2": 90,
+   "y2": 194
+  },
+  {
+   "help": 250,
+   "title": "CITY NAME",
+   "x1": 96,
+   "y1": 157,
+   "x2": 220,
+   "y2": 163
+  },
+  {
+   "help": 251,
+   "title": "CITY ENCHANTMENTS",
+   "x1": 98,
+   "y1": 167,
+   "x2": 224,
+   "y2": 194
+  },
+  {
+   "help": 252,
+   "title": "OK",
+   "x1": 239,
+   "y1": 182,
+   "x2": 279,
+   "y2": 196
+  },
+  {
+   "help": 231,
+   "title": "TOTAL GOLD",
+   "x1": 226,
+   "y1": 157,
+   "x2": 257,
+   "y2": 176
+  },
+  {
+   "help": 232,
+   "title": "TOTAL MANA",
+   "x1": 258,
+   "y1": 157,
+   "x2": 293,
+   "y2": 176
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

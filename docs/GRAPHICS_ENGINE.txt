@@ -1,0 +1,139 @@
+MASTER OF MAGIC 1.31 (WIZARDS.EXE) - HOW THE GRAPHICS ENGINE WORKS
+Written 2026-10-17 after a line-by-line read of the graphics, picture, palette, screen and transition modules;
+function names updated to the published source (src/) on 2026-10-26. Addresses are WIZARDS.EXE segment:offset, as
+in the map (index.html). Confidence: everything here was read in the decompile AND checked in the assembly at the
+cited address, unless marked READ (decompile only); the source has since been rebuilt byte-identical, so the C in
+src/ is the reference for every detail below.
+
+1. VIDEO MODE AND MEMORY
+- VGA_Set_ModeX (18f8:0008): BIOS mode 13h, then chain-4 and odd/even off, CRTC dword mode off / byte mode on,
+  all 256 KB cleared with one rep stosw. Plain 320x200 "Mode X" (unchained, 4 bit-planes, no 240-line tweak).
+- Pixel (x, y) lives in plane x & 3 at byte y*80 + x/4. Row addressing uses segment arithmetic:
+  ES = page segment + y*5 paragraphs (= y*80 bytes), so no multiply per row.
+- Video memory map (each page 16,000 bytes per plane = 0x400 paragraphs):
+    A000  display page 0          A400  display page 1
+    A800  "store" page (Screen_Save_A800 / Screen_Restore_A800: the clean background of the current screen)
+    AC00  second store (Screen_Save_AC00 / Screen_Restore_AC00)
+- draw_page_index (DS:76ee) = the page being SHOWN; drawing goes to the other one (Set_Draw_Page, draw segment in
+  DS:76ec). Set_Draw_Page_Front draws straight onto the visible page (used for instant feedback, e.g. pressed buttons).
+- Page_Flip (1fd7:003f): writes the CRTC start-address high byte (0 or 0x40 -> offset 0 / 0x4000), then waits for
+  vertical retrace (the card latches the start address there), then makes the old front page the new back page.
+
+2. BULK COPIES ("BitBlt")
+- All whole-page copies are VGA latch copies: map mask 0xF, graphics bit mask 0, rep movsb of 16,000 bytes - each
+  byte moved carries 4 pixels through the latches. Screen_Copy_Front (front -> back) has a variant that copies in
+  4 chunks and redraws the mouse cursor between them.
+- Fill_Rect (18fc:0020): left / right edge byte columns with partial plane masks (tables DS:76f0 / 76f4), the middle
+  with mask 0xF and rep stosb per row (4 pixels per byte).
+- Lines (Draw_Line): 8.8 fixed-point DDA, rotating the plane mask per x step. Draw_Line_Pattern takes a repeating
+  byte pattern (0 = transparent). Draw_Line_Clip_Pattern clips first (32-bit parametric clip).
+
+3. PICTURES
+Two formats.
+(a) LBX picture (compressed, as stored in the .LBX files; can also be held in EMS):
+    +0 width, +2 height, +4 current frame, +6 frame count, +8 loop-back frame, +0x0A EMS handle (0 = in memory),
+    +0x0E offset of an embedded palette (0 = none), +0x10 delta flag (0 = each frame draws over the previous one),
+    +0x11 remap flag, +0x12 + 4*f = 32-bit offset of frame f (one extra entry = end).
+    Frame data (first byte skipped) is COLUMN-MAJOR. Per column: 0xFF = empty column; else a 2-byte header
+    (bit 15 = RLE column, low 15 bits = data length) followed by packets [pixel count][rows to skip] + pixels.
+    Skipped rows are transparent. In RLE columns a byte >= 0xE0 means "repeat the next byte (b & 0x1F) + 1 times";
+    other bytes are literal pixels.
+    Draw_Pic_Frame draws the current frame straight to the screen and advances it (wrapping to the loop frame) - an
+    animation is just repeated calls. Delta animations rely on the previous frame still being on screen.
+    A read-only scan of all 101 LBX files: 15,792 frames, the largest 65,380 bytes (INTRO.LBX, used by MAGIC.EXE).
+(b) Bitmap ("pic", built at run time): +0 width, +2 height, +4 marker 0xDE0A, +6 frame number, +8 remap flag,
+    pixels from +0x10, also column-major, colour 0 = transparent. Pic_Decode_Frame_To_Bitmap decodes an LBX frame into one
+    (for delta pictures it decodes frames 0..n on top of each other). Bitmaps are then edited in memory: scaled
+    (Pic_Scale_Percent), mirrored, sheared (spellbook page curl), shifted per row / column (node aura wave),
+    outlined, recoloured, cut to a mask, dissolved with noise, drawn warped / rotated (Pic_Draw_Rotated, Cos_Mul /
+    Sin_Mul tables, Atan2_Deg) - and finally drawn with Draw_Bitmap / Draw_Bitmap_Clipped.
+- Drawing is always one vertical column at a time (plane mask changes per x), with movsb / stosb per pixel - no rep
+  instructions for sprites.
+
+4. TRANSLUCENCY, SHADOWS, TINTS (remap tables)
+- 24 remap tables of 256 bytes (remap_tables_seg). Table 0 = "50 % toward black" (shadow); tables 1-23 come from
+  (r, g, b, percent) definitions. Remap_Build_Table blends every colour toward the target colour and stores the
+  NEAREST palette colour (squared RGB distance, only candidates within 20 per channel).
+- In a picture with the remap flag, pixel values 0xE8-0xFF are not colours: value p reads the pixel already on the
+  screen and replaces it with remap_table[p - 0xE8][that pixel] (2006:010a, asm 01dc-0205). That is how unit
+  shadows, glows and tinted effects blend with whatever is behind them.
+- Box fills (Fill_Box_Styled styles): 1 solid, 3 / 15 recolour the area through a remap table (darken / tint),
+  5 / 7 textured diagonal gradients with noise, 13 two-colour random dither, 16 greyscale through a brightness table.
+
+5. PALETTE
+- 256 RGB entries in memory + 256 "dirty" flags. Palette_Upload sends only dirty entries to the DAC, 128 per
+  vertical retrace, then clears the flags. The remap builder uses the same dirty flags as its candidate set, so the
+  tables are rebuilt right after a palette load (load -> mark all -> Remap_Build_All -> upload).
+- Fades: Palette_Darken_Percent(p) uploads the palette darkened by p %. Palette_Fade_To_Black = 25/50/75/100 %,
+  Palette_Fade_From_Black = 75/50/25/0 % (one tick apart). Earlier names for these (Fade_In / Fade_Out) had the direction backwards.
+- Glowing UI colours: Palette_Cycle_Color ping-pongs one entry between two RGB values; Palette_Rotate_Upload rotates
+  a range (colour cycling).
+
+6. SCREEN UPDATE AND TRANSITIONS
+- Each screen registers a redraw callback; the UI loop each tick: restore the saved background (A800 store), call
+  the callback, upload the palette, redraw the mouse cursor, flip, wait a tick.
+- Screen_Present shows the finished back page using present_mode. A byte scan of every store to present_mode
+  (DS:9c8e) finds only 0, 2, 3, 4:
+    0  plain (palette + flip)                                         21 sites
+    2  fade in from black                                              4 sites (cartographer, diplomacy, spell learned, game menu)
+    3  DISSOLVE (VGA_Present_Dissolve: shuffled 8-pixel pieces, 4 passes, then flip)   25 sites (closing the city
+       screen, items, magic, unit view, outpost, stack popup, ... back to the map); also called directly after
+       spell animations (Map_Redraw_Dissolve), by the turn report and the hire-hero screen
+    4  ZOOM out of the clicked city tile (8 steps) when opening a city / outpost from the map   2 sites
+  Mode 1 (left-to-right wipe) and mode 5 are never selected.
+- Dead transition code (no direct call, no relocated far pointer anywhere in the image (a scan for relocated far pointers) and
+  not present in MAGIC.EXE): Transition_Interlace_Push / Transition_Interlace_Band_Push / Transition_Push_Left / Transition_Push_Right
+  with their steps VGA_Interlace_Shift, VGA_Interlace_Fill_Edges, VGA_Interlace_Shift_Band, VGA_Interlace_Fill_Band_Edges,
+  VGA_Push_Left_Step, VGA_Push_Right_Step, Transition_Blinds /
+  Transition_Blocks with VGA_Reveal_Line, VGA_Present_Dissolve_Slow, VGA_Present_Wipe_Centre, VGA_Present_Wipe_LR
+  (never selected), VGA_Load_Planar_Image (also in MAGIC.EXE, also uncalled). Also dead: Pic_Draw_Along_Line,
+  Pic_Recolor_By_Brightness*, Pic_Keep_Rect, Pic_Add_Rect, Pic_Replace_Color_Rect, Pic_Draw_Rect_Outline,
+  Palette_Gradient_Range, Palette_Rotate, Pic_Remap_Shade2.
+  Caveat: a far pointer assembled at run time from parts would escape the scan; none was seen.
+  EXECUTION CHECK (2026-10-17, DOSBox-X debugger breakpoints on all 28 entries above - see DOSBOX_X_DEBUG.txt):
+  none was hit during a tour of spellbook, armies, cities, magic, info menu + F1-F4, plane switch, game menu and two
+  turns, while the live controls were (Screen_Present; VGA_Present_Dissolve on closing the spellbook = mode 3;
+  Palette_Fade_To_Black / _From_Black on the game menu = mode 2). Supports the static result; it is not a proof for
+  screens the tour did not open (combat, diplomacy, city screen, endgame).
+
+7. DEVELOPER LEFTOVERS (inert in the shipped build: release_flag = 1 at startup)
+- Debug_Screenshot_FLI: saves the visible screen as SCRDMPnn.FLI (Autodesk FLI: COLOR chunk + uncompressed COPY
+  chunk). Debug_Memory_Report_Key: memory report. Both bound to keys in the UI loops.
+
+8. GRAPHICS BUGS FOUND
+- #339 LATENT: the three clipped picture decoders re-base their data segment with the instructions in the wrong
+  order (mov ds, cx / add cx, 0xfc0 / mov cx, ds) once a frame passes 0xFC00 bytes; no shipped WIZARDS picture that
+  large goes through a clipped draw.
+- Dead-code slips noted in comments only: Pic_Draw_Rect_Outline (wrong stride / header offset), Pic_Keep_Rect (right
+  edge off by one), Set_Pic_Frame divides by zero if loop == count, vertical slider ignores its minimum.
+
+9. TEXT (fonts and paragraphs)
+- Fonts come from FONTS.LBX. Font_Select copies one font into the font block: 16 colour slots per colour set
+  (normal / highlight / colour 2), height (+0x10), line advance (+0x44 = height + gap), char gap (+0x48), the 96
+  character widths (+0x4A, space first) and the 96 glyph offsets (+0xAA).
+- Glyphs are column-major RLE like pictures: byte < 0x80 = run of (b >> 4) pixels in colour SLOT (b & 15);
+  0x80 = next column; 0x81-0xFF = skip (b & 0x7F) transparent pixels. Characters 0x20-0x7D only.
+- No layers: text is drawn last, straight into the back page, on top of the background and the box pictures.
+  Shadow / outline styles (font byte +0x12) are extra passes of the whole string in the shadow colour
+  (Set_Text_Shadow_Color) at small offsets - 3 passes for a shadow, 8 for an outline, 13 for outline + shadow - then
+  the string itself.
+- Control bytes inside strings: 1 normal colours, 2 / 4 toggle highlight (help text keywords), 3 toggle colour set 2,
+  0x0D / 0x14 new line, 0x19 / 0x1D tab or set position (two decimal digits in paragraphs), 0x15 end.
+- Paragraphs: Paragraph_Layout_Lines word-wraps by overwriting the break spaces with 0x15 in the caller's string (restored
+  afterwards), can flow around up to 4 rectangles (pictures in help / spellbook pages), and gives up (prints
+  nothing) if one word is wider than the box. Set_Space_Width (47 calls, 1-2 px) narrows the space after Font_Select.
+- Text can be rendered into a bitmap instead (the *_To_Pic family: spellbook pages, item cards) and then drawn,
+  scaled or curled like any picture.
+- Bugs: #340 Str_Trim removes only one trailing space (city names); #341 LATENT right / centre paragraph-to-bitmap
+  passes the width as the bitmap segment (never used).
+
+10. MOUSE POINTER AND KEYS
+- The mouse driver calls the game's event handler (2579:02bc) on every move / press. The handler itself erases the
+  pointer (Mouse_Restore_Under), saves the pixels at the new spot (Mouse_Save_Under, 16 rows x 6 bytes x 4 planes)
+  and draws the 16x16 pointer image (Mouse_Draw_Pointer), saving and restoring the VGA registers so it can interrupt
+  any drawing safely. Mouse_Hide / Mouse_Show only freeze / unfreeze that (flag DS:78bc). Back-page twins of the save
+  / restore / draw routines keep the pointer correct across page flips.
+- Presses (not releases) are latched: buttons DS:78d0, x / y 78cc / 78ce, click-pending 78ca, event-pending 78d2 -
+  the latch a test harness can write to click. Pointer shapes come from up to N screen regions (12-byte records).
+- Keys: INT 16h fn 10h translated to game codes (table in ui/HARNESS_UI_NOTES.txt).
+

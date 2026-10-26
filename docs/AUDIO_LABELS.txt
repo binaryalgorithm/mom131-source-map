@@ -1,0 +1,243 @@
+MUSIC.LBX AND SOUNDFX.LBX - THE DEVELOPERS' ENTRY LABELS
+==========================================================
+Each LBX file has a name table at 0x200: 32 bytes per entry = a 9-byte file name and a 23-byte description, written
+by the original tools. Listed here from the GOG v1.31 files, unchanged (spelling as in the files; some descriptions
+are blank). The music / sound entry constants in ENUMS.H (MUSIC_*, SFX_*) index these files; the code that plays
+them is src/wizards/SOUND.C and its callers. Generated 2026-10-26.
+
+MUSIC.LBX (116 entries)
+    0  MOM81    Good Arcane
+    1  MOM103   Good Chaos
+    2  MOM75    Good Death
+    3  MOM77    Good Life
+    4  MOM73    Good nature
+    5  MOM79    Good Sorcery
+    6  MOM82    Bad Arcane
+    7  MOM104   Bad Chaos
+    8  MOM76    Bad Death
+    9  MOM78    Bad Life
+   10  MOM74    Bad Nature
+   11  MOM80    Bad Sorcery
+   12  MOM62    Spell Mastery Started
+   13  MOM56    Weak Creature Summons
+   14  MOM57    Avg Creature Summons
+   15  MOM58    Powerful Creature Summ
+   16  MOM59    Mighty Creature Summon
+   17  MOM53    Spell Failure Theme
+   18  MOM60    Upkeep warning music
+   19  MOM35    Eternal Night  DEATH
+   20  MOM36    Evil Omens
+   21  MOM37    Zombie Mastery
+   22  MOM31    Aura of Majesty  SORCE
+   23  MOM46    Wind Mastery 
+   24  MOM47    Supress Magic
+   25  MOM48    Time Stop
+   26  MOM43    Nature's Awareness NAT
+   27  MOM45    Force of Nature
+   28  MOM44    Herb Mastery
+   29  MOM30    Chaos Surge  CHAOS
+   30  MOM32    Doom Mastery
+   31  MOM29    Great Wasting
+   32  MOM33    Meteor Storm
+   33  MOM34    Armagedon
+   34  MOM41    Tranquility    LIFE
+   35  MOM40    Life Force
+   36  MOM42    Crusade
+   37  MOM38    Just Cause
+   38  MOM39    Holy Arms
+   39  TEMP     Wrath of God
+   40  MOM51    New Spell music
+   41  MOM01    Merlin Good  Diplomacy
+   42  MOM02    Merlin Bad
+   43  MOM03    Raven Good
+   44  MOM04    Raven Bad
+   45  MOM05    Sharee Good
+   46  MOM06    Sharee Bad
+   47  MOM07    Lo Pan Good
+   48  MOM08    Lo Pan Bad
+   49  MOM09    Jafar good
+   50  MOM10    Jafar Bad
+   51  MOM11    Oberic Good
+   52  MOM12    Oberic Bad
+   53  MOM13    Rjak good
+   54  MOM14    Rjak bad
+   55  MOM15    Sss'ra good
+   56  MOM16    Sss'ra bad
+   57  MOM17    Tauron good
+   58  MOM18    Tauron bad
+   59  MOM19    Freya good 
+   60  MOM20    Freya Bad
+   61  MOM21    Horus good
+   62  MOM22    Horus bad
+   63  MOM23    Ariel good
+   64  MOM24    Ariel bad
+   65  MOM25    Tlaloc good
+   66  MOM26    Tlaloc bad
+   67  MOM27    Kali good 
+   68  MOM28    Kali bad
+   69  MOM63    WINNING  by magic
+   70  MOM70    Hiring screen
+   71  COM1W01  Merlin Combat 1
+   72  COM2W01  Merlin Combat 2
+   73  COM1W02  
+   74  COM2W02  
+   75  COM1W03  
+   76  COM2W03  
+   77  COM1W04  
+   78  COM2W04  
+   79  COM1W05  
+   80  COM2W05  
+   81  COM1W06  
+   82  COM2W06  
+   83  COM1W07  
+   84  COM2W07  
+   85  COM1W08  
+   86  COM2W08  
+   87  COM1W09  
+   88  COM2W09  
+   89  COM1W10  
+   90  COM2W10  
+   91  COM1W11  
+   92  COM2W11  
+   93  COM1W12  
+   94  COM2W12  
+   95  COM1W13  
+   96  COM2W13  
+   97  COM1W14  Kali Combat 1
+   98  COM2W14  Kali Combat 2
+   99  MOM67    Background Good
+  100  MOM68    Background Neutral
+  101  MOM69    Background Negative
+  102  MOMCOM1  
+  103  MOMCOM2  
+  104  MOM50    Main Menu
+  105  MOM52    Site Discovery
+  106  MOM54    Events
+  107  MOM55    New Outpost
+  108  MOM61    Building Finished
+  109  MOM64    Winning Military
+  110  MOM66    Losing Military
+  111  MOM65    Losing Magic
+  112  MOM49    Intro music
+  113  MOMFAN   not used
+  114  MOM105   Bad Event Theme
+  115  MMFAN2   Fanfare
+
+SOUNDFX.LBX (119 entries; the name table holds the first 116 - the rest have none)
+    0  SLX19    Standard Button click
+    1  TORAN2M  intro speech
+    2  OKBUTTN  left button click
+    3  TORAN3M1 intro speech
+    4  MERLIN1  intro speech
+    5  TROOPS2  Troops
+    6  CALVARY  Cavalry
+    7  FLYERS2  Flyers, small
+    8  FLYWHOSH Flyers, large
+    9  SMALLMON Monster, small
+   10  MNMOVLG3 monster, Large
+   11  TELEPOR2 Teleport
+   12  TUNNEL   Tunneling
+   13  MEDMON   Medium monster
+   14  OKBUTTN   ---  Empty  ---
+   15  CATAPLT3 Attack, Catapult
+   16  EXPLODE  Attack, Cannon
+   17  BOW5     Attack, Bows
+   18  SLING    Attack, Slings
+   19  LITBOLT3 Attack, Lightning
+   20  FIREBAL4 Attack, Fire
+   21  ILUZUN4  Attack, Illusion
+   22  ZAP4     Attack, Death
+   23  ICESTRM3 Attack, Ice
+   24  HOLYATK2 Attack, Holy
+   25  ZAP1     Attack, Dark Elf
+   26  SPRITE   Attack, Sprite
+   27  LITBOLT  Lightning bolt
+   28  NATURE4  Generic Nature
+   29  SORCERY2 Generic Sorcery
+   30  CHAOS3   Generic Chaos
+   31  LIFEMAG2 Generic Life
+   32  DEATH5   Generic Death
+   33  ARCANE   Generic Arcane
+   34  FSCREAM  Female scream
+   35  ISCREAM  Male Scream
+   36  MSCREAM  Male scream II
+   37  OKBUTTN    --- Empty ---
+   38  OKBUTTN    --- Empty ---
+   39  KEN001   Star Fires   LIFE SPEL
+   40  TELEPORT Plane Shift
+   41  KEN001   Raise Dead
+   42  KEN001   Dispel Evil
+   43  KEN001   Holy Word
+   44  KEN001   Stream of Life
+   45  KEN001   Inspirations
+   46  KEN001   Prosperity
+   47  KEN001   Astral Gate
+   48  KEN001   Alkar
+   49  KEN001   Consecration
+   50  KEN001   Weakness   DEATH SPELL
+   51  KEN001   Black Sleep
+   52  KEN001   Mind Twist
+   53  KEN001   Posession
+   54  KEN001   Warp Node
+   55  BLAKWIND Black Wind
+   56  DRNPWR3  Drain Power
+   57  KEN001   Subversion
+   58  CRUNMND3 Cruel Unminding
+   59  KEN001   Animate Dead
+   60  DARKRITE Dark Rituals
+   61  KEN001   Evil Presence
+   62  KEN001   Cursed Land
+   63  KEN001   Pestilence
+   64  KEN001   Cloud of Shadow
+   65  KEN001   Famine
+   66  KEN001   Wall of Darkness
+   67  KEN001   Petrify    NATURE SPEL
+   68  KEN001   Web
+   69  2MUD2    Earth 2 Mud
+   70  KEN001   Ice Storm
+   71  KEN001   Cracks Call
+   72  QUAKE8   Earthquake
+   73  KEN001   Transmute
+   74  KEN001   Nature's Eye
+   75  KEN001   Earth Gate
+   76  KEN001   Gaias Blessing
+   77  KEN001   Dispel Magic  SORCERY 
+   78  KEN001   Word of Recall
+   79  KEN001   Vertigo
+   80  DISPEL2  Disenchant True
+   81  KEN001   Spell Blast
+   82  KEN001   Whirlwind
+   83  KEN001   Banish
+   84  KEN001   Confusion
+   85  KEN001   Stasis
+   86  ENCHTRD4 Enchant Road
+   87  KEN001   Mind Fires
+   88  KEN001   Creature Binding
+   89  KEN001   Flying Fortress
+   90  KEN001   Spell Ward
+   91  KEN001   Disrupt      CHAOS SPE
+   92  KEN001   Shatter
+   93  FIREBAL3 Fireball
+   94  KEN001   Warp Creature
+   95  KEN001   Warp Wood
+   96  FIRSTRM3 Firestorm
+   97  KEN001   Warp Lightning
+   98  STNRAIN  Raise Volcano
+   99  DISINTEG Disintegrate
+  100  DOOMBOLT doom Bolt
+  101  KEN001   Call Chaos
+  102  CALVOID3 Call the Void
+  103  CORRUPT2 Corruption
+  104  KEN001   Wall of Fire
+  105  KEN001   Chaos Rift
+  106  SILENT   sILENCE
+  107  SUMMON2  Combat Summoning
+  108  KEN001   Change Terrain
+  109  KEN001   Move Fortress
+  110  KEN001   Earth Lore
+  111  KEN001   Wall Of Stone
+  112  DISPEL2  Disjunction
+  113  KEN001   SPell Binding
+  114  KEN001   Resurrection
+  115  TORAN1   intro speech
+

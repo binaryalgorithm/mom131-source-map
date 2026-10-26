@@ -1,0 +1,36 @@
+32-BIT ARITHMETIC IN THE SOURCE - a porting note
+=================================================
+Written 2026-10-18 for the decompiled text, rewritten 2026-10-26 for the published source (src/).
+
+WHAT 'long' MEANS HERE
+The game is a 16-bit DOS program (Borland C++ 3.1, medium model): 'int' is 16 bits, 'long' is 32 bits. The source
+writes 32-bit arithmetic as ordinary C on 'long' / 'unsigned long' values (about 460 uses of the types). Borland
+cannot multiply, divide or shift a 32-bit value in one 16-bit instruction, so the COMPILER turns each such operator
+into a call into its own runtime library - the programmers never called these themselves:
+  LMUL@    multiply (low 32 bits; the same for signed and unsigned)
+  LDIV@    signed divide            (LUDIV@, unsigned divide, is in the library but nothing calls it)
+  LMOD@    signed remainder         (LUMOD@ likewise unused)
+  LXLSH@   left shift
+  LXURSH@  unsigned (logical) right shift
+32-bit add, subtract and compare are done inline (ADD / ADC, SUB / SBB, compare high word then low word).
+Struct assignment and initialised local arrays become SCOPY@ calls (a fixed-size memcpy).
+
+Counts in the original executables (calls to the helpers):
+  WIZARDS.EXE: 476 sites in 91 functions - LDIV@ 233, LMUL@ 195, LXLSH@ 35, LMOD@ 11, LXURSH@ 2
+  MAGIC.EXE:   158 sites in 28 functions - LDIV@ 65, LMUL@ 51, LXLSH@ 29, LMOD@ 11, LXURSH@ 2
+The heaviest users are the picture code (scaling, rotation), combat, city calculations, combat spells and the UI.
+
+PORTING
+- A 32 / 64-bit compiler does all of this natively; nothing to replace. But KEEP THE WIDTHS: in this code 'long' is
+  exactly 32 bits and 'int' exactly 16. Use int32_t / uint32_t for 'long' (on 64-bit Linux and macOS 'long' is
+  64 bits) and int16_t / uint16_t where the game relies on 16-bit wrap-around or sign (many counters, coordinates
+  and gold / mana sums are 16-bit and some bugs depend on their overflow - see BUGS_AND_QUIRKS.txt).
+- Behaviour to preserve: LDIV@ / LMOD@ truncate toward zero (as C does); right shifts of unsigned long are logical;
+  multiplies keep only the low 32 bits; int * int is a 16-bit multiply unless an operand is cast to long first -
+  the source has the casts exactly where the original had them (a missing cast changes the compiled code, so the
+  byte-identical build proves each one).
+- Mixed int / long expressions follow 16-bit C promotion rules: '(long)a * b' is 32-bit, 'a * b' is 16-bit and is
+  only then widened. A port with a 32-bit int changes these results where a 16-bit product overflowed.
+- Far pointers built from a segment and an offset ('(unsigned long)seg << 16' style, Seg_To_Far_Ptr) are addresses,
+  not arithmetic: a port replaces them with ordinary pointers.
+- A 16-bit DOS rebuild (Borland, Open Watcom) needs no change: the compiler emits its own helper calls again.

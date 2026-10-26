@@ -1,0 +1,109 @@
+{
+ "prog": "magic",
+ "name": "m12_select_banner",
+ "note": "route: c:240,41 w:2",
+ "time": "2026-10-21 18:46:25",
+ "current_screen": null,
+ "control_count": 6,
+ "controls": [
+  {
+   "id": 1,
+   "type": "region",
+   "x1": 175,
+   "y1": 21,
+   "x2": 313,
+   "y2": 55,
+   "w": 139,
+   "h": 35,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SELECT A BANNER"
+  },
+  {
+   "id": 2,
+   "type": "region",
+   "x1": 175,
+   "y1": 56,
+   "x2": 313,
+   "y2": 93,
+   "w": 139,
+   "h": 38,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SELECT A BANNER"
+  },
+  {
+   "id": 3,
+   "type": "region",
+   "x1": 175,
+   "y1": 94,
+   "x2": 313,
+   "y2": 128,
+   "w": 139,
+   "h": 35,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SELECT A BANNER"
+  },
+  {
+   "id": 4,
+   "type": "region",
+   "x1": 175,
+   "y1": 129,
+   "x2": 313,
+   "y2": 162,
+   "w": 139,
+   "h": 34,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SELECT A BANNER"
+  },
+  {
+   "id": 5,
+   "type": "region",
+   "x1": 175,
+   "y1": 163,
+   "x2": 313,
+   "y2": 199,
+   "w": 139,
+   "h": 37,
+   "hotkey": 0,
+   "help": -1,
+   "help_title": "SELECT A BANNER"
+  },
+  {
+   "id": 6,
+   "type": "region",
+   "x1": 500,
+   "y1": 500,
+   "x2": 500,
+   "y2": 500,
+   "w": 1,
+   "h": 1,
+   "hotkey": 27,
+   "help": -1,
+   "key": "0x1b",
+   "offscreen": true
+  }
+ ],
+ "help": [
+  {
+   "help": 658,
+   "title": "SELECT A BANNER",
+   "x1": 166,
+   "y1": 21,
+   "x2": 319,
+   "y2": 199
+  }
+ ],
+ "pointer_regions": [
+  {
+   "image": 1,
+   "pointer_offset": 0,
+   "x1": 0,
+   "y1": 0,
+   "x2": 319,
+   "y2": 199
+  }
+ ]
+}

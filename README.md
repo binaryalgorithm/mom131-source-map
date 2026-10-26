@@ -148,6 +148,16 @@ file, `CM.LIB` and `OVERLAY.LIB`. The link order decides the layout - do not reo
 The new `WIZARDS.EXE` and `MAGIC.EXE` must have the SHA-256 of the originals given above. If a hash differs, find the
 first differing byte: one module compiled in a shared session or with the wrong `-Y` is the usual cause.
 
+### Which game files the build needs - and playing the result
+
+The build reads only two files of your game: `WIZARDS.EXE` and `MAGIC.EXE` (the sound-library stand-ins are taken
+from them, and they are the reference for the final check). `make_ail.py` stops with a message if either is missing
+or is not the v1.31 file. The data files (`*.LBX`, `CONFIG.MOM`, the sound drivers ...) are not needed to build.
+
+To play the rebuilt executables, copy your whole game folder and put the new `WIZARDS.EXE` / `MAGIC.EXE` over the
+old ones in the copy - the programs load all their art, sound and rules from the `.LBX` files beside them. Start it as
+you would the original (in DOSBox / DOSBox-X: `MAGIC.EXE` for a new game, which then runs `WIZARDS.EXE`).
+
 ## The bugs (`BUGS_AND_QUIRKS.txt`)
 
 491 numbered bugs and quirks found while decompiling - what goes wrong, where (function and address), why, and
@@ -158,6 +168,13 @@ real but cannot change play.
 
 `CONVENTIONS.txt` describes how the source is written and how sure each statement is. It also refers to the
 project's analysis tools and evidence files (`tools/`, `work/`), which are not published.
+
+## Notes (`docs/`)
+
+[`docs/`](docs/README.md) holds reference notes from the work: how the graphics engine works, the save file layout,
+every screen's controls and hotkeys (from the source and from the running game), the music / sound labels, a porting
+note on 32-bit math, how to drive the DOSBox-X debugger from a script, and how the source was matched byte for byte
+to the original (Borland C++ 3.1 code-generation rules, the link method).
 
 ## The map (`index.html`)
 
