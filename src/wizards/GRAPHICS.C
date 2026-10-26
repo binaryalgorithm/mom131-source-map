@@ -29,7 +29,7 @@ unsigned anim_header_block;                     /* DS:e7de  MAGIC DS:a7d4   */
 
 void Error_Hook_Init(void);
 void EMS_Startup(void);
-void VGA_Set_ModeX(void);
+void VGA_Set_ModeY(void);
 void UI_Init(int mode);
 void Random_Seed_From_Timer(void);
 void Set_Draw_Page(void);
@@ -61,7 +61,7 @@ void Engine_Init(int input_mode, int sound_mode, char *lbx, int music_type, int 
 {
     Error_Hook_Init();
     EMS_Startup();
-    VGA_Set_ModeX();
+    VGA_Set_ModeY();
     if (input_mode == -1) {
         Font_And_Palette_Init("FONTS.LBX");
         Sound_Init(0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1);

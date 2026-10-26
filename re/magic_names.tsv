@@ -312,7 +312,7 @@
 17d6:075e	Draw_Double_Bevel_Box	
 17d6:0819	Fill_Box_Styled	
 17d6:08f3	DOS_Print_Dollar	
-1866:0004	VGA_Set_ModeX	
+1866:0004	VGA_Set_ModeY	
 186a:001c	Fill_Rect	
 186a:0120	Put_Pixel	
 186a:015a	Draw_Line	

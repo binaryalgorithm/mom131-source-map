@@ -17,6 +17,7 @@ field and global is named and described, and every known bug is marked in the co
 | `src/wizards/` | `WIZARDS.EXE`, the game: AI, combat, cities, diplomacy, magic, map, screens, and the engine (graphics, LBX files, UI, sound, memory, DOS I/O) | 131 C + 21 assembly |
 | `src/magic/` | `MAGIC.EXE`'s own modules: new-game setup, wizard creation, world generation, credits | 7 C |
 | `src/include/` | shared headers: `STRUCTS.H` (every game structure, field by field), `ENUMS.H`, `GAME.H`, declarations | 5 |
+| `src/ail/` | the Miles AIL 2.14 sound library (not Simtex code): John Miles' released source, unchanged - see its `README.txt` | 3 |
 
 `WIZARDS.EXE` is built from 152 modules (one per file in `src/wizards/`). `MAGIC.EXE` is built from 49: its 7 own
 files plus 42 shared with the game (heap, LBX loading, graphics, UI, DOS I/O ...) - the same files in
@@ -32,18 +33,19 @@ assistant working for one - can follow them by hand; `build/` also has scripts t
 
 ```
 python build/install_bc31.py "path/to/Borland CPP 3.1 and Application Frameworks (1992) (3.5-1.44mb)" tools
-python build/build.py --bc tools --game "path/to/your/Master of Magic" --dosbox path/to/dosbox-x
+python build/build.py --bc tools --dosbox path/to/dosbox-x
 ```
 
-The first installs the needed parts of Borland C++ 3.1 into `tools/BORLANDC` and checks them; the second makes the
-sound-library stand-ins from your game, compiles all 203 modules in silent DOSBox-X sessions (about a minute),
-links, and prints both executables' SHA-256 against the originals. The steps it performs:
+The first installs the needed parts of Borland C++ 3.1 into `tools/BORLANDC` and checks them; the second compiles
+all 203 modules (and the AIL sound library) in silent DOSBox-X sessions (about a minute), links, and prints both
+executables' SHA-256 against the originals. Every byte comes from this repository's source - no file of the game is
+read. The steps it performs:
 
 ### What you need
 
 | What | Where | Check |
 |---|---|---|
-| **Master of Magic v1.31** - your own copy | GOG ("Master of Magic Classic"); the GOG files are the ones verified | `WIZARDS.EXE` SHA-256 `83e273105b49ebb758b041c965298e45d491513e448e84ede2c6152232ad4e3d`, `MAGIC.EXE` `e9b96da031097fee92d8f00213f7406d5d22003c63e486b7f6394eaa078c3ebb` |
+| **Master of Magic v1.31** - your own copy: to play the result (the build does not read it) | GOG ("Master of Magic Classic"); the GOG files are the ones verified | `WIZARDS.EXE` SHA-256 `83e273105b49ebb758b041c965298e45d491513e448e84ede2c6152232ad4e3d`, `MAGIC.EXE` `e9b96da031097fee92d8f00213f7406d5d22003c63e486b7f6394eaa078c3ebb` |
 | **Borland C++ 3.1** | WinWorld (winworldpc.com): "Borland C++ 3.1 and Application Frameworks (1992)", the 3.5" 1.44 MB disk set - `Borland CPP 3.1 and Application Frameworks (1992) (3.5-1.44mb).7z` | archive SHA-256 `76e155a7fb7eb0590930ecd513644c977497a020466a272943776fbf683d0f27` |
 | **DOSBox-X** (Borland C++ is a 16-bit DOS program) | dosbox-x.com / github.com/joncampbell123/dosbox-x - verified with 2026.10.01 | |
 | **Python 3** | python.org - for the scripts in `build/` | |
@@ -82,28 +84,26 @@ In DOSBox-X the folder that holds `BORLANDC` is mounted as `C:` (so the compiler
 the build folder as another drive. The verified setup: `memsize=16`, `cycles=max`, `core=normal`, `xms=true`,
 `ems=false`, no sound; `PATH=C:\BORLANDC\BIN`.
 
-### 2. Make the sound-library stand-ins from your game
+### 2. The sound library
 
-Both programs link the Miles Design AIL 2.14 sound library, which is not Simtex code and not in this repository.
-The build links a stand-in made from your own executables:
-
-```
-python build/make_ail.py "path/to/your/Master of Magic" OUT
-```
-
-writes `OUT/S2FC1.ASM` (for `WIZARDS.EXE`) and `OUT/AIL.ASM` (for `MAGIC.EXE`). It checks your files' SHA-256 first.
+Both programs link the Miles Design AIL 2.14 sound library's API module, which is not Simtex code. John Miles
+released its source in 2000 as open-source freeware; `src/ail/` holds it unchanged (`AIL.ASM`, `AIL.INC`,
+`AIL.MAC`). It is assembled with the flags of its own makefile and linked as `S2FC1.OBJ` into `WIZARDS.EXE` (the
+name of its segment there, 2fc1) and as `AIL.OBJ` into `MAGIC.EXE`.
 
 ### 3. Compile - one fresh DOSBox-X session per module
 
 Use one build folder per program: `W` for `WIZARDS.EXE`, `L` for `MAGIC.EXE`. Copy into it the five headers of
 `src/include/` and the program's modules (`W`: every file of `src/wizards/`; `L`: the files listed in
-`src/magic/MODULES.TSV` - its own from `src/magic/`, the shared ones from `src/wizards/`), plus the stand-in
-(`S2FC1.ASM` into `W`, `AIL.ASM` into `L`). Then compile every module:
+`src/magic/MODULES.TSV` - its own from `src/magic/`, the shared ones from `src/wizards/`), plus the sound library
+(`src/ail/AIL.ASM` copied as `S2FC1.ASM` into `W` and as `AIL.ASM` into `L`, with `AIL.INC` and `AIL.MAC` beside
+it). Then compile every module:
 
 ```
 BCC -c -mm -a -d -IC:\BORLANDC\INCLUDE NAME.C        resident modules
 BCC -Y -c -mm -a -d -IC:\BORLANDC\INCLUDE NAME.C     overlay modules
-TASM /ml NAME.ASM                                     assembly modules and the stand-in
+TASM /ml NAME.ASM                                     assembly modules
+TASM /m /w+ /ml S2FC1.ASM (AIL.ASM in L)              the sound library
 ```
 
 A C module is an **overlay module** (`-Y`) when its object file is listed between `/o` and `/o-` in that program's
@@ -121,12 +121,6 @@ longer match. Sessions can run in parallel; a full build takes about a minute.
 followed by `exit`. `-silent` runs without a window and exits when the autoexec is done, so a script can start 200
 sessions without anything appearing on screen and simply wait for each process to end. `build/build.py` does exactly
 this - read it as the worked example (the config it writes, the batch per module, the parallel runner).
-
-After assembling the WIZARDS stand-in, put its relocation where the original link had it:
-
-```
-python build/fix_ail_obj.py W/S2FC1.OBJ
-```
 
 ### 4. Link
 
@@ -148,15 +142,20 @@ file, `CM.LIB` and `OVERLAY.LIB`. The link order decides the layout - do not reo
 The new `WIZARDS.EXE` and `MAGIC.EXE` must have the SHA-256 of the originals given above. If a hash differs, find the
 first differing byte: one module compiled in a shared session or with the wrong `-Y` is the usual cause.
 
-### Which game files the build needs - and playing the result
+### Playing the result
 
-The build reads only two files of your game: `WIZARDS.EXE` and `MAGIC.EXE` (the sound-library stand-ins are taken
-from them, and they are the reference for the final check). `make_ail.py` stops with a message if either is missing
-or is not the v1.31 file. The data files (`*.LBX`, `CONFIG.MOM`, the sound drivers ...) are not needed to build.
+The build reads no file of the game. To play the rebuilt executables, copy your whole game folder and put the new
+`WIZARDS.EXE` / `MAGIC.EXE` over the old ones in the copy - the programs load all their art, sound and rules from the
+`.LBX` files beside them. Start it as you would the original (`MAGIC.EXE` for a new game, which then runs
+`WIZARDS.EXE`).
 
-To play the rebuilt executables, copy your whole game folder and put the new `WIZARDS.EXE` / `MAGIC.EXE` over the
-old ones in the copy - the programs load all their art, sound and rules from the `.LBX` files beside them. Start it as
-you would the original (in DOSBox / DOSBox-X: `MAGIC.EXE` for a new game, which then runs `WIZARDS.EXE`).
+Sound: the rebuilt executables are the original files byte for byte, so they sound exactly as the originals do in
+the same setup. The sound card is chosen by the game's `CONFIG.MOM` (written by `INSTALL.EXE`; GOG's selects a Sound
+Blaster Pro 2 at port 220 for music and digital sound), and GOG runs the game in its own DOSBox with
+`dosboxMOM.conf` (`[sblaster]` `sbtype=sb16`, `sbbase=220`, `irq=7`, `dma=1`; `[midi]` `mpu401=intelligent`). In a
+DOSBox-X of your own, start from those settings (sound not disabled), or run `INSTALL.EXE` in the copy to pick the
+card your DOSBox emulates. If sound is wrong, put the original executables back in the same folder and setup: they
+behave the same, so the cause is the setup, not the build.
 
 ## The bugs (`BUGS_AND_QUIRKS.txt`)
 
@@ -208,8 +207,8 @@ to the original (Borland C++ 3.1 code-generation rules, the link method).
 Master of Magic is © MicroProse / Simtex; the rights now belong to Slitherine, which sells the game (GOG, Steam).
 This source is a reconstruction of that program for study and preservation. **This repository holds no game data,
 art, sound or executables** - you need your own copy of the game to play it, and later to build anything from the
-source. The one piece of the original executables not reconstructed is the Miles sound library (AIL), which is
-not part of Simtex's code.
+source. The Miles sound library (AIL) in both executables is not Simtex code: it is built from John Miles' own
+released source (`src/ail/`, open-source freeware since 2000).
 
 ## Credits
 

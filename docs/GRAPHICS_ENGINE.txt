@@ -6,8 +6,8 @@ cited address, unless marked READ (decompile only); the source has since been re
 src/ is the reference for every detail below.
 
 1. VIDEO MODE AND MEMORY
-- VGA_Set_ModeX (18f8:0008): BIOS mode 13h, then chain-4 and odd/even off, CRTC dword mode off / byte mode on,
-  all 256 KB cleared with one rep stosw. Plain 320x200 "Mode X" (unchained, 4 bit-planes, no 240-line tweak).
+- VGA_Set_ModeY (18f8:0008): BIOS mode 13h, then chain-4 and odd/even off, CRTC dword mode off / byte mode on,
+  all 256 KB cleared with one rep stosw. Unchained 320x200 "Mode Y" (4 bit-planes; "Mode X" is the 320x240 variant).
 - Pixel (x, y) lives in plane x & 3 at byte y*80 + x/4. Row addressing uses segment arithmetic:
   ES = page segment + y*5 paragraphs (= y*80 bytes), so no multiply per row.
 - Video memory map (each page 16,000 bytes per plane = 0x400 paragraphs):

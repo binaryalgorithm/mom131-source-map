@@ -1380,8 +1380,8 @@ int Heap_Block_Valid(unsigned block);
 void Font_Select();    /* no prototype: some callers pass other argument counts (declcheck section 4); defined (int font, int c1, int c2, int c3) */
 /* INPUT.ASM */
 void Mouse_Set_Cursor_Regions(int count, struct MouseRegion *regions);
-/* MODEX.ASM */
-void VGA_Set_ModeX(void);
+/* MODEY.ASM */
+void VGA_Set_ModeY(void);
 /* PALUPLD.ASM */
 void Palette_Upload(void);
 void Remap_Build_Table(int table, int r, int g, int b, int percent);

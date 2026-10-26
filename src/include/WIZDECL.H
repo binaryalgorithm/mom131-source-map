@@ -3618,8 +3618,8 @@ void VGA_Push_Right_Step(int step);
 void VGA_Reveal_Line(int x1, int y1, int x2, int y2, int fine);
 /* INPUT.ASM */
 void Mouse_Set_Cursor_Regions(int count, struct MouseRegion *regions);
-/* MODEX.ASM */
-void VGA_Set_ModeX(void);
+/* MODEY.ASM */
+void VGA_Set_ModeY(void);
 /* PALUPLD.ASM */
 void Palette_Darken_Percent(int percent);
 void Palette_Rotate_Upload(int first, unsigned count, unsigned step);

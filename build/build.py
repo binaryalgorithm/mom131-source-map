@@ -1,15 +1,16 @@
 """Steps 2-5 of the build (README): rebuild WIZARDS.EXE and MAGIC.EXE byte for byte and check them.
 
-  python build.py --bc TOOLS --game GAME --dosbox DOSBOX_X [--work WORK] [--parallel N]
+  python build.py --bc TOOLS --dosbox DOSBOX_X [--work WORK] [--parallel N]
       TOOLS     the folder that holds BORLANDC (install_bc31.py's OUT); mounted as C: in DOSBox-X
-      GAME      your Master of Magic v1.31 folder (WIZARDS.EXE / MAGIC.EXE: the AIL stand-ins and the final check)
       DOSBOX_X  the dosbox-x executable
       WORK      the build folder (default: ./work); W/ and L/ get the objects and the executables
       N         DOSBox-X sessions at once (default 8)
 
 Every compile runs in its OWN DOSBox-X session (`dosbox-x -silent`: no window, exits when its batch ends): Borland
-C++ 3.1 reads leftovers of the previous run from memory, so compiles that share a session can differ. Prints both
-executables' SHA-256 against the originals; exit status 0 when both are identical."""
+C++ 3.1 reads leftovers of the previous run from memory, so compiles that share a session can differ. The Miles AIL
+sound library is assembled from its released source (src/ail/) and linked as S2FC1.OBJ (WIZARDS.EXE) / AIL.OBJ
+(MAGIC.EXE). No game file is read. Prints both executables' SHA-256 against the originals; exit status 0 when both
+are identical."""
 import argparse
 import hashlib
 import os
@@ -22,7 +23,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 ORIGINAL = {'WIZARDS.EXE': '83e273105b49ebb758b041c965298e45d491513e448e84ede2c6152232ad4e3d',
             'MAGIC.EXE': 'e9b96da031097fee92d8f00213f7406d5d22003c63e486b7f6394eaa078c3ebb'}
-PROGRAMS = (('WIZARDS.EXE', 'W', 'WIZARDS.RSP', 'S2FC1.ASM'), ('MAGIC.EXE', 'L', 'MAGIC.RSP', 'AIL.ASM'))
+PROGRAMS = (('WIZARDS.EXE', 'W', 'WIZARDS.RSP', 'S2FC1.ASM'), ('MAGIC.EXE', 'L', 'MAGIC.RSP', 'AIL.ASM'))   # AIL's name
 
 
 def overlays(rsp):
@@ -73,7 +74,6 @@ def module_files(prog):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--bc', required=True)
-    ap.add_argument('--game', required=True)
     ap.add_argument('--dosbox', required=True)
     ap.add_argument('--work', default='work')
     ap.add_argument('--parallel', type=int, default=8)
@@ -82,8 +82,6 @@ def main():
     if os.path.isdir(work):
         shutil.rmtree(work)
     os.makedirs(work)
-    # step 2: the Miles AIL stand-ins from your game
-    subprocess.run([sys.executable, os.path.join(HERE, 'make_ail.py'), a.game, work], check=True)
     # step 3: one folder per program, one fresh session per module
     batches = []
     for prog, folder, rsp, standin in PROGRAMS:
@@ -94,11 +92,16 @@ def main():
         files = module_files(prog)
         for f in files:
             shutil.copy(f, os.path.join(d, os.path.basename(f).upper()))
-        shutil.copy(os.path.join(work, standin), os.path.join(d, standin))
+        ail = os.path.join(REPO, 'src', 'ail')                  # step 2: the Miles AIL source
+        shutil.copy(os.path.join(ail, 'AIL.ASM'), os.path.join(d, standin))
+        for f in ('AIL.INC', 'AIL.MAC'):
+            shutil.copy(os.path.join(ail, f), os.path.join(d, f))
         shutil.copy(os.path.join(HERE, rsp), os.path.join(d, rsp))
         ovl = overlays(os.path.join(HERE, rsp))
         for k, name in enumerate(sorted(os.path.basename(f).upper() for f in files) + [standin]):
-            if name.endswith('.ASM'):
+            if name == standin:
+                cmd = 'TASM /m /w+ /ml %s' % name                # AIL's own makefile flags (src/ail/README.txt)
+            elif name.endswith('.ASM'):
                 cmd = 'TASM /ml %s' % name
             else:
                 y = '-Y ' if os.path.splitext(name)[0] + '.OBJ' in ovl else ''
@@ -109,9 +112,6 @@ def main():
             batches.append(bat)
     t = run_sessions(a.dosbox, a.bc, work, batches, a.parallel)
     print('compiled %d modules in %.0f s' % (len(batches), t))
-    # step 3b: the WIZARDS stand-in's relocation in the original order
-    subprocess.run([sys.executable, os.path.join(HERE, 'fix_ail_obj.py'), os.path.join(work, 'W', 'S2FC1.OBJ')],
-                   check=True, stdout=subprocess.DEVNULL)
     # step 4: link at the original link date
     links = []
     for prog, folder, rsp, standin in PROGRAMS:

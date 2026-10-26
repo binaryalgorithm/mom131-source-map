@@ -370,7 +370,7 @@ entry	name	size
 1869:0752	Draw_Double_Bevel_Box	187	
 1869:080d	Gradient_Fill	183	
 1869:08e7	DOS_Print_Dollar	17	
-18f8:0008	VGA_Set_ModeX	68	
+18f8:0008	VGA_Set_ModeY	68	
 18fc:0020	Fill_Rect	260	
 18fc:0124	Put_Pixel	58	
 18fc:015e	Draw_Line	263	

@@ -2215,7 +2215,7 @@ f23a:0580	EMS_Map_Backup_Frame
 1df0:0002	Step_Toward	
 1df0:01a9	Line_Path_No_Wrap	
 1573:0063	DOS_File_Length	
-18f8:0008	VGA_Set_ModeX	
+18f8:0008	VGA_Set_ModeY	
 d50f:000f	Overland_Frame_AI_Nop	
 d50f:0019	AI_Uncalled_Nop_0019	
 d511:0810	Path_Uncalled_Returns_2	

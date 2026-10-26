@@ -326,7 +326,7 @@ entry	name	size
 17d6:075e	Draw_Double_Bevel_Box	187	
 17d6:0819	Gradient_Fill	183	
 17d6:08f3	DOS_Print_Dollar	17	
-1866:0004	VGA_Set_ModeX	68	
+1866:0004	VGA_Set_ModeY	68	
 186a:001c	Fill_Rect	260	
 186a:0120	Put_Pixel	58	
 186a:015a	Draw_Line	263	

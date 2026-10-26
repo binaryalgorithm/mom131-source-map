@@ -79,8 +79,8 @@ worlds, and became the regression suite (section 8). See [`DOSBOX_X_DEBUG.txt`](
 - **Linking:** object order recovered from the data segment, uninitialised data in Borland's reverse declaration
   order, overlay stubs in first-declaration order, and the link date (3 March 1995, stored by the overlay manager).
   `MAGIC.EXE` linked identical on 19 October, `WIZARDS.EXE` (152 / 152 modules, 852,887 bytes) on 21 October -
-  with only the Miles sound library as a stand-in taken from the game's own bytes. The rebuilt executables were then
-  play-tested. Method: [`matching/LINK_METHOD.txt`](matching/LINK_METHOD.txt).
+  with only the Miles sound library as a stand-in taken from the game's own bytes (since replaced by Miles' released
+  source, below). The rebuilt executables were then play-tested. Method: [`matching/LINK_METHOD.txt`](matching/LINK_METHOD.txt).
 
 ## 6. Making it readable (days 7-8)
 
@@ -115,11 +115,14 @@ flipped to "not shown", while a control entry they do not touch stayed shown.
 
 ## 9. Publishing (day 12)
 
-The build kit was tested from scratch: the compiler installed from the WinWorld disk images, the sound-library
-stand-ins made from the user's own game, every module compiled. One surprise: compiling everything in one DOSBox
+The build kit was tested from scratch: the compiler installed from the WinWorld disk images, every module compiled. One surprise: compiling everything in one DOSBox
 session does not give identical code - Borland C++ 3.1 reads leftovers of the previous run from extended memory,
 and three large modules then choose different registers. One fresh session per module does. A clean-room run that
 used only the public files produced both executables with the original SHA-256.
+
+The same day Jim Balcomb pointed us to John Miles' released AIL 2.14 source (open-source freeware since 2000):
+assembled with the flags of its own makefile, it links into both programs byte-identical, so the stand-in made from
+the game's bytes is gone and the build reads no file of the game at all.
 
 ## What worked
 
